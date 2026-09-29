@@ -1,0 +1,99 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="mb-4">
+        <h1 class="fw-bold">HealthTrack Dashboard</h1>
+        <p class="text-muted">
+            Personal Health & Fitness Management System
+        </p>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Users</h6>
+                    <h2 class="fw-bold">@ViewBag.Users</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Health Profiles</h6>
+                    <h2 class="fw-bold">@ViewBag.HealthProfiles</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Workout Plans</h6>
+                    <h2 class="fw-bold">@ViewBag.WorkoutPlans</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Workout Logs</h6>
+                    <h2 class="fw-bold">@ViewBag.WorkoutLogs</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Diet Plans</h6>
+                    <h2 class="fw-bold">@ViewBag.DietPlans</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Meal Logs</h6>
+                    <h2 class="fw-bold">@ViewBag.MealLogs</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Health Metrics</h6>
+                    <h2 class="fw-bold">@ViewBag.HealthMetrics</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Appointments</h6>
+                    <h2 class="fw-bold">@ViewBag.Appointments</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm border-0 mt-4">
+        <div class="card-body">
+            <h5 class="fw-bold">Notifications</h5>
+            <p class="text-muted mb-0">
+                Total Notifications: @ViewBag.Notifications
+            </p>
+        </div>
+    </div>
+
+</div>

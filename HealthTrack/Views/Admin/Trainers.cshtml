@@ -1,0 +1,2443 @@
+﻿@using System
+@using System.Linq
+
+@{
+    Layout = null;
+
+    var trainers = ViewBag.Trainers as System.Collections.IEnumerable;
+
+    int totalTrainers = ViewBag.TotalTrainers ?? 0;
+    int activeTrainers = ViewBag.ActiveTrainers ?? 0;
+    int inactiveTrainers = ViewBag.InactiveTrainers ?? 0;
+
+    string search = ViewBag.Search ?? "";
+
+    string adminName = ViewBag.UserName ?? "Admin";
+    string adminEmail = ViewBag.UserEmail ?? "";
+    string adminRole = ViewBag.UserRole ?? "ADMIN";
+    string adminImage = ViewBag.ProfileImage ?? "/images/default-user.png";
+
+    int notificationCount = ViewBag.TotalNotifications ?? 0;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Trainers | HealthTrack</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: "Segoe UI", Arial, sans-serif;
+                background: #0b1118;
+                color: #ffffff;
+            }
+
+            /* =========================================================
+                       SIDEBAR
+                    ========================================================= */
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 255px;
+                height: 100vh;
+                background: linear-gradient(180deg, #111a24 0%, #0a1017 100%);
+                border-right: 1px solid rgba(255,255,255,0.07);
+                z-index: 1000;
+                overflow-y: auto;
+            }
+
+            .sidebar-logo {
+                height: 82px;
+                display: flex;
+                align-items: center;
+                padding: 0 24px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .logo-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #ff1f3d, #e6002f);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 12px;
+                box-shadow: 0 8px 25px rgba(255,31,61,0.25);
+            }
+
+                .logo-icon i {
+                    color: #fff;
+                    font-size: 19px;
+                }
+
+            .logo-text {
+                font-size: 22px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+            }
+
+                .logo-text span {
+                    color: #ff2444;
+                }
+
+            .admin-mini-profile {
+                padding: 22px 20px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+                .admin-mini-profile img {
+                    width: 45px;
+                    height: 45px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid #ff2444;
+                    background: #202a35;
+                }
+
+            .admin-mini-name {
+                font-size: 14px;
+                font-weight: 700;
+                color: #fff;
+            }
+
+            .admin-mini-role {
+                font-size: 10px;
+                color: #8995a3;
+                margin-top: 2px;
+                letter-spacing: .7px;
+            }
+
+            .menu-title {
+                color: #687584;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 1.5px;
+                padding: 22px 24px 10px;
+            }
+
+            .sidebar-menu {
+                padding: 0 13px 25px;
+            }
+
+                .sidebar-menu a {
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    padding: 0 15px;
+                    margin-bottom: 5px;
+                    color: #aeb8c3;
+                    text-decoration: none;
+                    border-radius: 10px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all .2s ease;
+                }
+
+                    .sidebar-menu a i {
+                        width: 21px;
+                        text-align: center;
+                        font-size: 15px;
+                    }
+
+                    .sidebar-menu a:hover {
+                        background: rgba(255,255,255,0.05);
+                        color: #fff;
+                    }
+
+                    .sidebar-menu a.active {
+                        background: linear-gradient(90deg, #ff203f, #e90032);
+                        color: #fff;
+                        box-shadow: 0 8px 22px rgba(255,32,63,.22);
+                    }
+
+                    .sidebar-menu a .badge {
+                        margin-left: auto;
+                        background: #ff2444;
+                        font-size: 10px;
+                    }
+
+            .sidebar-divider {
+                height: 1px;
+                background: rgba(255,255,255,0.06);
+                margin: 10px 20px;
+            }
+
+
+            /* =========================================================
+                       TOP BAR
+                    ========================================================= */
+
+            .topbar {
+                position: fixed;
+                top: 0;
+                left: 255px;
+                right: 0;
+                height: 82px;
+                background: rgba(16,24,34,.96);
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+                z-index: 900;
+                display: flex;
+                align-items: center;
+                padding: 0 30px;
+            }
+
+            .topbar-left {
+                display: flex;
+                align-items: center;
+                gap: 18px;
+            }
+
+            .menu-toggle {
+                width: 42px;
+                height: 42px;
+                border-radius: 10px;
+                background: #18222d;
+                color: #c8d0d8;
+                border: 1px solid rgba(255,255,255,.06);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+
+            .breadcrumb-text {
+                font-size: 13px;
+                color: #758392;
+            }
+
+                .breadcrumb-text strong {
+                    color: #e8edf2;
+                }
+
+            .topbar-right {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 22px;
+            }
+
+            .top-search {
+                width: 270px;
+                height: 42px;
+                background: #151f2a;
+                border: 1px solid rgba(255,255,255,.06);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                padding: 0 14px;
+                color: #697887;
+            }
+
+                .top-search i {
+                    margin-right: 10px;
+                }
+
+                .top-search input {
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    color: #fff;
+                    width: 100%;
+                    font-size: 13px;
+                }
+
+            .notification-btn {
+                width: 42px;
+                height: 42px;
+                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,.06);
+                background: #151f2a;
+                color: #d8dfe6;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .notification-count {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                min-width: 18px;
+                height: 18px;
+                border-radius: 20px;
+                background: #ff203f;
+                color: #fff;
+                font-size: 9px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 4px;
+                border: 2px solid #101822;
+            }
+
+            .top-profile {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+            }
+
+                .top-profile img {
+                    width: 43px;
+                    height: 43px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid #ff2444;
+                }
+
+            .top-profile-name {
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .top-profile-role {
+                font-size: 9px;
+                color: #7f8b97;
+                letter-spacing: .7px;
+            }
+
+            .top-profile i {
+                color: #687684;
+                font-size: 11px;
+                margin-left: 4px;
+            }
+
+
+            /* =========================================================
+                       MAIN
+                    ========================================================= */
+
+            .main {
+                margin-left: 255px;
+                padding-top: 82px;
+                min-height: 100vh;
+                background: radial-gradient(circle at 80% 5%, rgba(255,25,60,.06), transparent 25%), #0b1118;
+            }
+
+            .content {
+                padding: 34px 38px 50px;
+                max-width: 1600px;
+                margin: auto;
+            }
+
+
+            /* =========================================================
+                       PAGE HEADER
+                    ========================================================= */
+
+            .page-header {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                margin-bottom: 27px;
+            }
+
+            .page-title-area {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .page-title-icon {
+                width: 53px;
+                height: 53px;
+                border-radius: 15px;
+                background: rgba(255,31,61,.13);
+                color: #ff2444;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 23px;
+            }
+
+            .page-title {
+                margin: 0;
+                font-size: 30px;
+                font-weight: 800;
+            }
+
+            .page-subtitle {
+                margin: 5px 0 0;
+                color: #778491;
+                font-size: 13px;
+            }
+
+            .add-btn {
+                border: none;
+                background: linear-gradient(135deg, #ff2444, #e90032);
+                color: #fff;
+                padding: 13px 20px;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 700;
+                box-shadow: 0 9px 25px rgba(255,31,61,.2);
+                transition: .2s;
+            }
+
+                .add-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 13px 30px rgba(255,31,61,.28);
+                }
+
+                .add-btn i {
+                    margin-right: 7px;
+                }
+
+
+            /* =========================================================
+                       STAT CARDS
+                    ========================================================= */
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 18px;
+                margin-bottom: 25px;
+            }
+
+            .stat-card {
+                position: relative;
+                overflow: hidden;
+                min-height: 120px;
+                padding: 22px;
+                border-radius: 15px;
+                background: linear-gradient(145deg, #16222d, #121b24);
+                border: 1px solid rgba(255,255,255,.06);
+            }
+
+            .stat-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 13px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                margin-bottom: 12px;
+            }
+
+            .stat-card.red .stat-icon {
+                background: rgba(255,31,61,.14);
+                color: #ff2444;
+            }
+
+            .stat-card.green .stat-icon {
+                background: rgba(37,211,117,.13);
+                color: #3bdd87;
+            }
+
+            .stat-card.orange .stat-icon {
+                background: rgba(255,173,51,.13);
+                color: #ffb13d;
+            }
+
+            .stat-number {
+                font-size: 25px;
+                font-weight: 800;
+                line-height: 1;
+            }
+
+            .stat-label {
+                color: #7e8b98;
+                font-size: 12px;
+                margin-top: 5px;
+            }
+
+            .stat-decoration {
+                position: absolute;
+                right: -25px;
+                bottom: -45px;
+                width: 130px;
+                height: 130px;
+                border-radius: 50%;
+                border: 20px solid rgba(255,255,255,.025);
+            }
+
+
+            /* =========================================================
+                       SEARCH
+                    ========================================================= */
+
+            .search-panel {
+                background: #121b24;
+                border: 1px solid rgba(255,255,255,.06);
+                border-radius: 15px;
+                padding: 16px;
+                margin-bottom: 25px;
+            }
+
+            .search-form {
+                display: flex;
+                gap: 10px;
+            }
+
+            .search-box {
+                flex: 1;
+                height: 48px;
+                border-radius: 10px;
+                background: #0c131b;
+                border: 1px solid rgba(255,255,255,.07);
+                display: flex;
+                align-items: center;
+                padding: 0 15px;
+            }
+
+                .search-box i {
+                    color: #6d7a87;
+                    margin-right: 10px;
+                }
+
+                .search-box input {
+                    width: 100%;
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    color: #fff;
+                    font-size: 13px;
+                }
+
+                    .search-box input::placeholder {
+                        color: #687582;
+                    }
+
+            .search-submit {
+                height: 48px;
+                padding: 0 22px;
+                border: none;
+                border-radius: 10px;
+                background: #ff2444;
+                color: #fff;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .clear-search {
+                height: 48px;
+                padding: 0 17px;
+                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,.07);
+                background: #1a2530;
+                color: #9ba7b3;
+                text-decoration: none;
+                display: flex;
+                align-items: center;
+            }
+
+
+            /* =========================================================
+                       TRAINER GRID
+                    ========================================================= */
+
+            .section-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 17px;
+            }
+
+            .section-title {
+                font-size: 16px;
+                font-weight: 700;
+            }
+
+            .showing {
+                font-size: 12px;
+                color: #75828f;
+            }
+
+            .trainer-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 20px;
+            }
+
+            .trainer-card {
+                background: linear-gradient(145deg, #17232e, #121b24);
+                border: 1px solid rgba(255,255,255,.07);
+                border-radius: 18px;
+                overflow: hidden;
+                transition: .25s ease;
+                position: relative;
+            }
+
+                .trainer-card:hover {
+                    transform: translateY(-4px);
+                    border-color: rgba(255,36,68,.3);
+                    box-shadow: 0 18px 45px rgba(0,0,0,.22);
+                }
+
+            .trainer-cover {
+                height: 105px;
+                background: linear-gradient(135deg, rgba(255,31,61,.18), transparent), linear-gradient(135deg, #202d39, #111a23);
+                position: relative;
+            }
+
+            .status-badge {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                border-radius: 20px;
+                padding: 5px 10px;
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .status-active {
+                background: rgba(44,218,126,.13);
+                color: #48df8b;
+                border: 1px solid rgba(44,218,126,.18);
+            }
+
+            .status-inactive {
+                background: rgba(255,72,93,.12);
+                color: #ff6278;
+                border: 1px solid rgba(255,72,93,.18);
+            }
+
+            .trainer-avatar {
+                position: absolute;
+                left: 22px;
+                bottom: -40px;
+                width: 82px;
+                height: 82px;
+                border-radius: 50%;
+                overflow: hidden;
+                border: 4px solid #17232e;
+                background: #263441;
+            }
+
+                .trainer-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+            .trainer-avatar-fallback {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg,#ff2444,#b90025);
+                color: #fff;
+                font-size: 25px;
+                font-weight: 800;
+            }
+
+            .trainer-content {
+                padding: 51px 20px 20px;
+            }
+
+            .trainer-name-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .trainer-name {
+                font-size: 18px;
+                font-weight: 800;
+                margin: 0;
+            }
+
+            .trainer-id {
+                color: #667482;
+                font-size: 10px;
+                margin-top: 3px;
+            }
+
+            .trainer-role {
+                background: rgba(255,31,61,.1);
+                color: #ff5a70;
+                border-radius: 7px;
+                padding: 5px 8px;
+                font-size: 9px;
+                font-weight: 700;
+                white-space: nowrap;
+            }
+
+            .trainer-details {
+                margin-top: 19px;
+                padding-top: 15px;
+                border-top: 1px solid rgba(255,255,255,.06);
+            }
+
+            .detail-row {
+                display: flex;
+                align-items: center;
+                gap: 11px;
+                color: #a7b1bb;
+                font-size: 11px;
+                margin-bottom: 12px;
+                word-break: break-word;
+            }
+
+                .detail-row i {
+                    width: 20px;
+                    color: #ff405b;
+                    text-align: center;
+                }
+
+                .detail-row:last-child {
+                    margin-bottom: 0;
+                }
+
+            .trainer-actions {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 7px;
+                margin-top: 20px;
+            }
+
+            .action-btn {
+                height: 38px;
+                border-radius: 9px;
+                border: 1px solid rgba(255,255,255,.07);
+                font-size: 11px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                cursor: pointer;
+            }
+
+            .view-btn {
+                background: rgba(64,145,255,.08);
+                color: #66a9ff;
+            }
+
+            .edit-btn {
+                background: rgba(255,174,55,.08);
+                color: #ffb74e;
+            }
+
+            .delete-btn {
+                background: rgba(255,45,73,.08);
+                color: #ff6278;
+            }
+
+            .action-btn:hover {
+                filter: brightness(1.25);
+            }
+
+
+            /* =========================================================
+                       EMPTY STATE
+                    ========================================================= */
+
+            .empty-state {
+                background: #121b24;
+                border: 1px solid rgba(255,255,255,.06);
+                border-radius: 18px;
+                padding: 65px 20px;
+                text-align: center;
+                grid-column: 1 / -1;
+            }
+
+                .empty-state i {
+                    font-size: 42px;
+                    color: #4c5966;
+                    margin-bottom: 15px;
+                }
+
+                .empty-state h4 {
+                    font-size: 17px;
+                    margin-bottom: 7px;
+                }
+
+                .empty-state p {
+                    color: #74818e;
+                    font-size: 12px;
+                }
+
+
+            /* =========================================================
+                       MODALS
+                    ========================================================= */
+
+            .modal-content {
+                background: #141e28;
+                color: #fff;
+                border: 1px solid rgba(255,255,255,.08);
+                border-radius: 16px;
+                overflow: hidden;
+            }
+
+            .modal-header {
+                border-bottom: 1px solid rgba(255,255,255,.07);
+                padding: 18px 22px;
+            }
+
+            .modal-title {
+                font-size: 17px;
+                font-weight: 700;
+            }
+
+            .modal-body {
+                padding: 22px;
+            }
+
+            .modal-footer {
+                border-top: 1px solid rgba(255,255,255,.07);
+                padding: 15px 22px;
+            }
+
+            .form-label {
+                color: #9ca8b3;
+                font-size: 11px;
+                font-weight: 600;
+                margin-bottom: 7px;
+            }
+
+            .form-control,
+            .form-select {
+                background: #0c141c;
+                border: 1px solid rgba(255,255,255,.08);
+                color: #fff;
+                border-radius: 9px;
+                min-height: 44px;
+                font-size: 12px;
+            }
+
+                .form-control:focus,
+                .form-select:focus {
+                    background: #0c141c;
+                    color: #fff;
+                    border-color: #ff2444;
+                    box-shadow: 0 0 0 .2rem rgba(255,36,68,.12);
+                }
+
+                .form-select option {
+                    background: #141e28;
+                    color: #fff;
+                }
+
+            .btn-close {
+                filter: invert(1);
+            }
+
+            .modal-save {
+                background: #ff2444;
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                padding: 9px 18px;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .modal-cancel {
+                background: #202c37;
+                color: #aab4be;
+                border: none;
+                border-radius: 8px;
+                padding: 9px 18px;
+                font-size: 12px;
+            }
+
+            .view-profile-image {
+                width: 115px;
+                height: 115px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 4px solid #ff2444;
+                margin-bottom: 15px;
+            }
+
+            .view-name {
+                font-size: 22px;
+                font-weight: 800;
+            }
+
+            .view-role {
+                color: #ff5068;
+                font-size: 11px;
+                font-weight: 700;
+                margin-top: 3px;
+            }
+
+            .view-info {
+                margin-top: 22px;
+            }
+
+            .view-info-item {
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                padding: 13px 0;
+                border-bottom: 1px solid rgba(255,255,255,.06);
+                font-size: 12px;
+                color: #aab4bd;
+            }
+
+                .view-info-item i {
+                    color: #ff2444;
+                    width: 22px;
+                    text-align: center;
+                }
+
+
+            /* =========================================================
+                       ALERTS
+                    ========================================================= */
+
+            .alert-custom {
+                border-radius: 10px;
+                font-size: 12px;
+                border: none;
+                margin-bottom: 20px;
+            }
+
+            .alert-success {
+                background: rgba(35,200,112,.12);
+                color: #4de391;
+            }
+
+            .alert-danger {
+                background: rgba(255,50,75,.12);
+                color: #ff7587;
+            }
+
+
+            /* =========================================================
+                       RESPONSIVE
+                    ========================================================= */
+
+            @@media (max-width: 1200px) {
+
+                .trainer-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+
+            @@media (max-width: 900px) {
+
+                .sidebar {
+                    width: 75px;
+                }
+
+                .sidebar-logo {
+                    justify-content: center;
+                    padding: 0;
+                }
+
+                .logo-text,
+                .admin-mini-profile > div,
+                .menu-title,
+                .sidebar-menu a span,
+                .sidebar-menu a .badge {
+                    display: none;
+                }
+
+                .admin-mini-profile {
+                    justify-content: center;
+                    padding: 18px 0;
+                }
+
+                .sidebar-menu {
+                    padding: 0 10px;
+                }
+
+                    .sidebar-menu a {
+                        justify-content: center;
+                        padding: 0;
+                    }
+
+                .topbar {
+                    left: 75px;
+                }
+
+                .main {
+                    margin-left: 75px;
+                }
+
+                .top-search {
+                    display: none;
+                }
+            }
+
+            @@media (max-width: 700px) {
+
+                .content {
+                    padding: 25px 17px 40px;
+                }
+
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .trainer-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .page-header {
+                    flex-direction: column;
+                    gap: 18px;
+                }
+
+                .add-btn {
+                    width: 100%;
+                }
+
+                .search-form {
+                    flex-direction: column;
+                }
+
+                .search-submit,
+                .clear-search {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+                .topbar {
+                    padding: 0 15px;
+                }
+
+                .breadcrumb-text {
+                    display: none;
+                }
+
+                .top-profile-name,
+                .top-profile-role,
+                .top-profile > i {
+                    display: none;
+                }
+            }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-logo">
+
+            <div class="logo-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div class="logo-text">
+                Health<span>Track</span>
+            </div>
+
+        </div>
+
+
+        <div class="admin-mini-profile">
+
+            <img src="@adminImage"
+                 alt="Admin"
+                 onerror="this.src='/images/default-user.png';">
+
+            <div>
+                <div class="admin-mini-name">
+                    @adminName
+                </div>
+
+                <div class="admin-mini-role">
+                    ADMINISTRATOR
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            MAIN MENU
+        </div>
+
+        <nav class="sidebar-menu">
+
+            <a href="@Url.Action("Index", "Home")">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="@Url.Action("Clients", "Home")">
+                <i class="fa-solid fa-users"></i>
+                <span>Clients</span>
+            </a>
+
+            <a href="@Url.Action("Trainers", "Home")"
+               class="active">
+                <i class="fa-solid fa-user-tie"></i>
+                <span>Trainers</span>
+            </a>
+
+            <a href="@Url.Action("Appointments", "Home")">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+
+            <a href="@Url.Action("WorkoutPlans", "Home")">
+                <i class="fa-solid fa-dumbbell"></i>
+                <span>Workout Plans</span>
+            </a>
+
+            <a href="@Url.Action("DietPlans", "Home")">
+                <i class="fa-solid fa-apple-whole"></i>
+                <span>Diet Plans</span>
+            </a>
+
+            <a href="@Url.Action("HealthMetrics", "Home")">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <span>Health Metrics</span>
+            </a>
+
+            <a href="@Url.Action("Notifications", "Home")">
+                <i class="fa-solid fa-bell"></i>
+                <span>Notifications</span>
+
+                @if (notificationCount > 0)
+                {
+                    <span class="badge rounded-pill">
+                        @notificationCount
+                    </span>
+                }
+
+            </a>
+
+            <a href="@Url.Action("Reports", "Home")">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Reports</span>
+            </a>
+
+            <div class="sidebar-divider"></div>
+
+            <a href="@Url.Action("Profile", "Home")">
+                <i class="fa-solid fa-user"></i>
+                <span>Profile</span>
+            </a>
+
+            <a href="@Url.Action("Logout", "Account")">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =========================================================
+         TOP BAR
+    ========================================================== -->
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button class="menu-toggle" type="button">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="breadcrumb-text">
+                Admin
+                <span class="mx-2">/</span>
+                <strong>Trainers</strong>
+            </div>
+
+        </div>
+
+
+        <div class="topbar-right">
+
+            <div class="top-search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input type="text"
+                       placeholder="Search anything..."
+                       id="topSearch">
+
+            </div>
+
+
+            <div class="notification-btn">
+
+                <i class="fa-regular fa-bell"></i>
+
+                @if (notificationCount > 0)
+                {
+                    <span class="notification-count">
+                        @notificationCount
+                    </span>
+                }
+
+            </div>
+
+
+            <div class="top-profile">
+
+                <img src="@adminImage"
+                     alt="Admin"
+                     onerror="this.src='/images/default-user.png';">
+
+                <div>
+
+                    <div class="top-profile-name">
+                        @adminName
+                    </div>
+
+                    <div class="top-profile-role">
+                        @adminRole
+                    </div>
+
+                </div>
+
+                <i class="fa-solid fa-chevron-down"></i>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+    ========================================================== -->
+
+    <main class="main">
+
+        <div class="content">
+
+
+            <!-- =====================================================
+                 ALERTS
+            ====================================================== -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-custom">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    @TempData["Success"]
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-custom">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+                    @TempData["Error"]
+                </div>
+            }
+
+
+            <!-- =====================================================
+                 PAGE HEADER
+            ====================================================== -->
+
+            <div class="page-header">
+
+                <div class="page-title-area">
+
+                    <div class="page-title-icon">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+
+                    <div>
+
+                        <h1 class="page-title">
+                            Trainers
+                        </h1>
+
+                        <p class="page-subtitle">
+                            Manage HealthTrack trainers and their accounts.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <button class="add-btn"
+                        type="button"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addTrainerModal">
+
+                    <i class="fa-solid fa-plus"></i>
+                    Add Trainer
+
+                </button>
+
+            </div>
+
+
+            <!-- =====================================================
+                 STATISTICS
+            ====================================================== -->
+
+            <div class="stats-grid">
+
+                <div class="stat-card red">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-group"></i>
+                    </div>
+
+                    <div class="stat-number">
+                        @totalTrainers
+                    </div>
+
+                    <div class="stat-label">
+                        Total Trainers
+                    </div>
+
+                    <div class="stat-decoration"></div>
+
+                </div>
+
+
+                <div class="stat-card green">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+
+                    <div class="stat-number">
+                        @activeTrainers
+                    </div>
+
+                    <div class="stat-label">
+                        Active Trainers
+                    </div>
+
+                    <div class="stat-decoration"></div>
+
+                </div>
+
+
+                <div class="stat-card orange">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-slash"></i>
+                    </div>
+
+                    <div class="stat-number">
+                        @inactiveTrainers
+                    </div>
+
+                    <div class="stat-label">
+                        Inactive Trainers
+                    </div>
+
+                    <div class="stat-decoration"></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 SEARCH
+            ====================================================== -->
+
+            <div class="search-panel">
+
+                <form method="get"
+                      action="@Url.Action("Trainers", "Home")"
+                      class="search-form">
+
+                    <div class="search-box">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input type="text"
+                               name="search"
+                               value="@search"
+                               placeholder="Search by name, email or phone..." />
+
+                    </div>
+
+                    <button type="submit"
+                            class="search-submit">
+
+                        <i class="fa-solid fa-search me-1"></i>
+                        Search
+
+                    </button>
+
+                    @if (!string.IsNullOrWhiteSpace(search))
+                    {
+                        <a href="@Url.Action("Trainers", "Home")"
+                           class="clear-search">
+
+                            <i class="fa-solid fa-xmark me-1"></i>
+                            Clear
+
+                        </a>
+                    }
+
+                </form>
+
+            </div>
+
+
+            <!-- =====================================================
+                 TRAINER SECTION
+            ====================================================== -->
+
+            <div class="section-header">
+
+                <div class="section-title">
+                    <i class="fa-solid fa-users me-2"
+                       style="color:#ff2444;"></i>
+                    Trainer Profiles
+                </div>
+
+                <div class="showing">
+                    Showing @totalTrainers trainer(s)
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 TRAINER CARDS
+            ====================================================== -->
+
+            <div class="trainer-grid">
+
+                @if (trainers != null)
+                {
+                    foreach (var trainer in trainers)
+                    {
+                        string fullName =
+                            Convert.ToString(trainer.FullName) ?? "Unknown Trainer";
+
+                        string email =
+                            Convert.ToString(trainer.Email) ?? "Not provided";
+
+                        string phone =
+                            Convert.ToString(trainer.Phone);
+
+                        if (string.IsNullOrWhiteSpace(phone))
+                        {
+                            phone = "Not provided";
+                        }
+
+                        string status =
+                            Convert.ToString(trainer.Status) ?? "Active";
+
+                        string created =
+                            "";
+
+                        try
+                        {
+                            created =
+                                Convert.ToDateTime(trainer.CreatedAt)
+                                    .ToString("dd MMM yyyy");
+                        }
+                        catch
+                        {
+                            created = "Not available";
+                        }
+
+                        string profileImage =
+                            Convert.ToString(trainer.ProfileImage);
+
+                        if (string.IsNullOrWhiteSpace(profileImage))
+                        {
+                            profileImage = "/images/default-user.png";
+                        }
+                        else if (!profileImage.StartsWith("/"))
+                        {
+                            profileImage = "/images/" + profileImage;
+                        }
+
+                        string initial =
+                            fullName.Trim().Length > 0
+                                ? fullName.Trim().Substring(0, 1).ToUpper()
+                                : "T";
+
+                        bool isActive =
+                            status.Equals(
+                                "Active",
+                                StringComparison.OrdinalIgnoreCase
+                            );
+
+                        <div class="trainer-card">
+
+
+                            <!-- COVER -->
+
+                            <div class="trainer-cover">
+
+                                @if (isActive)
+                                {
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-circle me-1"
+                                           style="font-size:5px;"></i>
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-circle me-1"
+                                           style="font-size:5px;"></i>
+                                        Inactive
+                                    </span>
+                                }
+
+
+                                <!-- PROFILE IMAGE -->
+
+                                <div class="trainer-avatar">
+
+                                    <img src="@profileImage"
+                                         alt="@fullName"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                                    <div class="trainer-avatar-fallback"
+                                         style="display:none;">
+                                        @initial
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- CONTENT -->
+
+                            <div class="trainer-content">
+
+                                <div class="trainer-name-row">
+
+                                    <div>
+
+                                        <h3 class="trainer-name">
+                                            @fullName
+                                        </h3>
+
+                                        <div class="trainer-id">
+                                            ID #@trainer.UserId
+                                        </div>
+
+                                    </div>
+
+                                    <div class="trainer-role">
+                                        TRAINER
+                                    </div>
+
+                                </div>
+
+
+                                <div class="trainer-details">
+
+                                    <div class="detail-row">
+
+                                        <i class="fa-solid fa-envelope"></i>
+
+                                        <span>
+                                            @email
+                                        </span>
+
+                                    </div>
+
+
+                                    <div class="detail-row">
+
+                                        <i class="fa-solid fa-phone"></i>
+
+                                        <span>
+                                            @phone
+                                        </span>
+
+                                    </div>
+
+
+                                    <div class="detail-row">
+
+                                        <i class="fa-solid fa-calendar"></i>
+
+                                        <span>
+                                            Joined @created
+                                        </span>
+
+                                    </div>
+
+
+                                    <div class="detail-row">
+
+                                        <i class="fa-solid fa-user-check"></i>
+
+                                        <span>
+                                            @status
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- ACTIONS -->
+
+                                <div class="trainer-actions">
+
+
+                                    <!-- VIEW -->
+
+                                    <button type="button"
+                                            class="action-btn view-btn"
+                                            onclick="showTrainer(
+                                        '@trainer.UserId',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(fullName))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(email))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(phone))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(status))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(created))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(profileImage))'
+                                        )">
+
+                                        <i class="fa-solid fa-eye"></i>
+                                        View
+
+                                    </button>
+
+
+                                    <!-- EDIT -->
+
+                                    <button type="button"
+                                            class="action-btn edit-btn"
+                                            onclick="editTrainer(
+                                        '@trainer.UserId',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(fullName))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(email))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(phone))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(status))'
+                                        )">
+
+                                        <i class="fa-solid fa-pen"></i>
+                                        Edit
+
+                                    </button>
+
+
+                                    <!-- DELETE -->
+
+                                    <button type="button"
+                                            class="action-btn delete-btn"
+                                            onclick="deleteTrainer(
+                                        '@trainer.UserId',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(fullName))'
+                                        )">
+
+                                        <i class="fa-solid fa-trash"></i>
+                                        Delete
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+                }
+
+
+                @if (trainers == null || !trainers.Cast<object>().Any())
+                {
+                    <div class="empty-state">
+
+                        <i class="fa-solid fa-user-slash"></i>
+
+                        <h4>
+                            No Trainers Found
+                        </h4>
+
+                        <p>
+                            There are no trainer accounts matching your search.
+                        </p>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================================================
+         ADD TRAINER MODAL
+    ========================================================== -->
+
+    <div class="modal fade"
+         id="addTrainerModal"
+         tabindex="-1">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <form method="post"
+                      action="@Url.Action("AddTrainer", "Home")">
+
+                    @Html.AntiForgeryToken()
+
+                    <div class="modal-header">
+
+                        <h5 class="modal-title">
+                            <i class="fa-solid fa-user-plus me-2"
+                               style="color:#ff2444;"></i>
+                            Add New Trainer
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"></button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <div class="row g-3">
+
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Full Name *
+                                </label>
+
+                                <input type="text"
+                                       name="FullName"
+                                       class="form-control"
+                                       placeholder="Enter trainer name"
+                                       required>
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Email *
+                                </label>
+
+                                <input type="email"
+                                       name="Email"
+                                       class="form-control"
+                                       placeholder="trainer@healthtrack.com"
+                                       required>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Phone
+                                </label>
+
+                                <input type="text"
+                                       name="Phone"
+                                       class="form-control"
+                                       placeholder="077xxxxxxx">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Status
+                                </label>
+
+                                <select name="Status"
+                                        class="form-select">
+
+                                    <option value="Active">
+                                        Active
+                                    </option>
+
+                                    <option value="Inactive">
+                                        Inactive
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Password *
+                                </label>
+
+                                <input type="password"
+                                       name="Password"
+                                       class="form-control"
+                                       placeholder="Minimum 6 characters"
+                                       minlength="6"
+                                       required>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="modal-cancel"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button type="submit"
+                                class="modal-save">
+
+                            <i class="fa-solid fa-plus me-1"></i>
+                            Create Trainer
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         EDIT TRAINER MODAL
+    ========================================================== -->
+
+    <div class="modal fade"
+         id="editTrainerModal"
+         tabindex="-1">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <form method="post"
+                      action="@Url.Action("EditTrainer", "Home")">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="UserId"
+                           id="editUserId">
+
+
+                    <div class="modal-header">
+
+                        <h5 class="modal-title">
+
+                            <i class="fa-solid fa-user-pen me-2"
+                               style="color:#ffb13d;"></i>
+
+                            Edit Trainer
+
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"></button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <div class="row g-3">
+
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Full Name *
+                                </label>
+
+                                <input type="text"
+                                       name="FullName"
+                                       id="editFullName"
+                                       class="form-control"
+                                       required>
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Email *
+                                </label>
+
+                                <input type="email"
+                                       name="Email"
+                                       id="editEmail"
+                                       class="form-control"
+                                       required>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Phone
+                                </label>
+
+                                <input type="text"
+                                       name="Phone"
+                                       id="editPhone"
+                                       class="form-control">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Status
+                                </label>
+
+                                <select name="Status"
+                                        id="editStatus"
+                                        class="form-select">
+
+                                    <option value="Active">
+                                        Active
+                                    </option>
+
+                                    <option value="Inactive">
+                                        Inactive
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    New Password
+                                    <span style="color:#687582;">
+                                        (leave blank to keep current)
+                                    </span>
+                                </label>
+
+                                <input type="password"
+                                       name="Password"
+                                       class="form-control"
+                                       minlength="6"
+                                       placeholder="Enter only if changing password">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="modal-cancel"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button type="submit"
+                                class="modal-save">
+
+                            <i class="fa-solid fa-save me-1"></i>
+                            Save Changes
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         VIEW TRAINER MODAL
+    ========================================================== -->
+
+    <div class="modal fade"
+         id="viewTrainerModal"
+         tabindex="-1">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        Trainer Profile
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"></button>
+
+                </div>
+
+
+                <div class="modal-body text-center">
+
+                    <img id="viewImage"
+                         class="view-profile-image"
+                         src="/images/default-user.png"
+                         alt="Trainer">
+
+                    <div class="view-name"
+                         id="viewName">
+                        Trainer
+                    </div>
+
+                    <div class="view-role">
+                        HEALTH TRACK TRAINER
+                    </div>
+
+
+                    <div class="view-info text-start">
+
+                        <div class="view-info-item">
+
+                            <i class="fa-solid fa-id-card"></i>
+
+                            <span>
+                                ID:
+                                <strong id="viewId"></strong>
+                            </span>
+
+                        </div>
+
+
+                        <div class="view-info-item">
+
+                            <i class="fa-solid fa-envelope"></i>
+
+                            <span id="viewEmail"></span>
+
+                        </div>
+
+
+                        <div class="view-info-item">
+
+                            <i class="fa-solid fa-phone"></i>
+
+                            <span id="viewPhone"></span>
+
+                        </div>
+
+
+                        <div class="view-info-item">
+
+                            <i class="fa-solid fa-calendar"></i>
+
+                            <span id="viewJoined"></span>
+
+                        </div>
+
+
+                        <div class="view-info-item">
+
+                            <i class="fa-solid fa-circle-check"></i>
+
+                            <span id="viewStatus"></span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="modal-cancel"
+                            data-bs-dismiss="modal">
+
+                        Close
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         DELETE CONFIRMATION MODAL
+    ========================================================== -->
+
+    <div class="modal fade"
+         id="deleteTrainerModal"
+         tabindex="-1">
+
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+
+            <div class="modal-content">
+
+                <form method="post"
+                      action="@Url.Action("DeleteTrainer", "Home")">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="id"
+                           id="deleteUserId">
+
+
+                    <div class="modal-header">
+
+                        <h5 class="modal-title">
+                            <i class="fa-solid fa-triangle-exclamation me-2"
+                               style="color:#ff5269;"></i>
+                            Delete Trainer
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"></button>
+
+                    </div>
+
+
+                    <div class="modal-body text-center">
+
+                        <div style="
+                            width:65px;
+                            height:65px;
+                            border-radius:50%;
+                            background:rgba(255,40,65,.1);
+                            color:#ff5269;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            margin:0 auto 18px;
+                            font-size:25px;">
+
+                            <i class="fa-solid fa-trash"></i>
+
+                        </div>
+
+                        <div style="
+                            font-size:14px;
+                            color:#9ba7b2;
+                            line-height:1.6;">
+
+                            Are you sure you want to delete
+
+                            <strong id="deleteTrainerName"
+                                    style="color:#fff;">
+                            </strong>
+
+                            ?
+
+                            <br>
+
+                            <small style="color:#6e7b88;">
+                                This action cannot be undone.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="modal-cancel"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button type="submit"
+                                class="modal-save"
+                                style="background:#e90032;">
+
+                            <i class="fa-solid fa-trash me-1"></i>
+                            Delete
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Bootstrap JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <script>
+
+            /* =========================================================
+               EDIT TRAINER
+            ========================================================== */
+
+            function editTrainer(
+                id,
+                name,
+                email,
+                phone,
+                status
+            ) {
+
+                document.getElementById("editUserId").value = id;
+
+                document.getElementById("editFullName").value = name;
+
+                document.getElementById("editEmail").value = email;
+
+                document.getElementById("editPhone").value =
+                    phone === "Not provided" ? "" : phone;
+
+                document.getElementById("editStatus").value = status;
+
+                var modal =
+                    new bootstrap.Modal(
+                        document.getElementById("editTrainerModal")
+                    );
+
+                modal.show();
+            }
+
+
+            /* =========================================================
+               DELETE TRAINER
+            ========================================================== */
+
+            function deleteTrainer(
+                id,
+                name
+            ) {
+
+                document.getElementById("deleteUserId").value = id;
+
+                document.getElementById("deleteTrainerName").textContent =
+                    name;
+
+                var modal =
+                    new bootstrap.Modal(
+                        document.getElementById("deleteTrainerModal")
+                    );
+
+                modal.show();
+            }
+
+
+            /* =========================================================
+               VIEW TRAINER
+            ========================================================== */
+
+            function showTrainer(
+                id,
+                name,
+                email,
+                phone,
+                status,
+                joined,
+                image
+            ) {
+
+                document.getElementById("viewId").textContent = id;
+
+                document.getElementById("viewName").textContent = name;
+
+                document.getElementById("viewEmail").textContent = email;
+
+                document.getElementById("viewPhone").textContent = phone;
+
+                document.getElementById("viewJoined").textContent =
+                    "Joined " + joined;
+
+                document.getElementById("viewStatus").textContent =
+                    status;
+
+                var imageElement =
+                    document.getElementById("viewImage");
+
+                imageElement.src =
+                    image || "/images/default-user.png";
+
+                imageElement.onerror = function() {
+
+                    this.src =
+                        "/images/default-user.png";
+
+                };
+
+                var modal =
+                    new bootstrap.Modal(
+                        document.getElementById("viewTrainerModal")
+                    );
+
+                modal.show();
+            }
+
+
+            /* =========================================================
+               TOP SEARCH
+            ========================================================== */
+
+            document
+                .getElementById("topSearch")
+                ?.addEventListener("keypress", function(event) {
+
+                    if (event.key === "Enter") {
+
+                        var value =
+                            this.value.trim();
+
+                        if (value.length > 0) {
+
+                            window.location.href =
+                                '@Url.Action("Trainers", "Home")'
+                                + '?search='
+                                + encodeURIComponent(value);
+
+                        }
+
+                    }
+
+                });
+
+
+            /* =========================================================
+               AUTO HIDE ALERT
+            ========================================================== */
+
+            setTimeout(function() {
+
+                document
+                    .querySelectorAll(".alert-custom")
+                    .forEach(function(alert) {
+
+                        alert.style.transition =
+                            "opacity .5s";
+
+                        alert.style.opacity = "0";
+
+                        setTimeout(function() {
+
+                            alert.remove();
+
+                        }, 500);
+
+                    });
+
+            }, 5000);
+
+
+            /* =========================================================
+               SIDEBAR TOGGLE
+            ========================================================== */
+
+            document
+                .querySelector(".menu-toggle")
+                ?.addEventListener("click", function() {
+
+                    var sidebar =
+                        document.querySelector(".sidebar");
+
+                    var topbar =
+                        document.querySelector(".topbar");
+
+                    var main =
+                        document.querySelector(".main");
+
+                    if (window.innerWidth > 900) {
+
+                        if (sidebar.style.width === "75px") {
+
+                            sidebar.style.width = "255px";
+                            topbar.style.left = "255px";
+                            main.style.marginLeft = "255px";
+
+                        }
+                        else {
+
+                            sidebar.style.width = "75px";
+                            topbar.style.left = "75px";
+                            main.style.marginLeft = "75px";
+
+                        }
+
+                    }
+
+                });
+
+    </script>
+
+</body>
+</html>

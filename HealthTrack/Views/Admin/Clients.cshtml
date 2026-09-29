@@ -1,0 +1,2235 @@
+﻿@using HealthTrack.Models
+@using System.Linq
+
+@{
+    Layout = null;
+
+    var clients = ViewBag.Clients as IEnumerable<User>
+                  ?? Enumerable.Empty<User>();
+
+    var adminName = ViewBag.AdminName as string ?? "Admin";
+    var adminEmail = ViewBag.AdminEmail as string ?? "";
+    var adminProfileImage = ViewBag.AdminProfileImage as string ?? "";
+
+    var totalClients = clients.Count();
+    var activeClients = clients.Count(x => x.Status == "Active");
+    var inactiveClients = clients.Count(x => x.Status != "Active");
+
+    var searchText = ViewBag.Search as string ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>Clients - HealthTrack</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            html,
+            body {
+                width: 100%;
+                min-height: 100%;
+                font-family: "Segoe UI", Arial, sans-serif;
+                background: #090b0f;
+                color: #ffffff;
+            }
+
+            body {
+                overflow-x: hidden;
+            }
+
+            /* =========================================================
+                       SIDEBAR
+                       ========================================================= */
+
+            .admin-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 245px;
+                height: 100vh;
+                background: linear-gradient( 180deg, #08090c 0%, #111318 55%, #090a0d 100% );
+                border-right: 1px solid rgba(255,255,255,0.08);
+                z-index: 1000;
+                overflow-y: auto;
+            }
+
+            .logo-area {
+                height: 82px;
+                display: flex;
+                align-items: center;
+                padding: 0 25px;
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .logo-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ff1735;
+                color: white;
+                font-size: 21px;
+                box-shadow: 0 0 22px rgba(255,23,53,0.35);
+            }
+
+            .logo-text {
+                margin-left: 12px;
+                font-size: 22px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+            }
+
+                .logo-text span {
+                    color: #ff1735;
+                }
+
+            /* =========================================================
+                       ADMIN PROFILE
+                       ========================================================= */
+
+            .admin-profile {
+                padding: 20px 18px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .profile-box {
+                display: flex;
+                align-items: center;
+                padding: 12px;
+                border-radius: 14px;
+                background: linear-gradient( 135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015) );
+            }
+
+            .profile-image {
+                width: 46px;
+                height: 46px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid #ff1735;
+                background: #20242b;
+            }
+
+            .profile-letter {
+                width: 46px;
+                height: 46px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ff1735;
+                font-size: 18px;
+                font-weight: 700;
+            }
+
+            .profile-info {
+                margin-left: 12px;
+                min-width: 0;
+            }
+
+            .profile-name {
+                font-size: 14px;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .profile-role {
+                margin-top: 4px;
+                font-size: 11px;
+                color: #aeb4bf;
+                letter-spacing: 0.8px;
+            }
+
+            /* =========================================================
+                       MENU
+                       ========================================================= */
+
+            .menu-title {
+                padding: 20px 24px 10px;
+                font-size: 10px;
+                color: #777d88;
+                font-weight: 700;
+                letter-spacing: 1.5px;
+            }
+
+            .sidebar-menu {
+                padding: 0 12px 25px;
+            }
+
+                .sidebar-menu a {
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    padding: 0 15px;
+                    margin-bottom: 6px;
+                    border-radius: 10px;
+                    color: #cdd1d8;
+                    text-decoration: none;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: 0.25s;
+                }
+
+                    .sidebar-menu a i {
+                        width: 25px;
+                        margin-right: 10px;
+                        font-size: 16px;
+                        text-align: center;
+                    }
+
+                    .sidebar-menu a:hover {
+                        color: white;
+                        background: rgba(255,255,255,0.06);
+                    }
+
+                    .sidebar-menu a.active {
+                        color: white;
+                        background: linear-gradient( 90deg, #ff102f, #e90029 );
+                        box-shadow: 0 8px 22px rgba(255,16,47,0.22);
+                    }
+
+                    .sidebar-menu a.logout {
+                        margin-top: 18px;
+                        color: #ff6679;
+                    }
+
+            /* =========================================================
+                       MAIN
+                       ========================================================= */
+
+            .admin-main {
+                margin-left: 245px;
+                min-height: 100vh;
+                background: #171a1f;
+            }
+
+            /* =========================================================
+                       TOPBAR
+                       ========================================================= */
+
+            .topbar {
+                height: 72px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 30px;
+                background: linear-gradient( 90deg, #090a0d, #111318 );
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+                position: sticky;
+                top: 0;
+                z-index: 900;
+            }
+
+            .topbar-left {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .mobile-menu {
+                display: none;
+                width: 40px;
+                height: 40px;
+                border: none;
+                border-radius: 10px;
+                color: white;
+                background: #171a20;
+                cursor: pointer;
+            }
+
+            .page-title-small {
+                color: #8f96a2;
+                font-size: 13px;
+            }
+
+            .topbar-right {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .notification {
+                position: relative;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #d5d9df;
+                font-size: 17px;
+            }
+
+            .notification-badge {
+                position: absolute;
+                right: 1px;
+                top: 0;
+                width: 17px;
+                height: 17px;
+                border-radius: 50%;
+                background: #ff1735;
+                color: white;
+                font-size: 9px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .top-admin {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .top-admin img,
+                .top-admin-letter {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid rgba(255,23,53,0.8);
+                }
+
+            .top-admin-letter {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ff1735;
+                font-weight: 700;
+            }
+
+            .top-admin-info strong {
+                display: block;
+                font-size: 13px;
+            }
+
+            .top-admin-info span {
+                display: block;
+                margin-top: 2px;
+                color: #858b96;
+                font-size: 10px;
+            }
+
+            /* =========================================================
+                       CONTENT
+                       ========================================================= */
+
+            .content {
+                padding: 30px;
+            }
+
+            .page-heading {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                margin-bottom: 25px;
+            }
+
+            .heading-left h1 {
+                font-size: 28px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+            }
+
+            .heading-left p {
+                margin-top: 7px;
+                color: #858c97;
+                font-size: 13px;
+            }
+
+            .add-client-btn {
+                border: none;
+                padding: 13px 20px;
+                border-radius: 10px;
+                color: white;
+                background: linear-gradient( 135deg, #ff1735, #d90027 );
+                font-size: 13px;
+                font-weight: 700;
+                cursor: pointer;
+                box-shadow: 0 8px 22px rgba(255,23,53,0.20);
+                transition: 0.2s;
+            }
+
+                .add-client-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 12px 28px rgba(255,23,53,0.30);
+                }
+
+                .add-client-btn i {
+                    margin-right: 7px;
+                }
+
+            /* =========================================================
+                       STAT CARDS
+                       ========================================================= */
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0,1fr));
+                gap: 18px;
+                margin-bottom: 22px;
+            }
+
+            .stat-card {
+                padding: 20px;
+                border-radius: 15px;
+                background: linear-gradient( 135deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018) );
+                border: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .stat-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .stat-icon {
+                width: 45px;
+                height: 45px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,23,53,0.12);
+                color: #ff3150;
+                font-size: 18px;
+            }
+
+            .stat-number {
+                font-size: 27px;
+                font-weight: 800;
+                margin-top: 14px;
+            }
+
+            .stat-label {
+                margin-top: 3px;
+                color: #9299a5;
+                font-size: 12px;
+            }
+
+            /* =========================================================
+                       TOOLBAR
+                       ========================================================= */
+
+            .clients-card {
+                border-radius: 17px;
+                overflow: hidden;
+                background: linear-gradient( 145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018) );
+                border: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .toolbar {
+                padding: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 15px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .search-box {
+                width: 350px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                padding: 0 14px;
+                border-radius: 10px;
+                background: #11141a;
+                border: 1px solid rgba(255,255,255,0.08);
+            }
+
+                .search-box i {
+                    color: #777f8b;
+                    margin-right: 10px;
+                }
+
+                .search-box input {
+                    width: 100%;
+                    border: none;
+                    outline: none;
+                    background: transparent;
+                    color: white;
+                    font-size: 13px;
+                }
+
+                    .search-box input::placeholder {
+                        color: #666d78;
+                    }
+
+            .toolbar-info {
+                color: #838a96;
+                font-size: 12px;
+            }
+
+            /* =========================================================
+                       TABLE
+                       ========================================================= */
+
+            .table-wrapper {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .clients-table {
+                width: 100%;
+                border-collapse: collapse;
+                min-width: 900px;
+            }
+
+                .clients-table thead {
+                    background: rgba(255,255,255,0.025);
+                }
+
+                .clients-table th {
+                    padding: 16px 18px;
+                    text-align: left;
+                    color: #818894;
+                    font-size: 10px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.8px;
+                    font-weight: 700;
+                }
+
+                .clients-table td {
+                    padding: 15px 18px;
+                    border-top: 1px solid rgba(255,255,255,0.045);
+                    font-size: 13px;
+                    color: #dce0e6;
+                }
+
+                .clients-table tbody tr {
+                    transition: 0.2s;
+                }
+
+                    .clients-table tbody tr:hover {
+                        background: rgba(255,255,255,0.025);
+                    }
+
+            .client-cell {
+                display: flex;
+                align-items: center;
+                gap: 11px;
+            }
+
+            .client-avatar {
+                width: 42px;
+                height: 42px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid rgba(255,23,53,0.55);
+                background: #22262e;
+            }
+
+            .avatar-letter {
+                width: 42px;
+                height: 42px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient( 135deg, #ff1735, #a9001d );
+                color: white;
+                font-weight: 700;
+                border: 2px solid rgba(255,255,255,0.08);
+            }
+
+            .client-name {
+                font-weight: 700;
+                color: #ffffff;
+            }
+
+            .client-id {
+                margin-top: 3px;
+                color: #727985;
+                font-size: 10px;
+            }
+
+            .email-text {
+                color: #b6bbc4;
+            }
+
+            .phone-text {
+                color: #a8aeb8;
+            }
+
+            .status {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px;
+                border-radius: 20px;
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+                .status.active {
+                    color: #48df9b;
+                    background: rgba(43,215,137,0.10);
+                }
+
+                .status.inactive {
+                    color: #ff6478;
+                    background: rgba(255,23,53,0.10);
+                }
+
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+
+            .date-text {
+                color: #9299a5;
+                white-space: nowrap;
+            }
+
+            /* =========================================================
+                       ACTION BUTTONS
+                       ========================================================= */
+
+            .actions {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+            }
+
+            .action-btn {
+                width: 34px;
+                height: 34px;
+                border: none;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: 0.2s;
+            }
+
+            .view-btn {
+                color: #5da8ff;
+                background: rgba(70,150,255,0.10);
+            }
+
+            .edit-btn {
+                color: #ffc34d;
+                background: rgba(255,195,77,0.10);
+            }
+
+            .delete-btn {
+                color: #ff5a70;
+                background: rgba(255,23,53,0.10);
+            }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+            }
+
+            /* =========================================================
+                       EMPTY
+                       ========================================================= */
+
+            .empty-state {
+                padding: 65px 20px;
+                text-align: center;
+                color: #747b87;
+            }
+
+                .empty-state i {
+                    font-size: 38px;
+                    color: #ff1735;
+                    margin-bottom: 15px;
+                }
+
+                .empty-state h3 {
+                    color: white;
+                    font-size: 17px;
+                }
+
+                .empty-state p {
+                    margin-top: 6px;
+                    font-size: 12px;
+                }
+
+            /* =========================================================
+                       MODAL
+                       ========================================================= */
+
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                background: rgba(0,0,0,0.78);
+                backdrop-filter: blur(7px);
+                z-index: 3000;
+            }
+
+                .modal-overlay.show {
+                    display: flex;
+                }
+
+            .modal {
+                width: 100%;
+                max-width: 600px;
+                max-height: 90vh;
+                overflow-y: auto;
+                border-radius: 18px;
+                background: linear-gradient( 145deg, #171a20, #0e1014 );
+                border: 1px solid rgba(255,255,255,0.09);
+                box-shadow: 0 25px 70px rgba(0,0,0,0.55);
+            }
+
+            .modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 20px 22px;
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+            }
+
+                .modal-header h2 {
+                    font-size: 18px;
+                }
+
+            .modal-close {
+                width: 34px;
+                height: 34px;
+                border: none;
+                border-radius: 8px;
+                background: #252932;
+                color: #cdd1d7;
+                cursor: pointer;
+            }
+
+            .modal-body {
+                padding: 22px;
+            }
+
+            .form-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0,1fr));
+                gap: 15px;
+            }
+
+            .form-group.full {
+                grid-column: 1 / -1;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 7px;
+                color: #9da4ae;
+                font-size: 11px;
+                font-weight: 600;
+            }
+
+            .form-control {
+                width: 100%;
+                height: 43px;
+                padding: 0 12px;
+                border-radius: 9px;
+                outline: none;
+                border: 1px solid rgba(255,255,255,0.08);
+                background: #0c0f13;
+                color: white;
+                font-size: 13px;
+            }
+
+                .form-control:focus {
+                    border-color: rgba(255,23,53,0.65);
+                    box-shadow: 0 0 0 3px rgba(255,23,53,0.08);
+                }
+
+            .modal-footer {
+                padding: 18px 22px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                border-top: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .btn-cancel,
+            .btn-save {
+                height: 42px;
+                padding: 0 18px;
+                border: none;
+                border-radius: 9px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .btn-cancel {
+                background: #272b33;
+                color: #c9ced6;
+            }
+
+            .btn-save {
+                background: linear-gradient( 135deg, #ff1735, #d90027 );
+                color: white;
+            }
+
+            /* =========================================================
+                       DETAILS MODAL
+                       ========================================================= */
+
+            .details-profile {
+                text-align: center;
+                padding: 5px 0 20px;
+            }
+
+            .details-avatar {
+                width: 82px;
+                height: 82px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid #ff1735;
+                background: #22262e;
+            }
+
+            .details-name {
+                margin-top: 10px;
+                font-size: 19px;
+                font-weight: 800;
+            }
+
+            .details-role {
+                margin-top: 4px;
+                color: #ff4b63;
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+            .details-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0,1fr));
+                gap: 10px;
+            }
+
+            .detail-item {
+                padding: 13px;
+                border-radius: 10px;
+                background: rgba(255,255,255,0.035);
+                border: 1px solid rgba(255,255,255,0.05);
+            }
+
+            .detail-label {
+                color: #727985;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.7px;
+            }
+
+            .detail-value {
+                margin-top: 5px;
+                color: #e4e7eb;
+                font-size: 12px;
+                word-break: break-word;
+            }
+
+            /* =========================================================
+                       TOAST
+                       ========================================================= */
+
+            .toast {
+                position: fixed;
+                right: 25px;
+                bottom: 25px;
+                min-width: 280px;
+                padding: 14px 17px;
+                border-radius: 11px;
+                background: #191c22;
+                border: 1px solid rgba(255,255,255,0.08);
+                box-shadow: 0 15px 40px rgba(0,0,0,0.45);
+                color: white;
+                font-size: 12px;
+                display: none;
+                z-index: 5000;
+            }
+
+                .toast.show {
+                    display: block;
+                }
+
+                .toast.success {
+                    border-left: 4px solid #32d58c;
+                }
+
+                .toast.error {
+                    border-left: 4px solid #ff1735;
+                }
+
+            /* =========================================================
+                       RESPONSIVE
+                       ========================================================= */
+
+            @@media (max-width: 1000px) {
+
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .search-box {
+                    width: 260px;
+                }
+            }
+
+            @@media (max-width: 800px) {
+
+                .admin-sidebar {
+                    transform: translateX(-100%);
+                    transition: 0.25s;
+                }
+
+                    .admin-sidebar.open {
+                        transform: translateX(0);
+                    }
+
+                .admin-main {
+                    margin-left: 0;
+                }
+
+                .mobile-menu {
+                    display: block;
+                }
+
+                .content {
+                    padding: 20px;
+                }
+
+                .page-heading {
+                    flex-direction: column;
+                    gap: 15px;
+                }
+
+                .toolbar {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .search-box {
+                    width: 100%;
+                }
+
+                .form-grid,
+                .details-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .form-group.full {
+                    grid-column: auto;
+                }
+            }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- =========================================================
+         SIDEBAR
+         ========================================================= -->
+
+    <aside class="admin-sidebar" id="adminSidebar">
+
+        <div class="logo-area">
+
+            <div class="logo-icon">
+                <i class="fa-solid fa-dumbbell"></i>
+            </div>
+
+            <div class="logo-text">
+                Health<span>Track</span>
+            </div>
+
+        </div>
+
+
+        <div class="admin-profile">
+
+            <div class="profile-box">
+
+                @if (!string.IsNullOrWhiteSpace(adminProfileImage))
+                {
+                    <img class="profile-image"
+                         src="@Url.Content("~/images/admin1.jpg")"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+
+                    <div class="profile-letter"
+                         style="display:none;">
+                        @(string.IsNullOrWhiteSpace(adminName)
+                            ? "A"
+                            : adminName.Substring(0, 1).ToUpper())
+                    </div>
+                }
+                else
+                {
+                    <div class="profile-letter">
+                        @(string.IsNullOrWhiteSpace(adminName)
+                            ? "A"
+                            : adminName.Substring(0, 1).ToUpper())
+                    </div>
+                }
+
+                <div class="profile-info">
+
+                    <div class="profile-name">
+                        @adminName
+                    </div>
+
+                    <div class="profile-role">
+                        ADMINISTRATOR
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            MAIN MENU
+        </div>
+
+
+        <nav class="sidebar-menu">
+
+            <a href="@Url.Action("Dashboard", "Home")">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="active"
+               href="@Url.Action("Clients", "Home")">
+
+                <i class="fa-solid fa-users"></i>
+
+                <span>Clients</span>
+
+            </a>
+
+            <a href="@Url.Action("Trainers", "Home")">
+
+                <i class="fa-solid fa-user-tie"></i>
+
+                <span>Trainers</span>
+
+            </a>
+
+            <a href="@Url.Action("Appointments", "Home")">
+
+                <i class="fa-regular fa-calendar-check"></i>
+
+                <span>Appointments</span>
+
+            </a>
+
+            <a href="@Url.Action("WorkoutPlans", "Home")">
+
+                <i class="fa-solid fa-dumbbell"></i>
+
+                <span>Workout Plans</span>
+
+            </a>
+
+            <a href="@Url.Action("DietPlans", "Home")">
+
+                <i class="fa-solid fa-apple-whole"></i>
+
+                <span>Diet Plans</span>
+
+            </a>
+
+            <a href="@Url.Action("HealthMetrics", "Home")">
+
+                <i class="fa-solid fa-heart-pulse"></i>
+
+                <span>Health Metrics</span>
+
+            </a>
+
+            <a href="@Url.Action("Reports", "Home")">
+
+                <i class="fa-solid fa-chart-pie"></i>
+
+                <span>Reports</span>
+
+            </a>
+
+            <a href="@Url.Action("Notifications", "Home")">
+
+                <i class="fa-regular fa-bell"></i>
+
+                <span>Notifications</span>
+
+            </a>
+
+            <a href="@Url.Action("Settings", "Home")">
+
+                <i class="fa-solid fa-gear"></i>
+
+                <span>Settings</span>
+
+            </a>
+
+            <a class="logout"
+               href="@Url.Action("Logout", "Account")">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                <span>Logout</span>
+
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN
+         ========================================================= -->
+
+    <main class="admin-main">
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button class="mobile-menu"
+                        type="button"
+                        onclick="toggleSidebar()">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+                <span class="page-title-small">
+                    Admin / Clients
+                </span>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <div class="notification">
+
+                    <i class="fa-regular fa-bell"></i>
+
+                    @if (ViewBag.TotalNotifications != null &&
+                         Convert.ToInt32(ViewBag.TotalNotifications) > 0)
+                    {
+                        <span class="notification-badge">
+                            @ViewBag.TotalNotifications
+                        </span>
+                    }
+
+                </div>
+
+
+                <div class="top-admin">
+
+                    @if (!string.IsNullOrWhiteSpace(adminProfileImage))
+                    {
+                        <img src="@Url.Content("~/images/admin1.jpg")"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+
+                        <div class="top-admin-letter"
+                             style="display:none;">
+                            @(string.IsNullOrWhiteSpace(adminName)
+                                ? "A"
+                                : adminName.Substring(0, 1).ToUpper())
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="top-admin-letter">
+                            @(string.IsNullOrWhiteSpace(adminName)
+                                ? "A"
+                                : adminName.Substring(0, 1).ToUpper())
+                        </div>
+                    }
+
+                    <div class="top-admin-info">
+
+                        <strong>
+                            @adminName
+                        </strong>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <section class="content">
+
+            <!-- PAGE HEADING -->
+
+            <div class="page-heading">
+
+                <div class="heading-left">
+
+                    <h1>
+                        Clients
+                    </h1>
+
+                    <p>
+                        Manage HealthTrack client accounts and information.
+                    </p>
+
+                </div>
+
+
+                <button class="add-client-btn"
+                        type="button"
+                        onclick="openAddModal()">
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Add Client
+
+                </button>
+
+            </div>
+
+
+            <!-- STATS -->
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div>
+                            <div class="stat-number">
+                                @totalClients
+                            </div>
+
+                            <div class="stat-label">
+                                Total Clients
+                            </div>
+                        </div>
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div>
+                            <div class="stat-number">
+                                @activeClients
+                            </div>
+
+                            <div class="stat-label">
+                                Active Clients
+                            </div>
+                        </div>
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div>
+                            <div class="stat-number">
+                                @inactiveClients
+                            </div>
+
+                            <div class="stat-label">
+                                Inactive Clients
+                            </div>
+                        </div>
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-user-slash"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CLIENTS TABLE -->
+
+            <div class="clients-card">
+
+                <div class="toolbar">
+
+                    <form method="get"
+                          action="@Url.Action("Clients", "Home")"
+                          class="search-box">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input type="text"
+                               name="search"
+                               value="@searchText"
+                               placeholder="Search name, email or phone..."
+                               autocomplete="off" />
+
+                    </form>
+
+
+                    <div class="toolbar-info">
+
+                        Showing
+                        <strong style="color:white;">
+                            @clients.Count()
+                        </strong>
+                        client(s)
+
+                    </div>
+
+                </div>
+
+
+                @if (clients.Any())
+                {
+                    <div class="table-wrapper">
+
+                        <table class="clients-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>Client</th>
+
+                                    <th>Email</th>
+
+                                    <th>Phone</th>
+
+                                    <th>Status</th>
+
+                                    <th>Created</th>
+
+                                    <th>Actions</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                @foreach (var client in clients)
+                                {
+                                    var image = client.ProfileImage;
+
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="client-cell">
+
+                                                @if (!string.IsNullOrWhiteSpace(image))
+                                                {
+                                                    <img class="client-avatar"
+                                                         src="@Url.Content("~/images/" + image)"
+                                                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+
+                                                    <div class="avatar-letter"
+                                                         style="display:none;">
+
+                                                        @(string.IsNullOrWhiteSpace(client.FullName)
+                                                            ? "C"
+                                                            : client.FullName.Substring(0, 1).ToUpper())
+
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="avatar-letter">
+
+                                                        @(string.IsNullOrWhiteSpace(client.FullName)
+                                                            ? "C"
+                                                            : client.FullName.Substring(0, 1).ToUpper())
+
+                                                    </div>
+                                                }
+
+
+                                                <div>
+
+                                                    <div class="client-name">
+                                                        @client.FullName
+                                                    </div>
+
+                                                    <div class="client-id">
+                                                        ID: #@client.UserId
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="email-text">
+                                                @client.Email
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="phone-text">
+                                                @(string.IsNullOrWhiteSpace(client.Phone)
+                                                    ? "Not provided"
+                                                    : client.Phone)
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            @if (client.Status == "Active")
+                                            {
+                                                <span class="status active">
+
+                                                    <span class="status-dot"></span>
+
+                                                    Active
+
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status inactive">
+
+                                                    <span class="status-dot"></span>
+
+                                                    @client.Status
+
+                                                </span>
+                                            }
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="date-text">
+
+                                                @client.CreatedAt.ToString("dd MMM yyyy")
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <div class="actions">
+
+                                                <!-- VIEW -->
+
+                                                <button class="action-btn view-btn"
+                                                        type="button"
+                                                        title="View"
+                                                        onclick='viewClient(
+                                                    @client.UserId,
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.FullName)),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.Email)),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.Phone ?? "")),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.Status)),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.ProfileImage ?? "")),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.CreatedAt.ToString("dd MMM yyyy")))
+                                                    )'>
+
+                                                    <i class="fa-regular fa-eye"></i>
+
+                                                </button>
+
+
+                                                <!-- EDIT -->
+
+                                                <button class="action-btn edit-btn"
+                                                        type="button"
+                                                        title="Edit"
+                                                        onclick='openEditModal(
+                                                    @client.UserId,
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.FullName)),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.Email)),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.Phone ?? "")),
+                                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(client.Status))
+                                                    )'>
+
+                                                    <i class="fa-solid fa-pen"></i>
+
+                                                </button>
+
+
+                                                <!-- DELETE -->
+
+                                                <form method="post"
+                                                      action="@Url.Action("DeleteClient", "Home")"
+                                                      onsubmit="return confirmDelete('@client.FullName');">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@client.UserId" />
+
+                                                    <button class="action-btn delete-btn"
+                                                            type="submit"
+                                                            title="Delete">
+
+                                                        <i class="fa-solid fa-trash"></i>
+
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+
+                        <i class="fa-solid fa-user-group"></i>
+
+                        <h3>
+                            No clients found
+                        </h3>
+
+                        <p>
+                            Try another search or add a new client.
+                        </p>
+
+                    </div>
+                }
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+         ADD / EDIT MODAL
+         ========================================================= -->
+
+    <div class="modal-overlay"
+         id="clientModal">
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <h2 id="modalTitle">
+                    Add Client
+                </h2>
+
+                <button class="modal-close"
+                        type="button"
+                        onclick="closeClientModal()">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <form method="post"
+                  id="clientForm"
+                  action="@Url.Action("AddClient", "Home")">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="UserId"
+                       id="clientId" />
+
+
+                <div class="modal-body">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                Full Name *
+                            </label>
+
+                            <input class="form-control"
+                                   type="text"
+                                   name="FullName"
+                                   id="fullName"
+                                   maxlength="100"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Email Address *
+                            </label>
+
+                            <input class="form-control"
+                                   type="email"
+                                   name="Email"
+                                   id="email"
+                                   maxlength="150"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Phone
+                            </label>
+
+                            <input class="form-control"
+                                   type="text"
+                                   name="Phone"
+                                   id="phone"
+                                   maxlength="20" />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Status
+                            </label>
+
+                            <select class="form-control"
+                                    name="Status"
+                                    id="status">
+
+                                <option value="Active">
+                                    Active
+                                </option>
+
+                                <option value="Inactive">
+                                    Inactive
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Password
+                                <span id="passwordHint"
+                                      style="color:#777;">
+                                    *
+                                </span>
+                            </label>
+
+                            <input class="form-control"
+                                   type="password"
+                                   name="Password"
+                                   id="password"
+                                   minlength="6"
+                                   placeholder="Enter password" />
+
+                            <small id="passwordHelp"
+                                   style="
+                                display:block;
+                                margin-top:6px;
+                                color:#6f7682;
+                                font-size:10px;">
+                                Minimum 6 characters.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button class="btn-cancel"
+                            type="button"
+                            onclick="closeClientModal()">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button class="btn-save"
+                            type="submit"
+                            id="saveButton">
+
+                        <i class="fa-solid fa-check"></i>
+
+                        Save Client
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         VIEW DETAILS MODAL
+         ========================================================= -->
+
+    <div class="modal-overlay"
+         id="detailsModal">
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <h2>
+                    Client Details
+                </h2>
+
+                <button class="modal-close"
+                        type="button"
+                        onclick="closeDetailsModal()">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <div class="details-profile">
+
+                    <img id="detailsImage"
+                         class="details-avatar"
+                         style="display:none;" />
+
+                    <div id="detailsLetter"
+                         class="avatar-letter"
+                         style="
+                        width:82px;
+                        height:82px;
+                        margin:auto;
+                        font-size:25px;">
+                    </div>
+
+                    <div class="details-name"
+                         id="detailsName">
+                    </div>
+
+                    <div class="details-role">
+                        CLIENT
+                    </div>
+
+                </div>
+
+
+                <div class="details-grid">
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            User ID
+                        </div>
+
+                        <div class="detail-value"
+                             id="detailsId">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Status
+                        </div>
+
+                        <div class="detail-value"
+                             id="detailsStatus">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Email
+                        </div>
+
+                        <div class="detail-value"
+                             id="detailsEmail">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Phone
+                        </div>
+
+                        <div class="detail-value"
+                             id="detailsPhone">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item"
+                         style="grid-column:1/-1;">
+
+                        <div class="detail-label">
+                            Created Date
+                        </div>
+
+                        <div class="detail-value"
+                             id="detailsCreated">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button class="btn-cancel"
+                        type="button"
+                        onclick="closeDetailsModal()">
+
+                    Close
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         TOAST
+         ========================================================= -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="toast success show"
+             id="serverToast">
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            &nbsp;
+
+            @TempData["Success"]
+
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="toast error show"
+             id="serverToast">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            &nbsp;
+
+            @TempData["Error"]
+
+        </div>
+    }
+
+
+    <script>
+
+            // =========================================================
+            // SIDEBAR
+            // =========================================================
+
+            function toggleSidebar() {
+
+                const sidebar =
+                    document.getElementById("adminSidebar");
+
+                sidebar.classList.toggle("open");
+            }
+
+
+            // =========================================================
+            // ADD CLIENT
+            // =========================================================
+
+            function openAddModal() {
+
+                const modal =
+                    document.getElementById("clientModal");
+
+                const form =
+                    document.getElementById("clientForm");
+
+                document.getElementById("modalTitle").innerText =
+                    "Add Client";
+
+                document.getElementById("saveButton").innerHTML =
+                    '<i class="fa-solid fa-plus"></i> Add Client';
+
+                document.getElementById("clientId").value = "";
+
+                document.getElementById("fullName").value = "";
+
+                document.getElementById("email").value = "";
+
+                document.getElementById("phone").value = "";
+
+                document.getElementById("status").value =
+                    "Active";
+
+                document.getElementById("password").value = "";
+
+                document.getElementById("password").required =
+                    true;
+
+                document.getElementById("passwordHint").innerText =
+                    "*";
+
+                document.getElementById("passwordHelp").innerText =
+                    "Minimum 6 characters.";
+
+                form.action =
+                    "@Url.Action("AddClient", "Home")";
+
+                modal.classList.add("show");
+            }
+
+
+            // =========================================================
+            // EDIT CLIENT
+            // =========================================================
+
+            function openEditModal(
+                id,
+                name,
+                email,
+                phone,
+                status
+            ) {
+
+                const modal =
+                    document.getElementById("clientModal");
+
+                const form =
+                    document.getElementById("clientForm");
+
+                document.getElementById("modalTitle").innerText =
+                    "Edit Client";
+
+                document.getElementById("saveButton").innerHTML =
+                    '<i class="fa-solid fa-floppy-disk"></i> Update Client';
+
+                document.getElementById("clientId").value =
+                    id;
+
+                document.getElementById("fullName").value =
+                    name;
+
+                document.getElementById("email").value =
+                    email;
+
+                document.getElementById("phone").value =
+                    phone;
+
+                document.getElementById("status").value =
+                    status;
+
+                document.getElementById("password").value =
+                    "";
+
+                document.getElementById("password").required =
+                    false;
+
+                document.getElementById("passwordHint").innerText =
+                    "(optional)";
+
+                document.getElementById("passwordHelp").innerText =
+                    "Leave empty if you do not want to change the password.";
+
+                form.action =
+                    "@Url.Action("EditClient", "Home")";
+
+                modal.classList.add("show");
+            }
+
+
+            // =========================================================
+            // CLOSE CLIENT MODAL
+            // =========================================================
+
+            function closeClientModal() {
+
+                document
+                    .getElementById("clientModal")
+                    .classList.remove("show");
+            }
+
+
+            // =========================================================
+            // VIEW CLIENT
+            // =========================================================
+
+            function viewClient(
+                id,
+                name,
+                email,
+                phone,
+                status,
+                image,
+                created
+            ) {
+
+                document.getElementById("detailsId").innerText =
+                    "#" + id;
+
+                document.getElementById("detailsName").innerText =
+                    name;
+
+                document.getElementById("detailsEmail").innerText =
+                    email;
+
+                document.getElementById("detailsPhone").innerText =
+                    phone || "Not provided";
+
+                document.getElementById("detailsStatus").innerText =
+                    status;
+
+                document.getElementById("detailsCreated").innerText =
+                    created;
+
+                const img =
+                    document.getElementById("detailsImage");
+
+                const letter =
+                    document.getElementById("detailsLetter");
+
+                if (image && image.trim() !== "") {
+
+                    img.src =
+                        "/images/" + image;
+
+                    img.style.display =
+                        "block";
+
+                    letter.style.display =
+                        "none";
+
+                    img.onerror = function() {
+
+                        img.style.display =
+                            "none";
+
+                        letter.style.display =
+                            "flex";
+                    };
+
+                }
+                else {
+
+                    img.style.display =
+                        "none";
+
+                    letter.style.display =
+                        "flex";
+                }
+
+                letter.innerText =
+                    name && name.length > 0
+                        ? name.charAt(0).toUpperCase()
+                        : "C";
+
+                document
+                    .getElementById("detailsModal")
+                    .classList.add("show");
+            }
+
+
+            // =========================================================
+            // CLOSE DETAILS
+            // =========================================================
+
+            function closeDetailsModal() {
+
+                document
+                    .getElementById("detailsModal")
+                    .classList.remove("show");
+            }
+
+
+            // =========================================================
+            // DELETE CONFIRMATION
+            // =========================================================
+
+            function confirmDelete(name) {
+
+                return confirm(
+                    "Are you sure you want to delete client '" +
+                    name +
+                    "'?\n\nThis action cannot be undone."
+                );
+            }
+
+
+            // =========================================================
+            // CLOSE MODALS WHEN CLICK OUTSIDE
+            // =========================================================
+
+            window.addEventListener(
+                "click",
+                function(event) {
+
+                    const clientModal =
+                        document.getElementById("clientModal");
+
+                    const detailsModal =
+                        document.getElementById("detailsModal");
+
+                    if (event.target === clientModal) {
+                        closeClientModal();
+                    }
+
+                    if (event.target === detailsModal) {
+                        closeDetailsModal();
+                    }
+
+                }
+            );
+
+
+            // =========================================================
+            // ESCAPE KEY
+            // =========================================================
+
+            document.addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (event.key === "Escape") {
+
+                        closeClientModal();
+
+                        closeDetailsModal();
+                    }
+
+                }
+            );
+
+
+            // =========================================================
+            // AUTO HIDE TOAST
+            // =========================================================
+
+            setTimeout(function() {
+
+                const toast =
+                    document.getElementById("serverToast");
+
+                if (toast) {
+
+                    toast.classList.remove("show");
+                }
+
+            }, 3500);
+
+    </script>
+
+</body>
+
+</html>

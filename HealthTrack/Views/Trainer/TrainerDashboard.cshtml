@@ -1,0 +1,1464 @@
+@{
+    Layout = null;
+
+    var trainerName = ViewBag.UserName ?? "Trainer";
+    var trainerEmail = ViewBag.UserEmail ?? "";
+    var trainerRole = ViewBag.UserRole ?? "TRAINER";
+    var profileImage = ViewBag.ProfileImage;
+
+    var totalClients = Convert.ToInt32(ViewBag.TotalClients ?? 0);
+    var totalWorkoutPlans = Convert.ToInt32(ViewBag.TotalWorkoutPlans ?? 0);
+    var totalDietPlans = Convert.ToInt32(ViewBag.TotalDietPlans ?? 0);
+    var totalAppointments = Convert.ToInt32(ViewBag.TotalAppointments ?? 0);
+    var totalHealthMetrics = Convert.ToInt32(ViewBag.TotalHealthMetrics ?? 0);
+    var totalNotifications = Convert.ToInt32(ViewBag.TotalNotifications ?? 0);
+
+    var clients = ViewBag.Clients as List<HealthTrack.Models.User> ?? new List<HealthTrack.Models.User>();
+    var trainerAppointments = ViewBag.TrainerAppointments as List<HealthTrack.Models.Appointment> ?? new List<HealthTrack.Models.Appointment>();
+    var recentAppointments = ViewBag.RecentAppointments as List<HealthTrack.Models.Appointment> ?? new List<HealthTrack.Models.Appointment>();
+    var upcomingAppointments = ViewBag.UpcomingAppointments as List<HealthTrack.Models.Appointment> ?? new List<HealthTrack.Models.Appointment>();
+    var workoutPlans = ViewBag.WorkoutPlansList as List<HealthTrack.Models.WorkoutPlan> ?? new List<HealthTrack.Models.WorkoutPlan>();
+    var dietPlans = ViewBag.DietPlansList as List<HealthTrack.Models.DietPlan> ?? new List<HealthTrack.Models.DietPlan>();
+
+    var trainerInitial = string.IsNullOrWhiteSpace(trainerName.ToString()) ? "T" : trainerName.ToString().Trim().Substring(0, 1).ToUpper();
+    string profilePath = "";
+
+    // Database stores only the filename (example: trainer1.jpg).
+    // Convert it to the real static-files path: /images/trainer1.jpg
+    if (profileImage != null && !string.IsNullOrWhiteSpace(profileImage.ToString()))
+    {
+        profilePath = profileImage.ToString().Trim();
+
+        if (!profilePath.StartsWith("/images/", StringComparison.OrdinalIgnoreCase))
+        {
+            profilePath = "/images/" + profilePath.TrimStart('/');
+        }
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>Trainer Dashboard - HealthTrack</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Segoe UI", Arial, sans-serif;
+                background: linear-gradient( rgba(245,247,249,0.91), rgba(245,247,249,0.94) ), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2200&q=85");
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                color: #171a1f;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
+
+            /* =====================================================
+                       SIDEBAR
+                    ===================================================== */
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 245px;
+                height: 100vh;
+                background: linear-gradient( 180deg, #080a0d 0%, #101419 55%, #07090c 100% );
+                color: white;
+                z-index: 1000;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 5px 0 30px rgba(0,0,0,0.22);
+                overflow-y: auto;
+                scrollbar-width: thin;
+            }
+
+                .sidebar::-webkit-scrollbar {
+                    width: 5px;
+                }
+
+                .sidebar::-webkit-scrollbar-thumb {
+                    background: #ef233c;
+                    border-radius: 10px;
+                }
+
+
+            /* =====================================================
+                       LOGO
+                    ===================================================== */
+
+            .brand {
+                height: 82px;
+                display: flex;
+                align-items: center;
+                padding: 0 22px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .brand-icon {
+                width: 43px;
+                height: 43px;
+                border-radius: 12px;
+                background: #ef233c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                box-shadow: 0 7px 20px rgba(239,35,60,0.30);
+            }
+
+            .brand-text {
+                margin-left: 12px;
+                font-size: 22px;
+                font-weight: 800;
+                letter-spacing: -0.6px;
+            }
+
+                .brand-text span {
+                    color: #ef233c;
+                }
+
+
+            /* =====================================================
+                       PROFILE
+                    ===================================================== */
+
+            .side-profile {
+                margin: 18px 15px 10px;
+                padding: 14px;
+                border-radius: 15px;
+                background: rgba(255,255,255,0.06);
+                border: 1px solid rgba(255,255,255,0.06);
+                display: flex;
+                align-items: center;
+            }
+
+            .side-profile-image {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid #ef233c;
+                background: #222;
+            }
+
+            .side-profile-fallback {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: #ef233c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+            }
+
+            .side-profile-info {
+                margin-left: 11px;
+                min-width: 0;
+            }
+
+            .side-profile-name {
+                color: white;
+                font-size: 14px;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .side-profile-role {
+                color: #aaa;
+                font-size: 11px;
+                margin-top: 4px;
+                text-transform: uppercase;
+            }
+
+
+            /* =====================================================
+                       MENU
+                    ===================================================== */
+
+            .menu-title {
+                padding: 13px 22px 8px;
+                color: #777;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 1.2px;
+            }
+
+            .sidebar-menu {
+                padding: 0 10px 25px;
+            }
+
+            .menu-item {
+                height: 46px;
+                margin-bottom: 5px;
+                padding: 0 14px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                color: #d7d7d7;
+                text-decoration: none;
+                font-size: 13px;
+                font-weight: 500;
+                transition: 0.2s ease;
+            }
+
+                .menu-item i {
+                    width: 20px;
+                    text-align: center;
+                    font-size: 15px;
+                }
+
+                .menu-item:hover {
+                    background: rgba(255,255,255,0.08);
+                    color: white;
+                    transform: translateX(2px);
+                }
+
+                .menu-item.active {
+                    background: #ef233c;
+                    color: white;
+                    box-shadow: 0 7px 18px rgba(239,35,60,0.30);
+                }
+
+            .menu-arrow {
+                margin-left: auto;
+                font-size: 10px;
+                color: #888;
+            }
+
+            .menu-item.active .menu-arrow {
+                color: white;
+            }
+
+
+            /* =====================================================
+                       SIDEBAR BOTTOM
+                    ===================================================== */
+
+            .sidebar-bottom {
+                margin-top: auto;
+                padding: 18px 18px 22px;
+                border-top: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .sidebar-motivation {
+                color: white;
+                font-size: 14px;
+                line-height: 1.25;
+                font-weight: 800;
+                text-transform: uppercase;
+            }
+
+                .sidebar-motivation span {
+                    color: #ef233c;
+                }
+
+            .motivation-line {
+                width: 40px;
+                height: 3px;
+                background: #ef233c;
+                margin-top: 10px;
+                border-radius: 5px;
+            }
+
+
+            /* =====================================================
+                       MAIN
+                    ===================================================== */
+
+            .main {
+                margin-left: 245px;
+                min-height: 100vh;
+                padding: 0 22px 35px;
+            }
+
+
+            /* =====================================================
+                       TOP BAR
+                    ===================================================== */
+
+            .topbar {
+                height: 70px;
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background: rgba(255,255,255,0.88);
+                backdrop-filter: blur(18px);
+                border-bottom: 1px solid rgba(0,0,0,0.06);
+            }
+
+            .search-box {
+                width: 370px;
+                height: 40px;
+                background: #f3f5f7;
+                border: 1px solid #e5e7ea;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                padding: 0 14px;
+                color: #6f747b;
+            }
+
+                .search-box i {
+                    margin-right: 10px;
+                }
+
+                .search-box input {
+                    border: none;
+                    outline: none;
+                    background: transparent;
+                    width: 100%;
+                    font-size: 12px;
+                    color: #333;
+                }
+
+
+            .topbar-spacer {
+                flex: 1;
+            }
+
+            .date-box {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                font-size: 11px;
+                color: #555;
+            }
+
+                .date-box i {
+                    color: #ef233c;
+                    font-size: 16px;
+                }
+
+            .report-btn {
+                border: none;
+                background: #ef233c;
+                color: white;
+                height: 40px;
+                padding: 0 16px;
+                border-radius: 9px;
+                font-size: 11px;
+                font-weight: 700;
+                cursor: pointer;
+                box-shadow: 0 5px 15px rgba(239,35,60,0.22);
+            }
+
+                .report-btn i {
+                    margin-right: 7px;
+                }
+
+
+            .notification {
+                position: relative;
+                width: 38px;
+                height: 38px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                color: #25282c;
+            }
+
+                .notification i {
+                    font-size: 18px;
+                }
+
+            .notification-badge {
+                position: absolute;
+                right: 1px;
+                top: 1px;
+                min-width: 17px;
+                height: 17px;
+                padding: 0 4px;
+                border-radius: 20px;
+                background: #ef233c;
+                color: white;
+                font-size: 9px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+
+            .top-profile {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                cursor: pointer;
+            }
+
+                .top-profile img {
+                    width: 39px;
+                    height: 39px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid #ef233c;
+                }
+
+            .top-profile-fallback {
+                width: 39px;
+                height: 39px;
+                border-radius: 50%;
+                background: #ef233c;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .top-profile-name {
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .top-profile-role {
+                font-size: 10px;
+                color: #777;
+                margin-top: 2px;
+            }
+
+            .top-profile-chevron {
+                font-size: 9px;
+                margin-left: 3px;
+            }
+
+
+            /* =====================================================
+                       DASHBOARD CONTENT
+                    ===================================================== */
+
+            .content {
+                padding-top: 20px;
+            }
+
+
+            /* =====================================================
+                       WELCOME CARD
+                    ===================================================== */
+
+            .welcome-card {
+                min-height: 88px;
+                border-radius: 17px;
+                background: linear-gradient( 110deg, #111923, #182230 55%, #25161b );
+                color: white;
+                padding: 17px 23px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.13);
+            }
+
+                .welcome-card::after {
+                    content: "";
+                    position: absolute;
+                    right: -60px;
+                    top: -100px;
+                    width: 290px;
+                    height: 290px;
+                    border-radius: 50%;
+                    border: 1px solid rgba(239,35,60,0.25);
+                    box-shadow: 0 0 0 40px rgba(239,35,60,0.04), 0 0 0 80px rgba(239,35,60,0.03);
+                }
+
+            .welcome-small {
+                color: #ef233c;
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                margin-bottom: 4px;
+            }
+
+            .welcome-title {
+                font-size: 25px;
+                font-weight: 800;
+                letter-spacing: -0.7px;
+            }
+
+                .welcome-title span {
+                    color: #ef233c;
+                }
+
+            .welcome-subtitle {
+                color: #bdc2c8;
+                font-size: 11px;
+                margin-top: 4px;
+            }
+
+            .welcome-icon {
+                position: relative;
+                z-index: 2;
+                width: 62px;
+                height: 62px;
+                border-radius: 50%;
+                border: 1px solid rgba(239,35,60,0.30);
+                background: rgba(239,35,60,0.12);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 15px;
+            }
+
+                .welcome-icon i {
+                    color: #ef233c;
+                    font-size: 26px;
+                }
+
+
+            /* =====================================================
+                       STAT CARDS
+                    ===================================================== */
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 13px;
+                margin-top: 14px;
+            }
+
+            .stat-card {
+                background: rgba(255,255,255,0.92);
+                border: 1px solid rgba(0,0,0,0.06);
+                border-radius: 14px;
+                min-height: 105px;
+                padding: 15px;
+                display: flex;
+                align-items: center;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+                transition: 0.2s ease;
+            }
+
+                .stat-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+                }
+
+            .stat-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 13px;
+                background: #fff0f2;
+                color: #ef233c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 19px;
+                margin-right: 12px;
+            }
+
+            .stat-title {
+                font-size: 10px;
+                color: #767b82;
+                margin-bottom: 3px;
+            }
+
+            .stat-number {
+                font-size: 24px;
+                font-weight: 800;
+                color: #1d232a;
+                line-height: 1;
+            }
+
+            .stat-change {
+                color: #18a957;
+                font-size: 9px;
+                margin-top: 6px;
+                font-weight: 600;
+            }
+
+
+            /* =====================================================
+                       GENERAL CARD
+                    ===================================================== */
+
+            .card {
+                background: rgba(255,255,255,0.94);
+                border: 1px solid rgba(0,0,0,0.055);
+                border-radius: 14px;
+                box-shadow: 0 7px 25px rgba(0,0,0,0.06);
+                overflow: hidden;
+            }
+
+            .card-header {
+                height: 55px;
+                padding: 0 16px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 1px solid #eef0f2;
+            }
+
+            .card-title {
+                font-size: 14px;
+                font-weight: 750;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+                .card-title i {
+                    color: #ef233c;
+                    font-size: 14px;
+                }
+
+            .view-all {
+                color: #ef233c;
+                font-size: 10px;
+                font-weight: 700;
+                text-decoration: none;
+            }
+
+
+            /* =====================================================
+                       TWO COLUMN
+                    ===================================================== */
+
+            .two-column {
+                display: grid;
+                grid-template-columns: 1.35fr 1fr;
+                gap: 13px;
+                margin-top: 13px;
+            }
+
+
+            /* =====================================================
+                       APPOINTMENTS
+                    ===================================================== */
+
+            .appointment-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+                .appointment-table th {
+                    background: #f6f7f8;
+                    padding: 10px 12px;
+                    text-align: left;
+                    font-size: 10px;
+                    color: #676c72;
+                    font-weight: 700;
+                }
+
+                .appointment-table td {
+                    padding: 10px 12px;
+                    border-bottom: 1px solid #f0f1f2;
+                    font-size: 10px;
+                    color: #30343a;
+                }
+
+            .client-cell {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 700;
+            }
+
+            .client-avatar {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                object-fit: cover;
+                background: #eceff1;
+            }
+
+            .status {
+                display: inline-flex;
+                padding: 4px 8px;
+                border-radius: 20px;
+                font-size: 8px;
+                font-weight: 700;
+            }
+
+            .status-confirmed {
+                color: #087d42;
+                background: #ddf7e9;
+            }
+
+            .status-pending {
+                color: #9a6700;
+                background: #fff1cc;
+            }
+
+            .status-completed {
+                color: #1769aa;
+                background: #e0efff;
+            }
+
+            .view-btn {
+                border: 1px solid #ef233c;
+                color: #ef233c;
+                background: white;
+                border-radius: 6px;
+                padding: 4px 9px;
+                font-size: 8px;
+                cursor: pointer;
+            }
+
+                .view-btn:hover {
+                    background: #ef233c;
+                    color: white;
+                }
+
+
+            /* =====================================================
+                       CLIENT PROGRESS
+                    ===================================================== */
+
+            .progress-list {
+                padding: 5px 16px 13px;
+            }
+
+            .progress-item {
+                padding: 10px 0;
+                border-bottom: 1px solid #f0f1f2;
+                display: grid;
+                grid-template-columns: 145px 1fr 35px;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .progress-client {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .progress-avatar {
+                width: 31px;
+                height: 31px;
+                border-radius: 50%;
+                object-fit: cover;
+                background: #eee;
+            }
+
+            .progress-name {
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .progress-goal {
+                color: #888;
+                font-size: 8px;
+                margin-top: 2px;
+            }
+
+            .progress-track {
+                height: 8px;
+                background: #e5e8ea;
+                border-radius: 20px;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: linear-gradient( 90deg, #ef233c, #ff7180 );
+                border-radius: 20px;
+            }
+
+            .progress-percent {
+                color: #333;
+                font-size: 9px;
+                font-weight: 700;
+                text-align: right;
+            }
+
+
+            /* =====================================================
+                       THREE COLUMN
+                    ===================================================== */
+
+            .three-column {
+                display: grid;
+                grid-template-columns: 1.15fr 1fr 0.82fr;
+                gap: 13px;
+                margin-top: 13px;
+            }
+
+
+            /* =====================================================
+                       RECENT CLIENTS
+                    ===================================================== */
+
+            .client-row {
+                display: grid;
+                grid-template-columns: 1.3fr 1fr 1fr 45px;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 15px;
+                border-bottom: 1px solid #f0f1f2;
+            }
+
+            .client-row-header {
+                background: #f6f7f8;
+                font-size: 9px;
+                color: #777;
+                font-weight: 700;
+            }
+
+            .client-name-small {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .small-avatar {
+                width: 27px;
+                height: 27px;
+                border-radius: 50%;
+                object-fit: cover;
+                background: #eee;
+            }
+
+            .goal-text {
+                font-size: 9px;
+                color: #666;
+            }
+
+            .mini-progress {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .mini-track {
+                width: 50px;
+                height: 6px;
+                background: #e5e7e9;
+                border-radius: 20px;
+                overflow: hidden;
+            }
+
+            .mini-fill {
+                height: 100%;
+                background: #ef233c;
+                border-radius: 20px;
+            }
+
+            .mini-percent {
+                font-size: 8px;
+                font-weight: 700;
+            }
+
+
+            /* =====================================================
+                       WEEKLY CHART
+                    ===================================================== */
+
+            .chart-area {
+                height: 225px;
+                padding: 15px 15px 8px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .chart-bars {
+                flex: 1;
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-around;
+                gap: 7px;
+                padding: 15px 5px 0;
+            }
+
+            .bar-column {
+                height: 100%;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+            }
+
+            .bar-value {
+                font-size: 8px;
+                font-weight: 700;
+                margin-bottom: 5px;
+            }
+
+            .bars {
+                width: 100%;
+                max-width: 22px;
+                display: flex;
+                align-items: flex-end;
+                height: 145px;
+            }
+
+            .bar {
+                width: 100%;
+                background: linear-gradient( to top, #ef233c, #ff7885 );
+                border-radius: 5px 5px 2px 2px;
+            }
+
+            .bar-label {
+                margin-top: 7px;
+                font-size: 8px;
+                color: #777;
+            }
+
+            .chart-legend {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                font-size: 8px;
+                color: #777;
+                padding-top: 8px;
+            }
+
+            .legend-dot {
+                width: 7px;
+                height: 7px;
+                display: inline-block;
+                border-radius: 50%;
+                background: #ef233c;
+                margin-right: 4px;
+            }
+
+
+            /* =====================================================
+                       UPCOMING
+                    ===================================================== */
+
+            .upcoming-list {
+                padding: 4px 15px 10px;
+            }
+
+            .upcoming-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 0;
+                border-bottom: 1px solid #f0f1f2;
+            }
+
+            .upcoming-avatar {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                object-fit: cover;
+                background: #eee;
+            }
+
+            .upcoming-name {
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .upcoming-date {
+                font-size: 8px;
+                color: #777;
+                margin-top: 3px;
+            }
+
+                .upcoming-date i {
+                    color: #ef233c;
+                    margin-right: 3px;
+                }
+
+
+            /* =====================================================
+                       BOTTOM THREE
+                    ===================================================== */
+
+            .bottom-grid {
+                display: grid;
+                grid-template-columns: 1.15fr 1fr 1fr;
+                gap: 13px;
+                margin-top: 13px;
+            }
+
+
+            /* =====================================================
+                       MESSAGES
+                    ===================================================== */
+
+            .message-item {
+                display: grid;
+                grid-template-columns: 32px 1fr auto;
+                align-items: center;
+                gap: 8px;
+                padding: 11px 15px;
+                border-bottom: 1px solid #f0f1f2;
+            }
+
+            .message-avatar {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                object-fit: cover;
+                background: #eee;
+            }
+
+            .message-name {
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .message-text {
+                font-size: 8px;
+                color: #777;
+                margin-top: 3px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .message-time {
+                font-size: 8px;
+                color: #999;
+            }
+
+
+            /* =====================================================
+                       DONUT CHART
+                    ===================================================== */
+
+            .donut-layout {
+                min-height: 210px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 20px;
+                padding: 15px;
+            }
+
+            .donut {
+                width: 125px;
+                height: 125px;
+                border-radius: 50%;
+                background: conic-gradient( #ef233c 0 33%, #ff7785 33% 58%, #ffb3ba 58% 75%, #ffd4d8 75% 90%, #d9dde0 90% 100% );
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+
+                .donut::after {
+                    content: "";
+                    width: 78px;
+                    height: 78px;
+                    border-radius: 50%;
+                    background: white;
+                    position: absolute;
+                }
+
+            .donut-center {
+                position: relative;
+                z-index: 2;
+                text-align: center;
+            }
+
+            .donut-number {
+                font-size: 22px;
+                font-weight: 800;
+            }
+
+            .donut-label {
+                font-size: 8px;
+                color: #777;
+            }
+
+            .legend-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .legend-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 8px;
+                color: #555;
+            }
+
+            .legend-color {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #ef233c;
+            }
+
+
+            /* =====================================================
+                       RESPONSIVE
+                    ===================================================== */
+
+            @@media (max-width: 1200px) {
+
+                .stats-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+
+                .two-column,
+                .three-column,
+                .bottom-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .search-box {
+                    width: 260px;
+                }
+            }
+
+            @@media (max-width: 850px) {
+
+                .sidebar {
+                    width: 215px;
+                }
+
+                .main {
+                    margin-left: 215px;
+                }
+
+                .date-box {
+                    display: none;
+                }
+
+                .report-btn {
+                    display: none;
+                }
+
+                .top-profile-info {
+                    display: none;
+                }
+            }
+
+            @@media (max-width: 650px) {
+
+                .sidebar {
+                    position: relative;
+                    width: 100%;
+                    height: auto;
+                }
+
+                .main {
+                    margin-left: 0;
+                }
+
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .topbar {
+                    position: relative;
+                }
+
+                .search-box {
+                    width: 100%;
+                }
+
+                .welcome-card {
+                    padding: 15px;
+                }
+
+                .welcome-title {
+                    font-size: 20px;
+                }
+
+                .welcome-icon {
+                    display: none;
+                }
+            }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-dumbbell"></i></div>
+            <div class="brand-text">Health<span>Track</span></div>
+        </div>
+
+        <div class="side-profile">
+            @if (!string.IsNullOrWhiteSpace(profilePath))
+            {
+                <img src="@profilePath" class="side-profile-image" alt="Trainer" />
+            }
+            else
+            {
+                <div class="side-profile-fallback">@trainerInitial</div>
+            }
+            <div class="side-profile-info">
+                <div class="side-profile-name">@trainerName</div>
+                <div class="side-profile-role">Trainer</div>
+            </div>
+        </div>
+
+        <div class="menu-title">MAIN MENU</div>
+        <nav class="sidebar-menu">
+            <a href="@Url.Action("TrainerDashboard", "Home")" class="menu-item active">
+                <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
+            </a>
+            <a href="#" class="menu-item"><i class="fa-solid fa-users"></i><span>My Clients</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
+            <a href="#" class="menu-item"><i class="fa-regular fa-calendar-check"></i><span>Appointments</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
+            <a href="#" class="menu-item"><i class="fa-solid fa-dumbbell"></i><span>Workout Plans</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
+            <a href="#" class="menu-item"><i class="fa-solid fa-apple-whole"></i><span>Diet Plans</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
+            <a href="#" class="menu-item"><i class="fa-solid fa-chart-simple"></i><span>Progress Reports</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
+            <a href="#" class="menu-item"><i class="fa-solid fa-message"></i><span>Messages</span><span class="menu-arrow">@totalNotifications</span></a>
+            <a href="#" class="menu-item"><i class="fa-regular fa-bell"></i><span>Notifications</span></a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-motivation">STRONGER <span>PEOPLE</span><br />HEALTHIER TOMORROW</div>
+            <div class="motivation-line"></div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="dashboardSearch" type="text" placeholder="Search clients, appointments..." />
+            </div>
+            <div class="topbar-spacer"></div>
+            <div class="date-box"><i class="fa-regular fa-calendar"></i><span id="currentDate"></span></div>
+            <button class="report-btn" type="button" onclick="window.print()"><i class="fa-solid fa-file-arrow-down"></i>Generate Report</button>
+            <div class="notification">
+                <i class="fa-regular fa-bell"></i>
+                @if (totalNotifications > 0) { <span class="notification-badge">@totalNotifications</span> }
+            </div>
+            <div class="top-profile">
+                @if (!string.IsNullOrWhiteSpace(profilePath))
+                {
+                    <img src="@profilePath" alt="Trainer" />
+                }
+                else
+                {
+                    <div class="top-profile-fallback">@trainerInitial</div>
+                }
+                <div>
+                    <div class="top-profile-name">@trainerName</div>
+                    <div class="top-profile-role">Trainer</div>
+                </div>
+                <i class="fa-solid fa-chevron-down top-profile-chevron"></i>
+            </div>
+        </header>
+
+        <section class="content">
+            <div class="welcome-card">
+                <div>
+                    <div class="welcome-small">Trainer Dashboard</div>
+                    <div class="welcome-title">Welcome back, <span>@trainerName</span></div>
+                    <div class="welcome-subtitle">Manage your clients, appointments and fitness plans from one place.</div>
+                </div>
+                <div class="welcome-icon"><i class="fa-solid fa-person-running"></i></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-users"></i></div><div><div class="stat-title">My Clients</div><div class="stat-number">@totalClients</div><div class="stat-change"><i class="fa-solid fa-link"></i> Assigned to you</div></div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fa-regular fa-calendar-check"></i></div><div><div class="stat-title">Appointments</div><div class="stat-number">@totalAppointments</div><div class="stat-change"><i class="fa-solid fa-calendar-day"></i> Your appointments</div></div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-dumbbell"></i></div><div><div class="stat-title">Workout Plans</div><div class="stat-number">@totalWorkoutPlans</div><div class="stat-change"><i class="fa-solid fa-user-check"></i> Your plans</div></div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fa-solid fa-apple-whole"></i></div><div><div class="stat-title">Diet Plans</div><div class="stat-number">@totalDietPlans</div><div class="stat-change"><i class="fa-solid fa-user-check"></i> Your plans</div></div></div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-regular fa-calendar-check"></i> Today's / Recent Appointments</div><a href="#" class="view-all">View All</a></div>
+                    <div style="overflow-x:auto;">
+                        <table class="appointment-table" id="appointmentsTable">
+                            <thead><tr><th>Client</th><th>Date</th><th>Time</th><th>Status</th><th></th></tr></thead>
+                            <tbody>
+                            @if (recentAppointments.Count == 0)
+                            {
+                                <tr><td colspan="5" style="text-align:center;color:#888;padding:25px;">No appointments for this trainer.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var appointment in recentAppointments)
+                                {
+                                    var clientName = appointment.Client?.FullName ?? "Client";
+                                    var initial = string.IsNullOrWhiteSpace(clientName) ? "C" : clientName.Substring(0,1).ToUpper();
+                                    var status = appointment.Status ?? "Pending";
+                                    var statusClass = status.Equals("Completed", StringComparison.OrdinalIgnoreCase) ? "status-completed" : status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) ? "status-confirmed" : "status-pending";
+                                    <tr class="search-row">
+                                        <td><div class="client-cell"><div class="client-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@initial</div>@clientName</div></td>
+                                        <td>@appointment.AppointmentDate.ToString("dd MMM yyyy")</td>
+                                        <td>@appointment.AppointmentTime.ToString("hh:mm tt")</td>
+                                        <td><span class="status @statusClass">@status</span></td>
+                                        <td><button type="button" class="view-btn">View</button></td>
+                                    </tr>
+                                }
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-solid fa-chart-simple"></i> Client Overview</div></div>
+                    <div class="progress-list">
+                        @if (clients.Count == 0)
+                        {
+                            <div style="padding:25px;text-align:center;color:#888;font-size:11px;">No clients assigned yet.</div>
+                        }
+                        else
+                        {
+                            foreach (var client in clients.Take(5))
+                            {
+                                var clientInitial = string.IsNullOrWhiteSpace(client.FullName) ? "C" : client.FullName.Substring(0,1).ToUpper();
+                                <div class="progress-item search-client-row">
+                                    <div class="progress-client"><div class="progress-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@clientInitial</div><div><div class="progress-name">@client.FullName</div><div class="progress-goal">Active client</div></div></div>
+                                    <div class="progress-track"><div class="progress-fill" style="width:100%;"></div></div>
+                                    <div class="progress-percent">100%</div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="three-column">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-solid fa-users"></i> My Clients</div><a href="#" class="view-all">View All</a></div>
+                    <div class="client-row client-row-header"><div>Client</div><div>Goal</div><div>Plan</div><div></div></div>
+                    @if (clients.Count == 0)
+                    {
+                        <div style="padding:25px;text-align:center;color:#888;font-size:10px;">No clients linked to this trainer.</div>
+                    }
+                    else
+                    {
+                        foreach (var client in clients.Take(5))
+                        {
+                            var initial = string.IsNullOrWhiteSpace(client.FullName) ? "C" : client.FullName.Substring(0,1).ToUpper();
+                            var clientWorkoutCount = workoutPlans.Count(w => w.ClientId == client.UserId);
+                            var clientDietCount = dietPlans.Count(d => d.ClientId == client.UserId);
+                            <div class="client-row search-client-row">
+                                <div class="client-name-small"><div class="small-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;">@initial</div>@client.FullName</div>
+                                <div class="goal-text">Fitness</div>
+                                <div class="mini-progress"><div class="mini-track"><div class="mini-fill" style="width:@(Math.Min(100, (clientWorkoutCount + clientDietCount) * 25))%;"></div></div><span class="mini-percent">@(clientWorkoutCount + clientDietCount)</span></div>
+                                <button class="view-btn" type="button">View</button>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-solid fa-chart-column"></i> Weekly Appointments</div><span style="font-size:9px;border:1px solid #e2e5e8;padding:6px 9px;border-radius:7px;color:#666;">This Week</span></div>
+                    <div class="chart-area">
+                        <div class="chart-bars">
+                        @for (int dayIndex = 0; dayIndex < 7; dayIndex++)
+                        {
+                            var date = DateTime.Today.Date.AddDays(dayIndex - (int)DateTime.Today.DayOfWeek + 1);
+                            var count = trainerAppointments.Count(a => a.AppointmentDate.ToDateTime(TimeOnly.MinValue).Date == date.Date);
+                            var height = count == 0 ? 5 : Math.Min(100, 20 + count * 20);
+                            <div class="bar-column"><span class="bar-value">@count</span><div class="bars"><div class="bar" style="height:@height%;"></div></div><span class="bar-label">@date.ToString("ddd")</span></div>
+                        }
+                        </div>
+                        <div class="chart-legend"><span><span class="legend-dot"></span>Appointments</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-regular fa-calendar-check"></i> Upcoming</div><a href="#" class="view-all">View All</a></div>
+                    <div class="upcoming-list">
+                        @if (upcomingAppointments.Count == 0)
+                        {
+                            <div style="padding:25px;text-align:center;color:#888;font-size:10px;">No upcoming appointments.</div>
+                        }
+                        else
+                        {
+                            foreach (var appointment in upcomingAppointments)
+                            {
+                                var name = appointment.Client?.FullName ?? "Client";
+                                var initial = string.IsNullOrWhiteSpace(name) ? "C" : name.Substring(0,1).ToUpper();
+                                <div class="upcoming-item"><div class="upcoming-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@initial</div><div><div class="upcoming-name">@name</div><div class="upcoming-date"><i class="fa-regular fa-calendar"></i>@appointment.AppointmentDate.ToString("dd MMM yyyy") &nbsp; <i class="fa-regular fa-clock"></i>@appointment.AppointmentTime.ToString("hh:mm tt")</div></div></div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-grid">
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-solid fa-message"></i> Recent Messages</div><a href="#" class="view-all">Chat</a></div>
+                    <div class="message-item"><div class="message-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;"><i class="fa-solid fa-message"></i></div><div><div class="message-name">Private Chat</div><div class="message-text">Chat will be enabled for your assigned clients.</div></div><div class="message-time">Ready</div></div>
+                    @foreach (var client in clients.Take(3))
+                    {
+                        var initial = string.IsNullOrWhiteSpace(client.FullName) ? "C" : client.FullName.Substring(0,1).ToUpper();
+                        <div class="message-item"><div class="message-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@initial</div><div><div class="message-name">@client.FullName</div><div class="message-text">Open private conversation</div></div><div class="message-time"><i class="fa-regular fa-comment"></i></div></div>
+                    }
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-solid fa-dumbbell"></i> Workout Plans</div><a href="#" class="view-all">View All</a></div>
+                    <div class="donut-layout">
+                        <div class="donut"><div class="donut-center"><div class="donut-number">@totalWorkoutPlans</div><div class="donut-label">Your Plans</div></div></div>
+                        <div class="legend-list">
+                            @foreach (var plan in workoutPlans.Take(5))
+                            {
+                                <div class="legend-row"><span class="legend-color"></span>@plan.PlanName</div>
+                            }
+                            @if (workoutPlans.Count == 0) { <div class="legend-row">No workout plans</div> }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><div class="card-title"><i class="fa-solid fa-apple-whole"></i> Diet Plans</div><a href="#" class="view-all">View All</a></div>
+                    <div class="donut-layout">
+                        <div class="donut" style="background:conic-gradient(#ef233c 0 60%, #ff7785 60% 80%, #ffb3ba 80% 92%, #d9dde0 92% 100%);"><div class="donut-center"><div class="donut-number">@totalDietPlans</div><div class="donut-label">Your Plans</div></div></div>
+                        <div class="legend-list">
+                            @foreach (var plan in dietPlans.Take(5))
+                            {
+                                <div class="legend-row"><span class="legend-color"></span>@plan.PlanName</div>
+                            }
+                            @if (dietPlans.Count == 0) { <div class="legend-row">No diet plans</div> }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const now = new Date();
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+
+        const search = document.getElementById('dashboardSearch');
+        if (search) {
+            search.addEventListener('input', function () {
+                const term = this.value.toLowerCase().trim();
+                document.querySelectorAll('.search-row, .search-client-row').forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+                });
+            });
+        }
+    </script>
+</body>
+</html>

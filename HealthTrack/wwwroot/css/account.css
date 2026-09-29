@@ -1,0 +1,667 @@
+﻿/* =========================================================
+   HEALTH TRACK - ACCOUNT AUTHENTICATION DESIGN
+   RED + BLACK FITNESS THEME
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #090909 0%, #171717 45%, #101010 100%);
+    color: #151515;
+}
+
+/* =========================================================
+   MAIN PAGE
+   ========================================================= */
+
+.account-page {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+    /* Background gym atmosphere */
+
+    .account-page::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient( rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.82) ), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2200&q=85") center center / cover no-repeat;
+        filter: blur(1px);
+        transform: scale(1.03);
+        z-index: 0;
+    }
+
+/* =========================================================
+   MAIN CARD
+   ========================================================= */
+
+.account-card {
+    width: min(1120px, 94vw);
+    min-height: 680px;
+    display: grid;
+    grid-template-columns: 42% 58%;
+    background: #ffffff;
+    border-radius: 28px;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 35px 90px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+/* =========================================================
+   LEFT FITNESS PANEL
+   ========================================================= */
+
+.brand-panel {
+    position: relative;
+    overflow: hidden;
+    padding: 55px 48px;
+    color: white;
+    background: linear-gradient( 145deg, rgba(5,5,5,0.97) 0%, rgba(15,15,15,0.93) 42%, rgba(110,0,0,0.90) 100% );
+}
+
+    /* Gym image */
+
+    .brand-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient( 145deg, rgba(0,0,0,0.88), rgba(0,0,0,0.60), rgba(180,0,0,0.72) ), url("https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1400&q=85") center center / cover no-repeat;
+        opacity: 0.92;
+        z-index: 0;
+    }
+
+    /* Red decorative shape */
+
+    .brand-panel::after {
+        content: "";
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        right: -270px;
+        bottom: -210px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 0, 0, 0.35);
+        box-shadow: 0 0 0 55px rgba(255,0,0,0.06), 0 0 0 110px rgba(255,0,0,0.035);
+        z-index: 1;
+    }
+
+/* =========================================================
+   BRAND CONTENT
+   ========================================================= */
+
+.brand-content {
+    position: relative;
+    z-index: 3;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Logo */
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.logo-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient( 145deg, #ff1111, #8b0000 );
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 10px 25px rgba(255,0,0,0.35);
+}
+
+    .logo-icon svg {
+        width: 42px;
+        height: 42px;
+        fill: white;
+    }
+
+.brand-name {
+    font-size: 39px;
+    font-weight: 800;
+    letter-spacing: -1.8px;
+    color: white;
+}
+
+    .brand-name span {
+        color: #ff1717;
+    }
+
+/* Subtitle */
+
+.brand-subtitle {
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 330px;
+    color: rgba(255,255,255,0.82);
+    margin-top: 4px;
+}
+
+/* =========================================================
+   FEATURE LIST
+   ========================================================= */
+
+.feature-list {
+    margin-top: 58px;
+    display: flex;
+    flex-direction: column;
+    gap: 23px;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+}
+
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: rgba(255,0,0,0.13);
+    border: 1px solid rgba(255,45,45,0.65);
+    color: #ff2020;
+    box-shadow: inset 0 0 15px rgba(255,0,0,0.08);
+}
+
+    .feature-icon svg {
+        width: 25px;
+        height: 25px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+    }
+
+.feature-text strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.feature-text span {
+    display: block;
+    font-size: 12px;
+    color: rgba(255,255,255,0.63);
+}
+
+/* =========================================================
+   BOTTOM QUOTE
+   ========================================================= */
+
+.brand-bottom {
+    margin-top: auto;
+    padding-top: 45px;
+}
+
+.quote {
+    font-family: Georgia, serif;
+    font-size: 20px;
+    line-height: 1.35;
+    font-style: italic;
+    color: rgba(255,255,255,0.94);
+}
+
+.quote-line {
+    width: 75px;
+    height: 3px;
+    background: #ff1111;
+    margin-top: 12px;
+    border-radius: 10px;
+}
+
+/* =========================================================
+   RIGHT FORM PANEL
+   ========================================================= */
+
+.form-panel {
+    background: #ffffff;
+    padding: 65px 78px;
+    display: flex;
+    align-items: center;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 560px;
+    margin: auto;
+}
+
+/* Back link */
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    color: #d20b0b;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 35px;
+    transition: 0.2s ease;
+}
+
+    .back-link:hover {
+        color: #8f0000;
+        transform: translateX(-3px);
+    }
+
+/* Heading */
+
+.form-title {
+    font-size: 40px;
+    font-weight: 800;
+    color: #111111;
+    letter-spacing: -1.4px;
+    margin-bottom: 8px;
+}
+
+.form-subtitle {
+    color: #858585;
+    font-size: 15px;
+    margin-bottom: 35px;
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-group {
+    margin-bottom: 19px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #363636;
+    margin-bottom: 8px;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 17px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #777;
+    pointer-events: none;
+}
+
+    .input-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8px;
+    }
+
+.form-input {
+    width: 100%;
+    height: 56px;
+    border-radius: 12px;
+    border: 1px solid #dedede;
+    background: #ffffff;
+    padding: 0 50px 0 49px;
+    outline: none;
+    font-size: 14px;
+    color: #222;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+    .form-input::placeholder {
+        color: #a4a4a4;
+    }
+
+    .form-input:focus {
+        border-color: #e00000;
+        box-shadow: 0 0 0 4px rgba(225,0,0,0.08);
+    }
+
+/* Password eye */
+
+.password-toggle {
+    position: absolute;
+    right: 17px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .password-toggle svg {
+        width: 19px;
+        height: 19px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8px;
+    }
+
+/* =========================================================
+   REMEMBER / FORGOT
+   ========================================================= */
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 3px 0 24px;
+}
+
+.remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #737373;
+}
+
+    .remember input {
+        width: 18px;
+        height: 18px;
+        accent-color: #e00000;
+    }
+
+.forgot-link {
+    color: #d60000;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+    .forgot-link:hover {
+        text-decoration: underline;
+    }
+
+/* =========================================================
+   MAIN BUTTON
+   ========================================================= */
+
+.submit-btn {
+    width: 100%;
+    height: 56px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient( 90deg, #ff1111, #d60000 );
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(214,0,0,0.25);
+    transition: all 0.25s ease;
+}
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px rgba(214,0,0,0.34);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 29px 0 22px;
+    color: #9a9a9a;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+    .divider::before,
+    .divider::after {
+        content: "";
+        height: 1px;
+        background: #e5e5e5;
+        flex: 1;
+    }
+
+/* =========================================================
+   SOCIAL LOGIN
+   ========================================================= */
+
+.social-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.social-btn {
+    height: 50px;
+    background: white;
+    border: 1px solid #e2e2e2;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+    .social-btn:hover {
+        border-color: #bdbdbd;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    }
+
+    .social-btn svg {
+        width: 22px;
+        height: 22px;
+    }
+
+/* =========================================================
+   SWITCH ACCOUNT
+   ========================================================= */
+
+.account-switch {
+    text-align: center;
+    margin-top: 27px;
+    font-size: 14px;
+    color: #858585;
+}
+
+    .account-switch a {
+        color: #d60000;
+        text-decoration: none;
+        font-weight: 700;
+        margin-left: 5px;
+    }
+
+        .account-switch a:hover {
+            text-decoration: underline;
+        }
+
+/* =========================================================
+   VALIDATION
+   ========================================================= */
+
+.validation-summary {
+    color: #d00000;
+    font-size: 13px;
+    margin-bottom: 15px;
+}
+
+.field-validation-error {
+    color: #d00000;
+    font-size: 12px;
+    display: block;
+    margin-top: 5px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 950px) {
+
+    .account-page {
+        padding: 20px;
+    }
+
+    .account-card {
+        grid-template-columns: 1fr;
+        max-width: 620px;
+    }
+
+    .brand-panel {
+        min-height: 330px;
+        padding: 35px 40px;
+    }
+
+    .feature-list {
+        margin-top: 30px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    .brand-bottom {
+        display: none;
+    }
+
+    .form-panel {
+        padding: 45px 40px;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .account-page {
+        padding: 10px;
+    }
+
+    .account-card {
+        width: 100%;
+        border-radius: 20px;
+    }
+
+    .brand-panel {
+        padding: 30px 25px;
+    }
+
+    .brand-name {
+        font-size: 31px;
+    }
+
+    .logo-icon {
+        width: 52px;
+        height: 52px;
+    }
+
+    .brand-subtitle {
+        font-size: 14px;
+    }
+
+    .feature-list {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .form-panel {
+        padding: 38px 25px;
+    }
+
+    .form-title {
+        font-size: 31px;
+    }
+
+    .social-buttons {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (max-height: 800px) and (min-width: 951px) {
+
+    .account-page {
+        padding: 15px;
+    }
+
+    .account-card {
+        min-height: 620px;
+    }
+
+    .brand-panel {
+        padding: 38px 45px;
+    }
+
+    .feature-list {
+        margin-top: 35px;
+        gap: 15px;
+    }
+
+    .form-panel {
+        padding: 40px 65px;
+    }
+
+    .form-title {
+        font-size: 34px;
+    }
+
+    .form-subtitle {
+        margin-bottom: 22px;
+    }
+
+    .form-group {
+        margin-bottom: 13px;
+    }
+
+    .form-input,
+    .submit-btn {
+        height: 50px;
+    }
+
+    .divider {
+        margin: 18px 0;
+    }
+}

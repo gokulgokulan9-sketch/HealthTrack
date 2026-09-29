@@ -1,0 +1,3868 @@
+﻿@{
+    Layout = null;
+
+    string adminName = ViewBag.AdminName ?? "Admin";
+    string adminRole = ViewBag.AdminRole ?? "ADMIN";
+    string profileImage = ViewBag.AdminProfileImage;
+
+    int totalUsers = ViewBag.TotalUsers ?? 0;
+    int totalTrainers = ViewBag.TotalTrainers ?? 0;
+    int totalAppointments = ViewBag.TotalAppointments ?? 0;
+    int totalWorkoutPlans = ViewBag.TotalWorkoutPlans ?? 0;
+    int totalDietPlans = ViewBag.TotalDietPlans ?? 0;
+    int totalNotifications = ViewBag.TotalNotifications ?? 0;
+
+    string profilePath = "/images/default-profile.png";
+
+    if (!string.IsNullOrWhiteSpace(profileImage))
+    {
+        profilePath = "/images/" + profileImage;
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>HealthTrack - Admin Dashboard</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+
+            /* =========================================================
+               GLOBAL
+            ========================================================= */
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                width: 100%;
+                min-height: 100%;
+                font-family: "Inter", sans-serif;
+                background: #f5f6f8;
+                color: #171717;
+            }
+
+            body {
+                overflow-x: hidden;
+            }
+
+            a {
+                text-decoration: none;
+                color: inherit;
+            }
+
+            button {
+                font-family: inherit;
+            }
+
+
+            /* =========================================================
+               MAIN LAYOUT
+            ========================================================= */
+
+            .dashboard-wrapper {
+                display: flex;
+                min-height: 100vh;
+                width: 100%;
+            }
+
+
+            /* =========================================================
+               SIDEBAR
+            ========================================================= */
+
+            .sidebar {
+                width: 245px;
+                min-width: 245px;
+                height: 100vh;
+                position: fixed;
+                left: 0;
+                top: 0;
+                z-index: 1000;
+                background: linear-gradient( to bottom, #090b0f 0%, #101319 58%, #08090c 100% );
+                background-size: cover;
+                background-position: center;
+                color: white;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 4px 0 25px rgba(0,0,0,0.15);
+                overflow: hidden;
+            }
+
+            .sidebar::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+
+                background:
+                    linear-gradient(
+                        180deg,
+                        rgba(0,0,0,0.25),
+                        rgba(0,0,0,0.72)
+                    );
+
+                pointer-events: none;
+            }
+
+            .sidebar > * {
+                position: relative;
+                z-index: 2;
+            }
+
+
+            /* =========================================================
+               LOGO
+            ========================================================= */
+
+            .sidebar-logo {
+                padding: 22px 20px 18px;
+
+                display: flex;
+                align-items: center;
+                gap: 11px;
+
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+
+            .logo-icon {
+                width: 42px;
+                height: 42px;
+
+                border-radius: 12px;
+
+                background: #ef233c;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                color: white;
+                font-size: 20px;
+
+                box-shadow:
+                    0 7px 20px rgba(239,35,60,0.35);
+            }
+
+            .logo-text {
+                font-size: 22px;
+                font-weight: 800;
+                letter-spacing: -0.8px;
+            }
+
+            .logo-text span {
+                color: #ef233c;
+            }
+
+
+            /* =========================================================
+               SIDEBAR PROFILE
+            ========================================================= */
+
+            .sidebar-profile {
+                margin: 18px 14px 18px;
+
+                padding: 14px;
+
+                border-radius: 14px;
+
+                background: rgba(255,255,255,0.09);
+
+                border: 1px solid rgba(255,255,255,0.08);
+
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .sidebar-profile-image {
+                width: 46px;
+                height: 46px;
+
+                border-radius: 50%;
+
+                object-fit: cover;
+
+                border: 2px solid #ef233c;
+
+                background: #333;
+            }
+
+            .sidebar-profile-info {
+                min-width: 0;
+            }
+
+            .sidebar-profile-name {
+                font-size: 14px;
+                font-weight: 700;
+
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .sidebar-profile-role {
+                margin-top: 4px;
+
+                font-size: 11px;
+                color: #cfcfcf;
+            }
+
+
+            /* =========================================================
+               MENU TITLE
+            ========================================================= */
+
+            .menu-title {
+                padding: 0 20px 8px;
+
+                color: #929292;
+
+                font-size: 10px;
+                font-weight: 700;
+
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            }
+
+
+            /* =========================================================
+               NAVIGATION
+            ========================================================= */
+
+            .sidebar-menu {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 0 10px 10px;
+            }
+
+                /* Sidebar scrollbar */
+                .sidebar-menu::-webkit-scrollbar {
+                    width: 4px;
+                }
+
+                .sidebar-menu::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                .sidebar-menu::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.20);
+                    border-radius: 10px;
+                }
+
+                    .sidebar-menu::-webkit-scrollbar-thumb:hover {
+                        background: rgba(239, 35, 60, 0.60);
+                    }
+
+            .menu-item {
+                height: 45px;
+                margin-bottom: 4px;
+                padding: 0 14px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                color: #d7d7d7;
+                font-size: 13px;
+                font-weight: 500;
+                transition: 0.2s ease;
+                flex-shrink: 0;
+            }
+
+                .menu-item i {
+                    width: 20px;
+                    text-align: center;
+                    font-size: 15px;
+                }
+
+                .menu-item:hover {
+                    background: rgba(255,255,255,0.09);
+                    color: white;
+                }
+
+                .menu-item.active {
+                    background: #ef233c;
+                    color: white;
+                    box-shadow: 0 7px 18px rgba(239,35,60,0.30);
+                }
+
+            .menu-arrow {
+                margin-left: auto;
+                font-size: 10px;
+                color: #999;
+            }
+
+
+            /* =========================================================
+               SIDEBAR FITNESS IMAGE AREA
+            ========================================================= */
+
+           
+
+            /* =========================================================
+               MAIN CONTENT
+            ========================================================= */
+
+            .main-content {
+                margin-left: 245px;
+
+                width: calc(100% - 245px);
+
+                min-height: 100vh;
+
+                position: relative;
+                isolation: isolate;
+
+                background: #eef0f2;
+                overflow-x: hidden;
+            }
+
+            /* Blurred gym background for the main dashboard area */
+                .main-content::before {
+                    content: "";
+                    position: absolute;
+                    inset: -15px;
+                    background-image: url('/images/dashboard-gym-bg.jpg');
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    /* Less blur */
+                    filter: blur(3px);
+                    transform: scale(1.02);
+                    z-index: 0;
+                    pointer-events: none;
+                }
+
+                .main-content::after {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    /* Light transparent overlay */
+                    background: rgba(255, 255, 255, 0.55);
+                    z-index: 1;
+                    pointer-events: none;
+                }
+
+                .main-content > * {
+                    position: relative;
+                    z-index: 2;
+                }
+
+
+            /* =========================================================
+               TOP BAR
+            ========================================================= */
+
+            .topbar {
+                height: 76px;
+
+                background: white;
+
+                border-bottom: 1px solid #e9e9e9;
+
+                display: flex;
+                align-items: center;
+
+                padding: 0 28px;
+
+                gap: 18px;
+            }
+
+            .mobile-menu {
+                display: none;
+
+                width: 40px;
+                height: 40px;
+
+                border: none;
+                border-radius: 10px;
+
+                background: #f4f4f5;
+
+                cursor: pointer;
+            }
+
+            .search-box {
+                width: 410px;
+                height: 42px;
+
+                background: #f5f6f8;
+
+                border: 1px solid #ececef;
+
+                border-radius: 12px;
+
+                display: flex;
+                align-items: center;
+
+                padding: 0 14px;
+
+                color: #777;
+            }
+
+            .search-box i {
+                font-size: 14px;
+            }
+
+            .search-box input {
+                width: 100%;
+
+                border: none;
+                outline: none;
+
+                background: transparent;
+
+                margin-left: 10px;
+
+                font-size: 12px;
+
+                color: #333;
+            }
+
+            .topbar-spacer {
+                flex: 1;
+            }
+
+            .topbar-date {
+                min-width: 185px;
+                height: 42px;
+                padding: 0 11px;
+                border: 1px solid #f0dfe2;
+                border-radius: 11px;
+                background: #fff8f9;
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                color: #555;
+                flex-shrink: 0;
+            }
+
+            .topbar-date > i {
+                color: #ef233c;
+                font-size: 15px;
+            }
+
+            .topbar-date-text {
+                display: flex;
+                flex-direction: column;
+                line-height: 1.25;
+                white-space: nowrap;
+            }
+
+            .topbar-date-text strong {
+                font-size: 9px;
+                font-weight: 700;
+                color: #333;
+            }
+
+            .topbar-date-text span {
+                margin-top: 2px;
+                font-size: 9px;
+                color: #888;
+            }
+
+            .topbar-report {
+                height: 42px;
+                padding: 0 14px;
+                border: none;
+                border-radius: 11px;
+                background: #ef233c;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                font-size: 10px;
+                font-weight: 700;
+                cursor: pointer;
+                white-space: nowrap;
+                box-shadow: 0 7px 16px rgba(239,35,60,0.20);
+                flex-shrink: 0;
+                transition: 0.2s ease;
+            }
+
+            .topbar-report:hover {
+                background: #d91f35;
+                transform: translateY(-1px);
+            }
+
+
+            /* =========================================================
+               NOTIFICATION
+            ========================================================= */
+
+            .notification-btn {
+                width: 42px;
+                height: 42px;
+
+                border: none;
+
+                border-radius: 11px;
+
+                background: #f7f7f8;
+
+                position: relative;
+
+                cursor: pointer;
+
+                color: #222;
+            }
+
+            .notification-btn i {
+                font-size: 17px;
+            }
+
+            .notification-count {
+                position: absolute;
+
+                right: -2px;
+                top: -3px;
+
+                width: 19px;
+                height: 19px;
+
+                border-radius: 50%;
+
+                background: #ef233c;
+
+                color: white;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                font-size: 9px;
+                font-weight: 700;
+            }
+
+
+            /* =========================================================
+               TOP PROFILE
+            ========================================================= */
+
+            .top-profile {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+
+                cursor: pointer;
+            }
+
+            .top-profile-image {
+                width: 42px;
+                height: 42px;
+
+                border-radius: 50%;
+
+                object-fit: cover;
+
+                border: 2px solid #eeeeee;
+            }
+
+            .top-profile-info {
+                line-height: 1.25;
+            }
+
+            .top-profile-name {
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .top-profile-role {
+                font-size: 10px;
+                color: #777;
+
+                margin-top: 2px;
+            }
+
+            .top-profile i {
+                font-size: 10px;
+                color: #777;
+            }
+
+
+            /* =========================================================
+               CONTENT
+            ========================================================= */
+
+            .content {
+                padding: 24px 28px 35px;
+            }
+
+
+            /* =========================================================
+               PAGE HEADER
+            ========================================================= */
+
+            .page-header {
+                display: flex;
+                align-items: center;
+
+                justify-content: space-between;
+
+                margin-bottom: 22px;
+            }
+
+            .page-title-area {
+                display: flex;
+                align-items: center;
+                gap: 13px;
+            }
+
+            .page-icon {
+                width: 48px;
+                height: 48px;
+
+                border-radius: 15px;
+
+                background: #fff0f2;
+
+                color: #ef233c;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                font-size: 21px;
+            }
+
+            .page-title {
+                font-size: 26px;
+                font-weight: 800;
+
+                letter-spacing: -0.8px;
+            }
+
+            .page-subtitle {
+                margin-top: 4px;
+
+                color: #858585;
+
+                font-size: 12px;
+            }
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .date-box {
+                min-width: 220px;
+
+                height: 48px;
+
+                padding: 0 15px;
+
+                background: white;
+
+                border: 1px solid #e8e8e8;
+
+                border-radius: 12px;
+
+                display: flex;
+                align-items: center;
+                gap: 11px;
+
+                font-size: 11px;
+                color: #555;
+            }
+
+            .date-box i {
+                color: #ef233c;
+                font-size: 16px;
+            }
+
+            .report-btn {
+                height: 48px;
+
+                padding: 0 18px;
+
+                border: none;
+
+                border-radius: 12px;
+
+                background: #ef233c;
+
+                color: white;
+
+                font-size: 12px;
+                font-weight: 700;
+
+                cursor: pointer;
+
+                box-shadow:
+                    0 8px 18px rgba(239,35,60,0.22);
+
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .report-btn:hover {
+                background: #d91f35;
+            }
+
+
+            /* =========================================================
+               WELCOME
+            ========================================================= */
+
+            .welcome-banner {
+                position: relative;
+
+                min-height: 145px;
+
+                overflow: hidden;
+
+                border-radius: 18px;
+
+                background:
+                    radial-gradient(
+                        circle at 88% 45%,
+                        rgba(239,35,60,0.28),
+                        transparent 28%
+                    ),
+                    linear-gradient(
+                        115deg,
+                        #171c23,
+                        #222b35
+                    );
+
+                color: white;
+
+                padding: 27px 31px;
+
+                margin-bottom: 24px;
+
+                box-shadow:
+                    0 10px 25px rgba(0,0,0,0.08);
+            }
+
+            .welcome-banner::before {
+                content: "";
+
+                position: absolute;
+
+                width: 240px;
+                height: 240px;
+
+                right: 35px;
+                top: -55px;
+
+                border-radius: 50%;
+
+                border: 1px solid rgba(239,35,60,0.22);
+            }
+
+            .welcome-banner::after {
+                content: "";
+
+                position: absolute;
+
+                width: 145px;
+                height: 145px;
+
+                right: 83px;
+                top: -10px;
+
+                border-radius: 50%;
+
+                border: 1px solid rgba(239,35,60,0.22);
+            }
+
+            .welcome-content {
+                position: relative;
+                z-index: 2;
+            }
+
+            .welcome-small {
+                color: #ff5267;
+
+                font-size: 11px;
+                font-weight: 800;
+
+                letter-spacing: 0.8px;
+
+                text-transform: uppercase;
+
+                margin-bottom: 6px;
+            }
+
+            .welcome-title {
+                font-size: 25px;
+                font-weight: 800;
+
+                letter-spacing: -0.8px;
+            }
+
+            .welcome-title span {
+                color: #ffffff;
+            }
+
+            .welcome-description {
+                margin-top: 8px;
+
+                color: #c9cdd2;
+
+                font-size: 12px;
+            }
+
+            .welcome-gym-icon {
+                position: absolute;
+
+                right: 42px;
+                top: 37px;
+
+                width: 70px;
+                height: 70px;
+
+                border-radius: 50%;
+
+                background: rgba(239,35,60,0.16);
+
+                border: 1px solid rgba(239,35,60,0.35);
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                color: #ef233c;
+
+                font-size: 29px;
+
+                z-index: 3;
+            }
+
+
+            /* =========================================================
+               SECTION TITLE
+            ========================================================= */
+
+            .section-heading {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                margin-bottom: 12px;
+            }
+
+            .section-heading h3 {
+                font-size: 17px;
+                font-weight: 800;
+            }
+
+            .section-link {
+                color: #ef233c;
+
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+
+            /* =========================================================
+               STAT CARDS
+            ========================================================= */
+
+            .stats-grid {
+                display: grid;
+
+                grid-template-columns:
+                    repeat(6, minmax(0, 1fr));
+
+                gap: 12px;
+
+                margin-bottom: 24px;
+            }
+
+            .stat-card {
+                background: #fff8f9;
+
+                border: 1px solid #f1d9de;
+
+                border-radius: 14px;
+
+                padding: 15px;
+
+                min-height: 125px;
+
+                box-shadow:
+                    0 3px 14px rgba(0,0,0,0.025);
+
+                transition: 0.2s ease;
+            }
+
+            .stat-card:hover {
+                transform: translateY(-2px);
+
+                box-shadow:
+                    0 8px 22px rgba(0,0,0,0.07);
+            }
+
+            .stat-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .stat-icon {
+                width: 44px;
+                height: 44px;
+
+                border-radius: 13px;
+
+                background: #fff0f2;
+
+                color: #ef233c;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                font-size: 18px;
+            }
+
+            .stat-label {
+                margin-top: 11px;
+
+                color: #777;
+
+                font-size: 10px;
+                font-weight: 500;
+            }
+
+            .stat-number {
+                margin-top: 3px;
+
+                font-size: 25px;
+                font-weight: 800;
+
+                letter-spacing: -0.7px;
+            }
+
+            .stat-footer {
+                margin-top: 5px;
+
+                color: #69b86b;
+
+                font-size: 9px;
+                font-weight: 600;
+            }
+
+            .stat-footer i {
+                margin-right: 3px;
+            }
+
+
+            /* =========================================================
+               DASHBOARD GRID
+            ========================================================= */
+
+            .dashboard-grid {
+                display: grid;
+
+                grid-template-columns:
+                    1.65fr
+                    1fr
+                    1.15fr;
+
+                gap: 14px;
+
+                margin-bottom: 14px;
+            }
+
+            .dashboard-grid-two {
+                display: grid;
+
+                grid-template-columns:
+                    1.5fr
+                    1fr
+                    1fr;
+
+                gap: 14px;
+
+                margin-bottom: 14px;
+            }
+
+            .dashboard-grid-three {
+                display: grid;
+
+                grid-template-columns:
+                    1fr
+                    1fr
+                    1.5fr;
+
+                gap: 14px;
+            }
+
+
+            /* =========================================================
+               CARD
+            ========================================================= */
+
+            .card {
+                background: #fff8f9;
+
+                border: 1px solid #f1d9de;
+
+                border-radius: 14px;
+
+                padding: 18px;
+
+                box-shadow:
+                    0 3px 14px rgba(0,0,0,0.025);
+
+                min-width: 0;
+            }
+
+            .card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+                margin-bottom: 16px;
+            }
+
+            .card-title {
+                font-size: 14px;
+                font-weight: 800;
+            }
+
+            .card-select {
+                height: 30px;
+
+                padding: 0 9px;
+
+                border: 1px solid #e8e8e8;
+
+                border-radius: 8px;
+
+                background: #fffafb;
+
+                color: #666;
+
+                font-size: 10px;
+
+                outline: none;
+            }
+
+
+            /* =========================================================
+               USER GROWTH
+            ========================================================= */
+
+            .growth-chart {
+                height: 235px;
+
+                position: relative;
+
+                display: flex;
+
+                align-items: flex-end;
+
+                gap: 16px;
+
+                padding: 15px 8px 25px;
+            }
+
+            .chart-y {
+                position: absolute;
+
+                left: 0;
+                top: 15px;
+                bottom: 27px;
+
+                width: 30px;
+
+                display: flex;
+                flex-direction: column;
+
+                justify-content: space-between;
+
+                color: #aaa;
+
+                font-size: 9px;
+            }
+
+            .chart-area {
+                position: relative;
+
+                height: 190px;
+
+                flex: 1;
+
+                margin-left: 30px;
+
+                border-bottom: 1px solid #ddd;
+
+                background:
+                    repeating-linear-gradient(
+                        to bottom,
+                        transparent 0,
+                        transparent 37px,
+                        #eeeeee 38px
+                    );
+            }
+
+            .chart-line {
+                position: absolute;
+
+                left: 2%;
+                right: 2%;
+                top: 25px;
+                bottom: 22px;
+            }
+
+            .chart-svg {
+                width: 100%;
+                height: 100%;
+                overflow: visible;
+            }
+
+            .chart-labels {
+                position: absolute;
+
+                left: 0;
+                right: 0;
+                bottom: -23px;
+
+                display: flex;
+                justify-content: space-between;
+
+                color: #888;
+
+                font-size: 9px;
+            }
+
+
+            /* =========================================================
+               APPOINTMENT DONUT
+            ========================================================= */
+
+            .appointment-content {
+                display: flex;
+                align-items: center;
+
+                gap: 22px;
+
+                min-height: 220px;
+            }
+
+            .donut {
+                width: 145px;
+                height: 145px;
+
+                flex-shrink: 0;
+
+                border-radius: 50%;
+
+                background:
+                    conic-gradient(
+                        #ef233c 0deg 145deg,
+                        #16b364 145deg 255deg,
+                        #a7abb1 255deg 320deg,
+                        #f59e0b 320deg 360deg
+                    );
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                position: relative;
+            }
+
+            .donut::after {
+                content: "";
+
+                width: 93px;
+                height: 93px;
+
+                background: white;
+
+                border-radius: 50%;
+
+                position: absolute;
+            }
+
+            .donut-text {
+                position: relative;
+                z-index: 2;
+
+                text-align: center;
+            }
+
+            .donut-total {
+                font-size: 23px;
+                font-weight: 800;
+            }
+
+            .donut-label {
+                color: #777;
+                font-size: 10px;
+            }
+
+            .legend {
+                display: flex;
+                flex-direction: column;
+
+                gap: 13px;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+
+                gap: 7px;
+
+                font-size: 10px;
+                color: #666;
+            }
+
+            .legend-dot {
+                width: 9px;
+                height: 9px;
+
+                border-radius: 50%;
+            }
+
+            .legend-name {
+                flex: 1;
+            }
+
+            .legend-value {
+                font-weight: 800;
+                color: #222;
+            }
+
+
+            /* =========================================================
+               RECENT USERS TABLE
+            ========================================================= */
+
+            .table-wrapper {
+                overflow-x: auto;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            th {
+                text-align: left;
+
+                color: #858585;
+
+                font-size: 9px;
+                font-weight: 600;
+
+                padding: 8px 5px;
+
+                border-bottom: 1px solid #eeeeee;
+
+                white-space: nowrap;
+            }
+
+            td {
+                padding: 10px 5px;
+
+                font-size: 10px;
+
+                border-bottom: 1px solid #f0f0f0;
+
+                white-space: nowrap;
+            }
+
+            tr:last-child td {
+                border-bottom: none;
+            }
+
+            .user-cell {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+            }
+
+            .small-avatar {
+                width: 26px;
+                height: 26px;
+
+                border-radius: 50%;
+
+                object-fit: cover;
+
+                background: #eee;
+            }
+
+            .role-badge {
+                padding: 4px 7px;
+
+                border-radius: 6px;
+
+                background: #fff0f2;
+
+                color: #ef233c;
+
+                font-size: 8px;
+                font-weight: 700;
+            }
+
+            .status-badge {
+                padding: 4px 7px;
+
+                border-radius: 6px;
+
+                background: #dcfce7;
+
+                color: #15803d;
+
+                font-size: 8px;
+                font-weight: 700;
+            }
+
+
+            /* =========================================================
+               APPOINTMENT LIST
+            ========================================================= */
+
+            .appointment-row {
+                display: grid;
+
+                grid-template-columns:
+                    36px
+                    1fr
+                    95px
+                    70px;
+
+                align-items: center;
+
+                gap: 8px;
+
+                padding: 11px 0;
+
+                border-bottom: 1px solid #eeeeee;
+            }
+
+            .appointment-row:last-child {
+                border-bottom: none;
+            }
+
+            .date-square {
+                width: 34px;
+                height: 38px;
+
+                border-radius: 9px;
+
+                background: #fff0f2;
+
+                display: flex;
+                flex-direction: column;
+
+                align-items: center;
+                justify-content: center;
+
+                color: #ef233c;
+            }
+
+            .date-square strong {
+                font-size: 11px;
+            }
+
+            .date-square span {
+                font-size: 7px;
+                text-transform: uppercase;
+            }
+
+            .appointment-person {
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .appointment-detail {
+                margin-top: 3px;
+
+                color: #888;
+
+                font-size: 8px;
+            }
+
+            .appointment-status {
+                justify-self: end;
+
+                padding: 5px 8px;
+
+                border-radius: 10px;
+
+                font-size: 8px;
+
+                background: #e8f7ef;
+                color: #179152;
+            }
+
+
+            /* =========================================================
+               QUICK ACTIONS
+            ========================================================= */
+
+            .quick-actions {
+                display: grid;
+
+                grid-template-columns: 1fr 1fr;
+
+                gap: 10px;
+            }
+
+            .quick-action {
+                padding: 13px;
+
+                border-radius: 11px;
+
+                background: #fafafa;
+
+                border: 1px solid #eeeeee;
+
+                display: flex;
+                align-items: center;
+
+                gap: 10px;
+
+                transition: 0.2s;
+            }
+
+            .quick-action:hover {
+                background: #fff5f6;
+                border-color: #ffd0d6;
+            }
+
+            .quick-icon {
+                width: 35px;
+                height: 35px;
+
+                border-radius: 9px;
+
+                background: #fff0f2;
+
+                color: #ef233c;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .quick-title {
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .quick-description {
+                margin-top: 2px;
+
+                font-size: 8px;
+
+                color: #999;
+            }
+
+
+            /* =========================================================
+               BAR CHART
+            ========================================================= */
+
+            .bar-chart {
+                height: 220px;
+
+                display: flex;
+                align-items: flex-end;
+
+                gap: 20px;
+
+                padding: 20px 10px 25px;
+
+                border-bottom: 1px solid #eee;
+            }
+
+            .bar-column {
+                flex: 1;
+
+                height: 100%;
+
+                display: flex;
+                flex-direction: column;
+
+                justify-content: flex-end;
+
+                align-items: center;
+
+                gap: 7px;
+            }
+
+            .bar-value {
+                font-size: 9px;
+                font-weight: 700;
+            }
+
+            .bar {
+                width: 34px;
+
+                border-radius: 7px 7px 0 0;
+
+                background:
+                    linear-gradient(
+                        to top,
+                        #ef233c,
+                        #ff5267
+                    );
+            }
+
+            .bar-label {
+                font-size: 8px;
+                color: #888;
+            }
+
+
+            /* =========================================================
+               TRAINERS
+            ========================================================= */
+
+            .trainer-row {
+                display: flex;
+
+                align-items: center;
+
+                gap: 9px;
+
+                padding: 10px 0;
+
+                border-bottom: 1px solid #eeeeee;
+            }
+
+            .trainer-row:last-child {
+                border-bottom: none;
+            }
+
+            .trainer-avatar {
+                width: 32px;
+                height: 32px;
+
+                border-radius: 50%;
+
+                object-fit: cover;
+
+                background: #eee;
+            }
+
+            .trainer-info {
+                width: 90px;
+
+                flex-shrink: 0;
+            }
+
+            .trainer-name {
+                font-size: 9px;
+                font-weight: 700;
+            }
+
+            .trainer-clients {
+                margin-top: 2px;
+
+                color: #888;
+
+                font-size: 8px;
+            }
+
+            .progress-wrapper {
+                flex: 1;
+
+                height: 7px;
+
+                border-radius: 10px;
+
+                background: #eeeeee;
+
+                overflow: hidden;
+            }
+
+            .progress-bar {
+                height: 100%;
+
+                border-radius: 10px;
+
+                background: #ef233c;
+            }
+
+
+            /* =========================================================
+               SYSTEM ACTIVITY
+            ========================================================= */
+
+            .activity-row {
+                display: flex;
+
+                align-items: flex-start;
+
+                gap: 10px;
+
+                padding: 10px 0;
+
+                border-bottom: 1px solid #eeeeee;
+            }
+
+            .activity-row:last-child {
+                border-bottom: none;
+            }
+
+            .activity-icon {
+                width: 32px;
+                height: 32px;
+
+                border-radius: 50%;
+
+                background: #fff0f2;
+
+                color: #ef233c;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                flex-shrink: 0;
+
+                font-size: 12px;
+            }
+
+            .activity-info {
+                flex: 1;
+            }
+
+            .activity-title {
+                font-size: 9px;
+                font-weight: 700;
+            }
+
+            .activity-description {
+                margin-top: 3px;
+
+                font-size: 8px;
+
+                color: #888;
+            }
+
+            .activity-time {
+                font-size: 8px;
+                color: #999;
+            }
+
+
+            /* =========================================================
+               PENDING REQUESTS
+            ========================================================= */
+
+            .request-badge {
+                padding: 5px 7px;
+
+                background: #fff7e8;
+
+                color: #d97706;
+
+                border-radius: 6px;
+
+                font-size: 8px;
+                font-weight: 700;
+            }
+
+            .request-actions {
+                display: flex;
+                gap: 5px;
+            }
+
+            .approve-btn,
+            .reject-btn {
+                border: none;
+
+                padding: 5px 8px;
+
+                border-radius: 5px;
+
+                color: white;
+
+                font-size: 8px;
+
+                cursor: pointer;
+            }
+
+            .approve-btn {
+                background: #16a34a;
+            }
+
+            .reject-btn {
+                background: #ef233c;
+            }
+
+
+            /* =========================================================
+               RESPONSIVE
+            ========================================================= */
+
+            @@media (max-width: 1400px) {
+
+                .stats-grid {
+                    grid-template-columns:
+                        repeat(3, 1fr);
+                }
+
+                .dashboard-grid {
+                    grid-template-columns:
+                        1.4fr 1fr;
+                }
+
+                .dashboard-grid > .recent-users {
+                    grid-column: 1 / -1;
+                }
+
+            }
+
+
+            @@media (max-width: 1050px) {
+
+                .sidebar {
+                    width: 220px;
+                    min-width: 220px;
+                }
+
+                .main-content {
+                    margin-left: 220px;
+                    width: calc(100% - 220px);
+                }
+
+                .dashboard-grid,
+                .dashboard-grid-two,
+                .dashboard-grid-three {
+                    grid-template-columns: 1fr;
+                }
+
+                .stats-grid {
+                    grid-template-columns:
+                        repeat(2, 1fr);
+                }
+
+                .search-box {
+                    width: 230px;
+                }
+
+                .topbar-date {
+                    min-width: 165px;
+                }
+
+                .topbar-report {
+                    padding: 0 11px;
+                }
+
+            }
+
+
+            @@media (max-width: 750px) {
+
+                .sidebar {
+                    transform: translateX(-100%);
+
+                    transition: 0.25s ease;
+                }
+
+                .sidebar.open {
+                    transform: translateX(0);
+                }
+
+                .main-content {
+                    margin-left: 0;
+
+                    width: 100%;
+                }
+
+                .mobile-menu {
+                    display: block;
+                }
+
+                .topbar {
+                    padding: 0 15px;
+                }
+
+                .search-box {
+                    display: none;
+                }
+
+                .topbar-date {
+                    min-width: 150px;
+                    height: 40px;
+                    padding: 0 9px;
+                }
+
+                .topbar-date-text strong {
+                    font-size: 8px;
+                }
+
+                .topbar-date-text span {
+                    font-size: 8px;
+                }
+
+                .topbar-report {
+                    width: 40px;
+                    height: 40px;
+                    padding: 0;
+                }
+
+                .topbar-report span {
+                    display: none;
+                }
+
+                .top-profile-info,
+                .top-profile > i {
+                    display: none;
+                }
+
+
+                .sidebar-fitness {
+                    height: 185px;
+                    min-height: 185px;
+                }
+
+                .content {
+                    padding: 18px 15px 30px;
+                }
+
+                .page-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+
+                    gap: 15px;
+                }
+
+                .header-actions {
+                    width: 100%;
+                }
+
+                .date-box {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .report-btn {
+                    padding: 0 13px;
+                }
+
+                .stats-grid {
+                    grid-template-columns:
+                        1fr 1fr;
+                }
+
+                .welcome-gym-icon {
+                    right: 20px;
+                }
+
+            }
+
+
+            @@media (max-width: 480px) {
+
+                .topbar {
+                    gap: 7px;
+                }
+
+                .topbar-date {
+                    min-width: 0;
+                    flex: 1;
+                    max-width: 150px;
+                }
+
+                .top-profile-image {
+                    width: 38px;
+                    height: 38px;
+                }
+
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .welcome-banner {
+                    padding: 22px;
+                }
+
+                .welcome-title {
+                    font-size: 21px;
+                }
+
+                .welcome-gym-icon {
+                    display: none;
+                }
+
+                .appointment-content {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                .header-actions {
+                    flex-direction: column;
+                }
+
+                .date-box,
+                .report-btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+            }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="dashboard-wrapper">
+
+
+        <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+
+        <aside class="sidebar" id="sidebar">
+
+
+            <!-- LOGO -->
+
+            <div class="sidebar-logo">
+
+                <div class="logo-icon">
+                    <i class="fa-solid fa-dumbbell"></i>
+                </div>
+
+                <div class="logo-text">
+                    Health<span>Track</span>
+                </div>
+
+            </div>
+
+
+            <!-- ADMIN PROFILE -->
+
+            <div class="sidebar-profile">
+
+                <img src="@profilePath"
+                     class="sidebar-profile-image"
+                     alt="Admin Profile"
+                     onerror="this.src='/images/admin1.jpg';" />
+
+                <div class="sidebar-profile-info">
+
+                    <div class="sidebar-profile-name">
+                        @adminName
+                    </div>
+
+                    <div class="sidebar-profile-role">
+                        Administrator
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- MENU -->
+
+            <div class="menu-title">
+                Main Menu
+            </div>
+
+
+            <nav class="sidebar-menu">
+
+
+                <a href="@Url.Action("Dashboard", "Home")"
+                   class="menu-item active">
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                    <span>Dashboard</span>
+
+                </a>
+
+
+                <a href="/Home/Users" class="menu-item">
+
+                    <i class="fa-solid fa-users"></i>
+
+                    <span>Clients</span>
+
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <i class="fa-solid fa-user-tie"></i>
+
+                    <span>Trainers</span>
+
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <i class="fa-solid fa-calendar-check"></i>
+
+                    <span>Appointments</span>
+
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <i class="fa-solid fa-dumbbell"></i>
+
+                    <span>Workout Plans</span>
+
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <i class="fa-solid fa-utensils"></i>
+
+                    <span>Diet Plans</span>
+
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    <span>Reports</span>
+
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <i class="fa-solid fa-bell"></i>
+
+                    <span>Notifications</span>
+
+                </a>
+
+
+                <a href="#" class="menu-item">
+
+                    <i class="fa-solid fa-gear"></i>
+
+                    <span>Settings</span>
+
+                    <i class="fa-solid fa-chevron-right menu-arrow"></i>
+
+                </a>
+
+                <a asp-controller="Account"
+                   asp-action="Logout"
+                   class="sidebar-link">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+
+            </nav>
+
+
+           
+
+        </aside>
+
+
+        <!-- =========================================================
+         MAIN CONTENT
+    ========================================================== -->
+
+        <main class="main-content">
+
+
+            <!-- =====================================================
+             TOP BAR
+        ====================================================== -->
+
+            <header class="topbar">
+
+
+                <button class="mobile-menu"
+                        id="mobileMenu">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input type="text"
+                           placeholder="Search anything..." />
+
+                </div>
+
+
+                <div class="topbar-spacer"></div>
+
+                <div class="topbar-date">
+                    <i class="fa-regular fa-calendar"></i>
+                    <div class="topbar-date-text">
+                        <strong>@DateTime.Now.ToString("dddd, dd MMMM yyyy")</strong>
+                        <span>@DateTime.Now.ToString("hh:mm tt")</span>
+                    </div>
+                </div>
+
+                <button class="topbar-report"
+                        type="button"
+                        onclick="window.print();">
+                    <i class="fa-regular fa-file-pdf"></i>
+                    <span>Generate Report</span>
+                </button>
+
+
+                <button class="notification-btn">
+
+                    <i class="fa-regular fa-bell"></i>
+
+                    @if (totalNotifications > 0)
+                    {
+                        <span class="notification-count">
+                            @(totalNotifications > 9 ? "9+" : totalNotifications.ToString())
+                        </span>
+                    }
+
+                </button>
+
+
+                <div class="top-profile">
+
+                    <img src="@profilePath"
+                         class="top-profile-image"
+                         alt="Admin"
+                         onerror="this.src='/images/admin1.jpg';" />
+
+                    <div class="top-profile-info">
+                                        
+                        <div class="top-profile-name">
+                            @adminName
+                        </div>
+
+                        <div class="top-profile-role">
+                            System Administrator
+                        </div>
+
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </div>
+
+            </header>
+
+
+            <!-- =====================================================
+             CONTENT
+        ====================================================== -->
+
+            <section class="content">
+
+
+                <!-- =================================================
+                 WELCOME BANNER
+            ================================================== -->
+
+                <div class="welcome-banner">
+
+
+                    <div class="welcome-content">
+
+                        <div class="welcome-small">
+                            HealthTrack Administration
+                        </div>
+
+                        <div class="welcome-title">
+                            Welcome Back, <span>@adminName</span> 👋
+                        </div>
+
+                        <div class="welcome-description">
+                            Manage your fitness platform, users, trainers
+                            and appointments from one place.
+                        </div>
+
+                    </div>
+
+
+                    <div class="welcome-gym-icon">
+
+                        <i class="fa-solid fa-dumbbell"></i>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                 OVERVIEW
+            ================================================== -->
+
+                <div class="section-heading">
+
+                    <h3>
+                        Overview
+                    </h3>
+
+                    <a href="#" class="section-link">
+                        View Reports
+                    </a>
+
+                </div>
+
+
+                <div class="stats-grid">
+
+
+                    <!-- USERS -->
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-label">
+                            Total Users
+                        </div>
+
+                        <div class="stat-number">
+                            @totalUsers
+                        </div>
+
+                        <div class="stat-footer">
+                            <i class="fa-solid fa-user-check"></i>
+                            Registered clients
+                        </div>
+
+                    </div>
+
+
+                    <!-- TRAINERS -->
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-label">
+                            Total Trainers
+                        </div>
+
+                        <div class="stat-number">
+                            @totalTrainers
+                        </div>
+
+                        <div class="stat-footer">
+                            <i class="fa-solid fa-circle-check"></i>
+                            Active trainers
+                        </div>
+
+                    </div>
+
+
+                    <!-- APPOINTMENTS -->
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-label">
+                            Total Appointments
+                        </div>
+
+                        <div class="stat-number">
+                            @totalAppointments
+                        </div>
+
+                        <div class="stat-footer">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            Total appointments
+                        </div>
+
+                    </div>
+
+
+                    <!-- WORKOUT -->
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-dumbbell"></i>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-label">
+                            Workout Plans
+                        </div>
+
+                        <div class="stat-number">
+                            @totalWorkoutPlans
+                        </div>
+
+                        <div class="stat-footer">
+                            <i class="fa-solid fa-dumbbell"></i>
+                            Available plans
+                        </div>
+
+                    </div>
+
+
+                    <!-- DIET -->
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-bowl-food"></i>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-label">
+                            Diet Plans
+                        </div>
+
+                        <div class="stat-number">
+                            @totalDietPlans
+                        </div>
+
+                        <div class="stat-footer">
+                            <i class="fa-solid fa-leaf"></i>
+                            Available plans
+                        </div>
+
+                    </div>
+
+
+                    <!-- NOTIFICATIONS -->
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-bell"></i>
+                            </div>
+
+                        </div>
+
+                        <div class="stat-label">
+                            Notifications
+                        </div>
+
+                        <div class="stat-number">
+                            @totalNotifications
+                        </div>
+
+                        <div class="stat-footer">
+                            <i class="fa-solid fa-circle-info"></i>
+                            System notifications
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                 ROW 1
+            ================================================== -->
+
+                <div class="dashboard-grid">
+
+
+                    <!-- USER GROWTH -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                User Growth
+                            </div>
+
+                            <select class="card-select">
+                                <option>Last 6 Months</option>
+                                <option>This Year</option>
+                            </select>
+
+                        </div>
+
+
+                        <div class="growth-chart">
+
+                            <div class="chart-y">
+                                <span>50</span>
+                                <span>40</span>
+                                <span>30</span>
+                                <span>20</span>
+                                <span>10</span>
+                                <span>0</span>
+                            </div>
+
+
+                            <div class="chart-area">
+
+                                <div class="chart-line">
+
+                                    <svg class="chart-svg"
+                                         viewBox="0 0 600 170"
+                                         preserveAspectRatio="none">
+
+                                        <defs>
+
+                                            <linearGradient id="areaRed"
+                                                            x1="0"
+                                                            x2="0"
+                                                            y1="0"
+                                                            y2="1">
+
+                                                <stop offset="0%"
+                                                      stop-color="#ef233c"
+                                                      stop-opacity="0.25" />
+
+                                                <stop offset="100%"
+                                                      stop-color="#ef233c"
+                                                      stop-opacity="0.02" />
+
+                                            </linearGradient>
+
+                                        </defs>
+
+
+                                        <polygon points="0,120 120,92 240,80 360,55 480,42 600,20 600,170 0,170"
+                                                 fill="url(#areaRed)" />
+
+
+                                        <polyline points="0,120 120,92 240,80 360,55 480,42 600,20"
+                                                  fill="none"
+                                                  stroke="#ef233c"
+                                                  stroke-width="3" />
+
+
+                                        <circle cx="0"
+                                                cy="120"
+                                                r="5"
+                                                fill="#ef233c" />
+
+                                        <circle cx="120"
+                                                cy="92"
+                                                r="5"
+                                                fill="#ef233c" />
+
+                                        <circle cx="240"
+                                                cy="80"
+                                                r="5"
+                                                fill="#ef233c" />
+
+                                        <circle cx="360"
+                                                cy="55"
+                                                r="5"
+                                                fill="#ef233c" />
+
+                                        <circle cx="480"
+                                                cy="42"
+                                                r="5"
+                                                fill="#ef233c" />
+
+                                        <circle cx="600"
+                                                cy="20"
+                                                r="5"
+                                                fill="#ef233c" />
+
+                                    </svg>
+
+                                </div>
+
+
+                                <div class="chart-labels">
+
+                                    <span>Apr</span>
+                                    <span>May</span>
+                                    <span>Jun</span>
+                                    <span>Jul</span>
+                                    <span>Aug</span>
+                                    <span>Sep</span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- APPOINTMENT OVERVIEW -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                Appointment Overview
+                            </div>
+
+                        </div>
+
+
+                        <div class="appointment-content">
+
+
+                            <div class="donut">
+
+                                <div class="donut-text">
+
+                                    <div class="donut-total">
+                                        @totalAppointments
+                                    </div>
+
+                                    <div class="donut-label">
+                                        Total
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="legend">
+
+                                <div class="legend-item">
+
+                                    <span class="legend-dot"
+                                          style="background:#ef233c;"></span>
+
+                                    <span class="legend-name">
+                                        Upcoming
+                                    </span>
+
+                                    <span class="legend-value">
+                                        @Math.Max(0, totalAppointments / 3)
+                                    </span>
+
+                                </div>
+
+
+                                <div class="legend-item">
+
+                                    <span class="legend-dot"
+                                          style="background:#16b364;"></span>
+
+                                    <span class="legend-name">
+                                        Completed
+                                    </span>
+
+                                    <span class="legend-value">
+                                        @Math.Max(0, totalAppointments / 3)
+                                    </span>
+
+                                </div>
+
+
+                                <div class="legend-item">
+
+                                    <span class="legend-dot"
+                                          style="background:#a7abb1;"></span>
+
+                                    <span class="legend-name">
+                                        Cancelled
+                                    </span>
+
+                                    <span class="legend-value">
+                                        @Math.Max(0, totalAppointments / 10)
+                                    </span>
+
+                                </div>
+
+
+                                <div class="legend-item">
+
+                                    <span class="legend-dot"
+                                          style="background:#f59e0b;"></span>
+
+                                    <span class="legend-name">
+                                        Pending
+                                    </span>
+
+                                    <span class="legend-value">
+                                        @Math.Max(0, totalAppointments / 10)
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- RECENT USERS -->
+
+                    <div class="card recent-users">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                Recent Users
+                            </div>
+
+                            <a href="#"
+                               class="section-link">
+                                View All
+                            </a>
+
+                        </div>
+
+
+                        <div class="table-wrapper">
+
+                            <table>
+
+                                <thead>
+
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Joined</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    <tr>
+
+                                        <td>1</td>
+
+                                        <td>
+                                            <div class="user-cell">
+
+                                                <img src="/images/user1.jpg"
+                                                     class="small-avatar"
+                                                     onerror="this.style.display='none';" />
+
+                                                <span>
+                                                    Kasun Fernando
+                                                </span>
+
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="role-badge">
+                                                CLIENT
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="status-badge">
+                                                Active
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.ToString("yyyy-MM-dd")
+                                        </td>
+
+                                    </tr>
+
+
+                                    <tr>
+
+                                        <td>2</td>
+
+                                        <td>
+                                            <div class="user-cell">
+
+                                                <img src="/images/user2.jpg"
+                                                     class="small-avatar"
+                                                     onerror="this.style.display='none';" />
+
+                                                <span>
+                                                    Priya Sharma
+                                                </span>
+
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="role-badge">
+                                                CLIENT
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="status-badge">
+                                                Active
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.ToString("yyyy-MM-dd")
+                                        </td>
+
+                                    </tr>
+
+
+                                    <tr>
+
+                                        <td>3</td>
+
+                                        <td>
+                                            <div class="user-cell">
+
+                                                <img src="/images/user3.jpg"
+                                                     class="small-avatar"
+                                                     onerror="this.style.display='none';" />
+
+                                                <span>
+                                                    Ravi Kumar
+                                                </span>
+
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="role-badge">
+                                                CLIENT
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="status-badge">
+                                                Active
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.ToString("yyyy-MM-dd")
+                                        </td>
+
+                                    </tr>
+
+
+                                    <tr>
+
+                                        <td>4</td>
+
+                                        <td>
+                                            <div class="user-cell">
+
+                                                <img src="/images/user4.jpg"
+                                                     class="small-avatar"
+                                                     onerror="this.style.display='none';" />
+
+                                                <span>
+                                                    Anjali Perera
+                                                </span>
+
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="role-badge">
+                                                CLIENT
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="status-badge">
+                                                Active
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.ToString("yyyy-MM-dd")
+                                        </td>
+
+                                    </tr>
+
+
+                                    <tr>
+
+                                        <td>5</td>
+
+                                        <td>
+                                            <div class="user-cell">
+
+                                                <img src="@profilePath"
+                                                     class="small-avatar"
+                                                     onerror="this.src='/images/default-profile.png';" />
+
+                                                <span>
+                                                    @adminName
+                                                </span>
+
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="role-badge">
+                                                ADMIN
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="status-badge">
+                                                Active
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.ToString("yyyy-MM-dd")
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                 ROW 2
+            ================================================== -->
+
+                <div class="dashboard-grid-two">
+
+
+                    <!-- LATEST APPOINTMENTS -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                Latest Appointments
+                            </div>
+
+                            <a href="#"
+                               class="section-link">
+                                View All
+                            </a>
+
+                        </div>
+
+
+                        <div class="appointment-row">
+
+                            <div class="date-square">
+
+                                <strong>
+                                    @DateTime.Now.Day
+                                </strong>
+
+                                <span>
+                                    @DateTime.Now.ToString("MMM")
+                                </span>
+
+                            </div>
+
+                            <div>
+
+                                <div class="appointment-person">
+                                    Kasun Fernando
+                                </div>
+
+                                <div class="appointment-detail">
+                                    <i class="fa-solid fa-user-doctor"></i>
+                                    Trainer Nimal
+                                    &nbsp; • &nbsp;
+                                    10:00 AM
+                                </div>
+
+                            </div>
+
+                            <span class="appointment-status">
+                                Upcoming
+                            </span>
+
+                            <button class="approve-btn">
+                                View
+                            </button>
+
+                        </div>
+
+
+                        <div class="appointment-row">
+
+                            <div class="date-square">
+
+                                <strong>
+                                    @DateTime.Now.Day
+                                </strong>
+
+                                <span>
+                                    @DateTime.Now.ToString("MMM")
+                                </span>
+
+                            </div>
+
+                            <div>
+
+                                <div class="appointment-person">
+                                    Priya Sharma
+                                </div>
+
+                                <div class="appointment-detail">
+                                    <i class="fa-solid fa-user-doctor"></i>
+                                    Trainer John
+                                    &nbsp; • &nbsp;
+                                    11:30 AM
+                                </div>
+
+                            </div>
+
+                            <span class="request-badge">
+                                Pending
+                            </span>
+
+                            <button class="approve-btn">
+                                View
+                            </button>
+
+                        </div>
+
+
+                        <div class="appointment-row">
+
+                            <div class="date-square">
+
+                                <strong>
+                                    @DateTime.Now.Day
+                                </strong>
+
+                                <span>
+                                    @DateTime.Now.ToString("MMM")
+                                </span>
+
+                            </div>
+
+                            <div>
+
+                                <div class="appointment-person">
+                                    Ravi Kumar
+                                </div>
+
+                                <div class="appointment-detail">
+                                    <i class="fa-solid fa-user-doctor"></i>
+                                    Trainer Akash
+                                    &nbsp; • &nbsp;
+                                    02:00 PM
+                                </div>
+
+                            </div>
+
+                            <span class="appointment-status">
+                                Upcoming
+                            </span>
+
+                            <button class="approve-btn">
+                                View
+                            </button>
+
+                        </div>
+
+
+                        <div class="appointment-row">
+
+                            <div class="date-square">
+
+                                <strong>
+                                    @DateTime.Now.Day
+                                </strong>
+
+                                <span>
+                                    @DateTime.Now.ToString("MMM")
+                                </span>
+
+                            </div>
+
+                            <div>
+
+                                <div class="appointment-person">
+                                    Anjali Perera
+                                </div>
+
+                                <div class="appointment-detail">
+                                    <i class="fa-solid fa-user-doctor"></i>
+                                    Trainer John
+                                    &nbsp; • &nbsp;
+                                    09:30 AM
+                                </div>
+
+                            </div>
+
+                            <span class="status-badge">
+                                Completed
+                            </span>
+
+                            <button class="approve-btn">
+                                View
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- WORKOUT STATISTICS -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                Workout Plan Statistics
+                            </div>
+
+                            <select class="card-select">
+
+                                <option>
+                                    This Month
+                                </option>
+
+                                <option>
+                                    This Year
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="bar-chart">
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(5, totalWorkoutPlans / 4))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:45%;"></div>
+
+                                <span class="bar-label">
+                                    Created
+                                </span>
+
+                            </div>
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(8, totalWorkoutPlans / 2))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:70%;"></div>
+
+                                <span class="bar-label">
+                                    Assigned
+                                </span>
+
+                            </div>
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(6, totalWorkoutPlans / 2))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:60%;"></div>
+
+                                <span class="bar-label">
+                                    Active
+                                </span>
+
+                            </div>
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(4, totalWorkoutPlans / 3))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:38%;"></div>
+
+                                <span class="bar-label">
+                                    Completed
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DIET STATISTICS -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                Diet Plan Statistics
+                            </div>
+
+                            <select class="card-select">
+
+                                <option>
+                                    This Month
+                                </option>
+
+                                <option>
+                                    This Year
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="bar-chart">
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(5, totalDietPlans / 4))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:40%;"></div>
+
+                                <span class="bar-label">
+                                    Created
+                                </span>
+
+                            </div>
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(8, totalDietPlans / 2))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:65%;"></div>
+
+                                <span class="bar-label">
+                                    Assigned
+                                </span>
+
+                            </div>
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(6, totalDietPlans / 2))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:60%;"></div>
+
+                                <span class="bar-label">
+                                    Active
+                                </span>
+
+                            </div>
+
+
+                            <div class="bar-column">
+
+                                <span class="bar-value">
+                                    @(Math.Max(4, totalDietPlans / 3))
+                                </span>
+
+                                <div class="bar"
+                                     style="height:35%;"></div>
+
+                                <span class="bar-label">
+                                    Completed
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                 ROW 3
+            ================================================== -->
+
+                <div class="dashboard-grid-three">
+
+
+                    <!-- TOP TRAINERS -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                Top Trainers by Clients
+                            </div>
+
+                            <a href="#"
+                               class="section-link">
+                                View All
+                            </a>
+
+                        </div>
+
+
+                        <div class="trainer-row">
+
+                            <img src="/images/trainer1.jpg"
+                                 class="trainer-avatar"
+                                 onerror="this.style.display='none';" />
+
+                            <div class="trainer-info">
+
+                                <div class="trainer-name">
+                                    John Perera
+                                </div>
+
+                                <div class="trainer-clients">
+                                    18 Clients
+                                </div>
+
+                            </div>
+
+                            <div class="progress-wrapper">
+
+                                <div class="progress-bar"
+                                     style="width:90%;"></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="trainer-row">
+
+                            <img src="/images/trainer2.jpg"
+                                 class="trainer-avatar"
+                                 onerror="this.style.display='none';" />
+
+                            <div class="trainer-info">
+
+                                <div class="trainer-name">
+                                    Nimal Silva
+                                </div>
+
+                                <div class="trainer-clients">
+                                    15 Clients
+                                </div>
+
+                            </div>
+
+                            <div class="progress-wrapper">
+
+                                <div class="progress-bar"
+                                     style="width:75%;"></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="trainer-row">
+
+                            <img src="/images/trainer3.jpg"
+                                 class="trainer-avatar"
+                                 onerror="this.style.display='none';" />
+
+                            <div class="trainer-info">
+
+                                <div class="trainer-name">
+                                    Akash Kumar
+                                </div>
+
+                                <div class="trainer-clients">
+                                    12 Clients
+                                </div>
+
+                            </div>
+
+                            <div class="progress-wrapper">
+
+                                <div class="progress-bar"
+                                     style="width:60%;"></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="trainer-row">
+
+                            <img src="/images/trainer4.jpg"
+                                 class="trainer-avatar"
+                                 onerror="this.style.display='none';" />
+
+                            <div class="trainer-info">
+
+                                <div class="trainer-name">
+                                    Sarah Lee
+                                </div>
+
+                                <div class="trainer-clients">
+                                    10 Clients
+                                </div>
+
+                            </div>
+
+                            <div class="progress-wrapper">
+
+                                <div class="progress-bar"
+                                     style="width:50%;"></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="trainer-row">
+
+                            <img src="/images/trainer5.jpg"
+                                 class="trainer-avatar"
+                                 onerror="this.style.display='none';" />
+
+                            <div class="trainer-info">
+
+                                <div class="trainer-name">
+                                    David Wilson
+                                </div>
+
+                                <div class="trainer-clients">
+                                    8 Clients
+                                </div>
+
+                            </div>
+
+                            <div class="progress-wrapper">
+
+                                <div class="progress-bar"
+                                     style="width:40%;"></div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SYSTEM ACTIVITY -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                System Activity
+                            </div>
+
+                            <a href="#"
+                               class="section-link">
+                                View All
+                            </a>
+
+                        </div>
+
+
+                        <div class="activity-row">
+
+                            <div class="activity-icon">
+                                <i class="fa-solid fa-user-plus"></i>
+                            </div>
+
+                            <div class="activity-info">
+
+                                <div class="activity-title">
+                                    New user registered
+                                </div>
+
+                                <div class="activity-description">
+                                    Kesavaraj joined as Client
+                                </div>
+
+                            </div>
+
+                            <div class="activity-time">
+                                10:24 AM
+                            </div>
+
+                        </div>
+
+
+                        <div class="activity-row">
+
+                            <div class="activity-icon">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+
+                            <div class="activity-info">
+
+                                <div class="activity-title">
+                                    Appointment booked
+                                </div>
+
+                                <div class="activity-description">
+                                    Priya Sharma
+                                </div>
+
+                            </div>
+
+                            <div class="activity-time">
+                                09:15 AM
+                            </div>
+
+                        </div>
+
+
+                        <div class="activity-row">
+
+                            <div class="activity-icon">
+                                <i class="fa-solid fa-dumbbell"></i>
+                            </div>
+
+                            <div class="activity-info">
+
+                                <div class="activity-title">
+                                    Workout plan assigned
+                                </div>
+
+                                <div class="activity-description">
+                                    Trainer Nimal assigned a plan
+                                </div>
+
+                            </div>
+
+                            <div class="activity-time">
+                                08:40 AM
+                            </div>
+
+                        </div>
+
+
+                        <div class="activity-row">
+
+                            <div class="activity-icon">
+                                <i class="fa-solid fa-bowl-food"></i>
+                            </div>
+
+                            <div class="activity-info">
+
+                                <div class="activity-title">
+                                    Diet plan updated
+                                </div>
+
+                                <div class="activity-description">
+                                    Admin updated diet plan
+                                </div>
+
+                            </div>
+
+                            <div class="activity-time">
+                                07:30 AM
+                            </div>
+
+                        </div>
+
+
+                        <div class="activity-row">
+
+                            <div class="activity-icon">
+                                <i class="fa-solid fa-user-pen"></i>
+                            </div>
+
+                            <div class="activity-info">
+
+                                <div class="activity-title">
+                                    User profile updated
+                                </div>
+
+                                <div class="activity-description">
+                                    @adminName updated profile
+                                </div>
+
+                            </div>
+
+                            <div class="activity-time">
+                                06:20 AM
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PENDING REQUESTS -->
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div class="card-title">
+                                Pending Requests
+                            </div>
+
+                            <a href="#"
+                               class="section-link">
+                                View All
+                            </a>
+
+                        </div>
+
+
+                        <div class="table-wrapper">
+
+                            <table>
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>#</th>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Details</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+
+                                    <tr>
+
+                                        <td>1</td>
+
+                                        <td>
+                                            <span class="request-badge">
+                                                Trainer
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            Suresh Kumar
+                                        </td>
+
+                                        <td>
+                                            Wants to join Trainer
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.ToString("yyyy-MM-dd")
+                                        </td>
+
+                                        <td>
+
+                                            <div class="request-actions">
+
+                                                <button class="approve-btn">
+                                                    Approve
+                                                </button>
+
+                                                <button class="reject-btn">
+                                                    Reject
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+
+                                    <tr>
+
+                                        <td>2</td>
+
+                                        <td>
+                                            <span class="request-badge">
+                                                Appointment
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            Priya Sharma
+                                        </td>
+
+                                        <td>
+                                            New appointment request
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.ToString("yyyy-MM-dd")
+                                        </td>
+
+                                        <td>
+
+                                            <div class="request-actions">
+
+                                                <button class="approve-btn">
+                                                    Approve
+                                                </button>
+
+                                                <button class="reject-btn">
+                                                    Reject
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+
+                                    <tr>
+
+                                        <td>3</td>
+
+                                        <td>
+                                            <span class="request-badge">
+                                                Plan Request
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            Ravi Kumar
+                                        </td>
+
+                                        <td>
+                                            Requested workout plan
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd")
+                                        </td>
+
+                                        <td>
+
+                                            <div class="request-actions">
+
+                                                <button class="approve-btn">
+                                                    Approve
+                                                </button>
+
+                                                <button class="reject-btn">
+                                                    Reject
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+
+                                    <tr>
+
+                                        <td>4</td>
+
+                                        <td>
+                                            <span class="request-badge">
+                                                Plan Request
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            Anjali Perera
+                                        </td>
+
+                                        <td>
+                                            Requested diet plan
+                                        </td>
+
+                                        <td>
+                                            @DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd")
+                                        </td>
+
+                                        <td>
+
+                                            <div class="request-actions">
+
+                                                <button class="approve-btn">
+                                                    Approve
+                                                </button>
+
+                                                <button class="reject-btn">
+                                                    Reject
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- =============================================================
+     MOBILE SIDEBAR SCRIPT
+============================================================== -->
+
+    <script>
+
+            const mobileMenu =
+                document.getElementById("mobileMenu");
+
+            const sidebar =
+                document.getElementById("sidebar");
+
+
+            if (mobileMenu) {
+
+                mobileMenu.addEventListener(
+                    "click",
+                    function () {
+
+                        sidebar.classList.toggle("open");
+
+                    }
+                );
+
+            }
+
+
+            // Close sidebar when clicking outside
+            document.addEventListener(
+                "click",
+                function (event) {
+
+                    if (
+                        window.innerWidth <= 750 &&
+                        sidebar.classList.contains("open") &&
+                        !sidebar.contains(event.target) &&
+                        !mobileMenu.contains(event.target)
+                    ) {
+
+                        sidebar.classList.remove("open");
+
+                    }
+
+                }
+            );
+
+    </script>
+
+
+</body>
+</html>
