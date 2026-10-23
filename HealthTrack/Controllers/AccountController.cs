@@ -112,7 +112,7 @@ namespace HealthTrack.Controllers
 
             if (user.Role == "CLIENT")
             {
-                return RedirectToAction(
+                return RedirectToAction(_
                     "ClientDashboard",
                     "Home"
                 );

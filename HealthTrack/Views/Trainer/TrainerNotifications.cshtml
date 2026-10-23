@@ -1,0 +1,340 @@
+@using HealthTrack.Models
+@using System.Linq
+@{
+    Layout = null;
+
+    var trainerName = ViewBag.UserName as string ?? "Trainer";
+    var profilePath = ViewBag.ProfileImage as string;
+    var trainerInitial = !string.IsNullOrWhiteSpace(trainerName)
+        ? trainerName.Trim().Substring(0, 1).ToUpper()
+        : "T";
+
+    var notifications = ViewBag.Notifications as IEnumerable<Notification>
+        ?? Enumerable.Empty<Notification>();
+
+    int totalNotifications = ViewBag.TotalNotifications ?? 0;
+    int unreadNotifications = ViewBag.UnreadNotifications ?? 0;
+    int readNotifications = ViewBag.ReadNotifications ?? 0;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notifications - HealthTrack</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin:0; padding:0; min-height:100%; }
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:#071b2d;
+            color:#d8e5ee;
+            overflow-x:hidden;
+        }
+
+        .sidebar {
+            position:fixed;
+            left:0;
+            top:0;
+            width:245px;
+            height:100vh;
+            background:linear-gradient(180deg,#061a2c 0%,#09253a 55%,#071c2e 100%);
+            border-right:1px solid rgba(255,255,255,.05);
+            padding:24px 14px 18px;
+            overflow-y:auto;
+            scrollbar-width:thin;
+            scrollbar-color:#1e526e transparent;
+            z-index:1000;
+        }
+        .sidebar::-webkit-scrollbar { width:5px; }
+        .sidebar::-webkit-scrollbar-thumb { background:#1e526e; border-radius:10px; }
+        .sidebar::-webkit-scrollbar-track { background:transparent; }
+
+        .brand { display:flex; align-items:center; gap:10px; padding:0 12px 22px; }
+        .brand-icon {
+            width:42px;height:42px;border-radius:12px;background:#00b894;color:#062238;
+            display:flex;align-items:center;justify-content:center;font-size:19px;
+            box-shadow:0 8px 22px rgba(0,184,148,.20);
+        }
+        .brand-text { font-size:20px;font-weight:850;letter-spacing:-.4px;color:#f0f6fa; }
+        .brand-text span { color:#00b894; }
+
+        .side-profile {
+            display:flex;align-items:center;gap:11px;padding:12px 10px;margin:0 0 22px;
+            border-radius:14px;background:rgba(255,255,255,.035);
+        }
+        .side-profile-image,.side-profile-fallback {
+            width:45px;height:45px;border-radius:50%;object-fit:cover;flex:none;
+        }
+        .side-profile-fallback {
+            display:flex;align-items:center;justify-content:center;background:#16405a;
+            color:#00d6aa;font-weight:800;font-size:17px;border:1px solid rgba(0,184,148,.25);
+        }
+        .side-profile-name { color:#eaf2f6;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .side-profile-role { color:#6f899e;font-size:9px;margin-top:3px; }
+
+        .menu-title { color:#4f6b80;font-size:9px;font-weight:800;letter-spacing:1.5px;padding:0 14px 9px; }
+        .sidebar-menu { display:flex;flex-direction:column;gap:4px; }
+        .menu-item {
+            min-height:43px;padding:0 12px;border-radius:11px;text-decoration:none;color:#9eb2c1;
+            display:flex;align-items:center;gap:12px;font-size:11px;font-weight:650;transition:.18s;
+        }
+        .menu-item i:first-child { width:17px;text-align:center;font-size:13px; }
+        .menu-item:hover { background:rgba(255,255,255,.045);color:#e9f3f7; }
+        .menu-item.active {
+            background:linear-gradient(90deg,#00b894,#00a986);
+            color:#052136;box-shadow:0 8px 20px rgba(0,184,148,.16);font-weight:850;
+        }
+        .menu-arrow { margin-left:auto;font-size:9px!important;width:auto!important;opacity:.75; }
+        .notification-count { margin-left:auto;min-width:19px;height:19px;padding:0 6px;border-radius:20px;background:#183b50;color:#8da7b9;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800; }
+        .menu-item.active .notification-count { background:rgba(5,33,54,.18);color:#052136; }
+
+        .sidebar-bottom { margin-top:28px;padding:17px 14px 5px; }
+        .sidebar-motivation { color:#6c8597;font-size:9px;font-weight:800;line-height:1.55;letter-spacing:.8px; }
+        .sidebar-motivation span { color:#00b894; }
+        .motivation-line { width:100%;height:1px;background:rgba(255,255,255,.05);margin-top:12px; }
+
+        .main { margin-left:245px;min-height:100vh;background:#071b2d; }
+        .topbar {
+            height:82px;padding:0 34px;display:flex;align-items:center;justify-content:space-between;
+            background:linear-gradient(180deg,#0b263b 0%,#081e31 100%);border-bottom:1px solid rgba(255,255,255,.05);
+        }
+        .page-title { color:#eef6fa;font-size:21px;font-weight:850;letter-spacing:-.3px; }
+        .page-subtitle { color:#718da1;font-size:10px;margin-top:4px; }
+        .trainer-box { display:flex;align-items:center;gap:10px; }
+        .trainer-avatar { width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid rgba(0,184,148,.25);background:#12344a; }
+        .trainer-name { color:#eaf3f7;font-size:11px;font-weight:800; }
+        .trainer-role { color:#6d8799;font-size:9px;margin-top:3px; }
+
+        .content { padding:28px 34px 40px; }
+        .hero {
+            background:linear-gradient(135deg,#10364f,#0b2b43);border:1px solid rgba(255,255,255,.055);
+            border-radius:18px;padding:24px 26px;display:flex;align-items:center;justify-content:space-between;
+            margin-bottom:18px;box-shadow:0 18px 40px rgba(0,0,0,.12);
+        }
+        .hero h2 { margin:0;color:#f1f7fa;font-size:18px;font-weight:850; }
+        .hero p { margin:6px 0 0;color:#7894a7;font-size:10px; }
+        .hero p span { color:#00d2a8;font-weight:800; }
+        .hero-actions { display:flex;align-items:center;gap:10px; }
+        .stat-chip { min-width:92px;padding:10px 13px;border-radius:11px;background:#092337;border:1px solid rgba(255,255,255,.055);text-align:center; }
+        .stat-chip strong { display:block;color:#00c9a0;font-size:17px;line-height:1; }
+        .stat-chip span { display:block;color:#6f899d;font-size:8px;margin-top:5px;text-transform:uppercase;letter-spacing:.8px;font-weight:800; }
+        .mark-all {
+            border:0;border-radius:10px;padding:11px 14px;background:#00b894;color:#062238;
+            font-size:10px;font-weight:850;cursor:pointer;display:flex;align-items:center;gap:7px;
+        }
+        .mark-all:hover { background:#20c997; }
+
+        .notification-list { display:flex;flex-direction:column;gap:10px; }
+        .notification-card {
+            display:flex;align-items:flex-start;gap:14px;padding:17px 18px;border-radius:15px;
+            background:#0b263a;border:1px solid rgba(255,255,255,.05);box-shadow:0 10px 25px rgba(0,0,0,.10);
+        }
+        .notification-card.unread { border-color:rgba(0,184,148,.26);background:linear-gradient(90deg,#0c2b3e,#0b263a); }
+        .notification-icon {
+            width:43px;height:43px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+            flex:none;background:#123a50;color:#00c9a0;font-size:15px;
+        }
+        .notification-card.unread .notification-icon { background:rgba(0,184,148,.13);color:#00d0a6; }
+        .notification-body { flex:1;min-width:0; }
+        .notification-head { display:flex;align-items:center;gap:9px;flex-wrap:wrap; }
+        .notification-title { color:#eaf3f7;font-size:12px;font-weight:850; }
+        .unread-dot { width:6px;height:6px;border-radius:50%;background:#00d0a6;box-shadow:0 0 8px rgba(0,208,166,.55); }
+        .notification-message { color:#8099aa;font-size:10px;line-height:1.6;margin-top:5px; }
+        .notification-meta { display:flex;align-items:center;gap:10px;margin-top:8px; }
+        .notification-type { color:#00b894;background:rgba(0,184,148,.09);border-radius:20px;padding:4px 8px;font-size:8px;font-weight:800;text-transform:uppercase; }
+        .notification-date { color:#597487;font-size:8px; }
+        .read-btn {
+            border:1px solid rgba(255,255,255,.07);background:#102f44;color:#8ba5b5;border-radius:9px;
+            padding:8px 10px;font-size:9px;font-weight:750;cursor:pointer;white-space:nowrap;
+        }
+        .read-btn:hover { color:#00d0a6;border-color:rgba(0,184,148,.25); }
+        .empty-state {
+            min-height:340px;border:1px dashed rgba(255,255,255,.08);border-radius:17px;background:#0a2337;
+            display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;
+        }
+        .empty-icon { width:65px;height:65px;margin:0 auto 13px;border-radius:18px;background:#10344b;color:#00b894;display:flex;align-items:center;justify-content:center;font-size:24px; }
+        .empty-title { color:#c8d8e1;font-size:14px;font-weight:850; }
+        .empty-text { color:#688397;font-size:10px;margin-top:6px; }
+
+        @@media(max-width:900px){
+            .sidebar{width:220px}.main{margin-left:220px}.topbar{padding:0 20px}.content{padding:22px 20px}.hero{flex-direction:column;align-items:flex-start;gap:18px}.hero-actions{width:100%;flex-wrap:wrap}
+        }
+        @@media(max-width:700px){
+            .sidebar{width:74px;padding:20px 8px}.brand{justify-content:center;padding:0 0 20px}.brand-text,.side-profile-info,.menu-title,.menu-item span,.menu-arrow,.sidebar-bottom{display:none}.side-profile{justify-content:center;padding:8px;margin-bottom:18px}.menu-item{justify-content:center;padding:0}.main{margin-left:74px}.topbar{padding:0 15px}.trainer-name,.trainer-role{display:none}.content{padding:18px 12px}.notification-card{padding:13px;gap:10px}.notification-icon{width:38px;height:38px}.read-btn{padding:7px 8px}.stat-chip{min-width:75px}.hero-actions{gap:7px}.mark-all{font-size:9px}
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-dumbbell"></i></div>
+        <div class="brand-text">Health<span>Track</span></div>
+    </div>
+
+    <div class="side-profile">
+        @if (!string.IsNullOrWhiteSpace(profilePath))
+        {
+            <img src="@profilePath" class="side-profile-image" alt="Trainer" />
+        }
+        else
+        {
+            <div class="side-profile-fallback">@trainerInitial</div>
+        }
+        <div class="side-profile-info">
+            <div class="side-profile-name">@trainerName</div>
+            <div class="side-profile-role">Trainer</div>
+        </div>
+    </div>
+
+    <div class="menu-title">MAIN MENU</div>
+    <nav class="sidebar-menu">
+        <a href="@Url.Action("TrainerDashboard", "Home")" class="menu-item">
+            <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
+        </a>
+        <a href="@Url.Action("MyClients", "Home")" class="menu-item">
+            <i class="fa-solid fa-users"></i><span>My Clients</span><i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="@Url.Action("TrainerAppointments", "Home")" class="menu-item">
+            <i class="fa-regular fa-calendar-check"></i><span>Appointments</span><i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="@Url.Action("TrainerWorkoutPlans", "Home")" class="menu-item">
+            <i class="fa-solid fa-dumbbell"></i><span>Workout Plans</span><i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="@Url.Action("TrainerDietPlans", "Home")" class="menu-item">
+            <i class="fa-solid fa-apple-whole"></i><span>Diet Plans</span><i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="@Url.Action("TrainerHealthRecords", "Home")" class="menu-item">
+            <i class="fa-solid fa-chart-simple"></i><span>Progress Reports</span><i class="fa-solid fa-chevron-right menu-arrow"></i>
+        </a>
+        <a href="@Url.Action("TrainerMessages", "Home")" class="menu-item">
+            <i class="fa-solid fa-message"></i><span>Messages</span><span class="menu-arrow">0</span>
+        </a>
+        <a href="@Url.Action("TrainerNotifications", "Home")" class="menu-item active">
+            <i class="fa-regular fa-bell"></i><span>Notifications</span>
+            @if (unreadNotifications > 0)
+            {
+                <span class="notification-count">@unreadNotifications</span>
+            }
+        </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+        <div class="sidebar-motivation">STRONGER <span>PEOPLE</span><br />HEALTHIER TOMORROW</div>
+        <div class="motivation-line"></div>
+    </div>
+</aside>
+
+<main class="main">
+    <header class="topbar">
+        <div>
+            <div class="page-title">Notifications</div>
+            <div class="page-subtitle">Stay updated with your HealthTrack activities</div>
+        </div>
+        <div class="trainer-box">
+            @if (!string.IsNullOrWhiteSpace(profilePath))
+            {
+                <img src="@profilePath" class="trainer-avatar" alt="Trainer" />
+            }
+            else
+            {
+                <div class="trainer-avatar" style="display:flex;align-items:center;justify-content:center;color:#00b894;font-weight:800;">@trainerInitial</div>
+            }
+            <div>
+                <div class="trainer-name">@trainerName</div>
+                <div class="trainer-role">Trainer</div>
+            </div>
+        </div>
+    </header>
+
+    <section class="content">
+        <div class="hero">
+            <div>
+                <h2>Notifications</h2>
+                <p>Review your latest system updates, reminders and alerts.</p>
+            </div>
+            <div class="hero-actions">
+                <div class="stat-chip"><strong>@totalNotifications</strong><span>Total</span></div>
+                <div class="stat-chip"><strong>@unreadNotifications</strong><span>Unread</span></div>
+                <div class="stat-chip"><strong>@readNotifications</strong><span>Read</span></div>
+                @if (unreadNotifications > 0)
+                {
+                    <form method="post" action="@Url.Action("MarkAllTrainerNotificationsAsRead", "Home")">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="mark-all"><i class="fa-solid fa-check-double"></i> Mark all read</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        @if (notifications.Any())
+        {
+            <div class="notification-list">
+                @foreach (var notification in notifications)
+                {
+                    var isUnread = notification.IsRead != true;
+                    var icon = (notification.Type ?? "").ToLowerInvariant() switch
+                    {
+                        "appointment" => "fa-calendar-check",
+                        "workout" => "fa-dumbbell",
+                        "diet" => "fa-apple-whole",
+                        "health" => "fa-heart-pulse",
+                        "message" => "fa-message",
+                        "system" => "fa-circle-info",
+                        _ => "fa-bell"
+                    };
+
+                    <article class="notification-card @(isUnread ? "unread" : "")">
+                        <div class="notification-icon"><i class="fa-solid @icon"></i></div>
+                        <div class="notification-body">
+                            <div class="notification-head">
+                                <div class="notification-title">@notification.Title</div>
+                                @if (isUnread)
+                                {
+                                    <span class="unread-dot" title="Unread"></span>
+                                }
+                            </div>
+                            <div class="notification-message">@notification.Message</div>
+                            <div class="notification-meta">
+                                @if (!string.IsNullOrWhiteSpace(notification.Type))
+                                {
+                                    <span class="notification-type">@notification.Type</span>
+                                }
+                                <span class="notification-date">
+                                    @(notification.CreatedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "No date")
+                                </span>
+                            </div>
+                        </div>
+                        @if (isUnread)
+                        {
+                            <form method="post" action="@Url.Action("MarkTrainerNotificationAsRead", "Home")">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@notification.NotificationId" />
+                                <button type="submit" class="read-btn"><i class="fa-solid fa-check"></i> Read</button>
+                            </form>
+                        }
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div>
+                    <div class="empty-icon"><i class="fa-regular fa-bell"></i></div>
+                    <div class="empty-title">No notifications yet</div>
+                    <div class="empty-text">You're all caught up. New updates will appear here.</div>
+                </div>
+            </div>
+        }
+    </section>
+</main>
+
+</body>
+</html>

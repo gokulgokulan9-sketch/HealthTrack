@@ -1,0 +1,2398 @@
+﻿@using HealthTrack.Models
+@using System.Linq
+
+@{
+    Layout = null;
+
+    var appointments = ViewBag.Appointments as IEnumerable<Appointment>
+                       ?? Enumerable.Empty<Appointment>();
+
+    var clients = ViewBag.Clients as IEnumerable<User>
+                  ?? Enumerable.Empty<User>();
+
+    var trainers = ViewBag.Trainers as IEnumerable<User>
+                   ?? Enumerable.Empty<User>();
+
+    var adminName = ViewBag.AdminName as string ?? "Admin";
+    var adminEmail = ViewBag.AdminEmail as string ?? "";
+    var adminProfileImage = ViewBag.AdminProfileImage as string ?? "";
+
+    var searchText = ViewBag.Search as string ?? "";
+
+    var totalAppointments = appointments.Count();
+
+    var pendingCount = appointments.Count(x =>
+        string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+
+    var confirmedCount = appointments.Count(x =>
+        string.Equals(x.Status, "Confirmed", StringComparison.OrdinalIgnoreCase));
+
+    var completedCount = appointments.Count(x =>
+        string.Equals(x.Status, "Completed", StringComparison.OrdinalIgnoreCase));
+
+    var cancelledCount = appointments.Count(x =>
+        string.Equals(x.Status, "Cancelled", StringComparison.OrdinalIgnoreCase));
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Appointments - HealthTrack</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            html,
+            body {
+                width: 100%;
+                min-height: 100%;
+                font-family: "Segoe UI", Arial, sans-serif;
+                background: #090b0f;
+                color: white;
+            }
+
+            body {
+                overflow-x: hidden;
+            }
+
+            /* =========================================================
+                       SIDEBAR
+                    ========================================================= */
+
+            .admin-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 245px;
+                height: 100vh;
+                background: linear-gradient( 180deg, #08090c 0%, #111318 55%, #090a0d 100% );
+                border-right: 1px solid rgba(255,255,255,0.08);
+                z-index: 1000;
+                overflow-y: auto;
+            }
+
+            .logo-area {
+                height: 82px;
+                display: flex;
+                align-items: center;
+                padding: 0 25px;
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .logo-icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ff1735;
+                color: white;
+                font-size: 21px;
+                box-shadow: 0 0 22px rgba(255,23,53,0.35);
+            }
+
+            .logo-text {
+                margin-left: 12px;
+                font-size: 22px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+            }
+
+                .logo-text span {
+                    color: #ff1735;
+                }
+
+            /* =========================================================
+                       ADMIN PROFILE
+                    ========================================================= */
+
+            .admin-profile {
+                padding: 20px 18px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .profile-box {
+                display: flex;
+                align-items: center;
+                padding: 12px;
+                border-radius: 14px;
+                background: linear-gradient( 135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015) );
+            }
+
+            .profile-image {
+                width: 46px;
+                height: 46px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid #ff1735;
+                background: #20242b;
+            }
+
+            .profile-letter {
+                width: 46px;
+                height: 46px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ff1735;
+                font-size: 18px;
+                font-weight: 700;
+            }
+
+            .profile-info {
+                margin-left: 12px;
+                min-width: 0;
+            }
+
+            .profile-name {
+                font-size: 14px;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .profile-role {
+                margin-top: 4px;
+                font-size: 11px;
+                color: #aeb4bf;
+                letter-spacing: 0.8px;
+            }
+
+            /* =========================================================
+                       MENU
+                    ========================================================= */
+
+            .menu-title {
+                padding: 20px 24px 10px;
+                font-size: 10px;
+                color: #777d88;
+                font-weight: 700;
+                letter-spacing: 1.5px;
+            }
+
+            .sidebar-menu {
+                padding: 0 12px 25px;
+            }
+
+                .sidebar-menu a {
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    padding: 0 15px;
+                    margin-bottom: 6px;
+                    border-radius: 10px;
+                    color: #cdd1d8;
+                    text-decoration: none;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: 0.25s;
+                }
+
+                    .sidebar-menu a i {
+                        width: 25px;
+                        margin-right: 10px;
+                        font-size: 16px;
+                        text-align: center;
+                    }
+
+                    .sidebar-menu a:hover {
+                        color: white;
+                        background: rgba(255,255,255,0.06);
+                    }
+
+                    .sidebar-menu a.active {
+                        color: white;
+                        background: linear-gradient( 90deg, #ff102f, #e90029 );
+                        box-shadow: 0 8px 22px rgba(255,16,47,0.22);
+                    }
+
+                    .sidebar-menu a.logout {
+                        margin-top: 18px;
+                        color: #ff6679;
+                    }
+
+            /* =========================================================
+                       MAIN
+                    ========================================================= */
+
+            .admin-main {
+                margin-left: 245px;
+                min-height: 100vh;
+                background: radial-gradient( circle at 85% 0%, rgba(255,23,53,0.10), transparent 28% ), #090b0f;
+            }
+
+            /* =========================================================
+                       TOPBAR
+                    ========================================================= */
+
+            .topbar {
+                height: 72px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 30px;
+                background: linear-gradient( 90deg, #090a0d, #111318 );
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+                position: sticky;
+                top: 0;
+                z-index: 900;
+            }
+
+            .topbar-left {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .mobile-menu {
+                display: none;
+                width: 40px;
+                height: 40px;
+                border: none;
+                border-radius: 10px;
+                color: white;
+                background: #171a20;
+                cursor: pointer;
+            }
+
+            .page-title-small {
+                color: #8f96a2;
+                font-size: 13px;
+            }
+
+            .topbar-right {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .notification {
+                position: relative;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #d5d9df;
+                font-size: 17px;
+            }
+
+            .notification-link {
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .notification-link:hover {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            .notification-badge {
+                position: absolute;
+                right: 1px;
+                top: 0;
+                width: 17px;
+                height: 17px;
+                border-radius: 50%;
+                background: #ff1735;
+                color: white;
+                font-size: 9px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .top-admin {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .top-admin img,
+                .top-admin-letter {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid rgba(255,23,53,0.8);
+                }
+
+            .top-admin-letter {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ff1735;
+                font-weight: 700;
+            }
+
+            .top-admin-info strong {
+                display: block;
+                font-size: 13px;
+            }
+
+            .top-admin-info span {
+                display: block;
+                margin-top: 2px;
+                color: #858b96;
+                font-size: 10px;
+            }
+
+            /* =========================================================
+                       CONTENT
+                    ========================================================= */
+
+            .content {
+                padding: 30px;
+            }
+
+            .page-heading {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                margin-bottom: 25px;
+            }
+
+            .heading-left h1 {
+                font-size: 28px;
+                font-weight: 800;
+            }
+
+            .heading-left p {
+                margin-top: 7px;
+                color: #858c97;
+                font-size: 13px;
+            }
+
+            .add-btn {
+                border: none;
+                padding: 13px 20px;
+                border-radius: 10px;
+                color: white;
+                background: linear-gradient( 135deg, #ff1735, #d90027 );
+                font-size: 13px;
+                font-weight: 700;
+                cursor: pointer;
+                box-shadow: 0 8px 22px rgba(255,23,53,0.20);
+                transition: 0.2s;
+            }
+
+                .add-btn:hover {
+                    transform: translateY(-2px);
+                }
+
+                .add-btn i {
+                    margin-right: 7px;
+                }
+
+            /* =========================================================
+                       STAT CARDS
+                    ========================================================= */
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0,1fr));
+                gap: 18px;
+                margin-bottom: 22px;
+            }
+
+            .stat-card {
+                padding: 20px;
+                border-radius: 15px;
+                background: linear-gradient( 135deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018) );
+                border: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .stat-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .stat-icon {
+                width: 45px;
+                height: 45px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255,23,53,0.12);
+                color: #ff3150;
+                font-size: 18px;
+            }
+
+            .stat-number {
+                font-size: 27px;
+                font-weight: 800;
+                margin-top: 14px;
+            }
+
+            .stat-label {
+                margin-top: 3px;
+                color: #9299a5;
+                font-size: 12px;
+            }
+
+            /* =========================================================
+                       APPOINTMENT AREA
+                    ========================================================= */
+
+            .appointments-card {
+                border-radius: 17px;
+                overflow: hidden;
+                background: linear-gradient( 145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018) );
+                border: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .toolbar {
+                padding: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 15px;
+                border-bottom: 1px solid rgba(255,255,255,0.06);
+            }
+
+            .search-box {
+                width: 390px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                padding: 0 14px;
+                border-radius: 10px;
+                background: #11141a;
+                border: 1px solid rgba(255,255,255,0.08);
+            }
+
+                .search-box i {
+                    color: #777f8b;
+                    margin-right: 10px;
+                }
+
+                .search-box input {
+                    width: 100%;
+                    border: none;
+                    outline: none;
+                    background: transparent;
+                    color: white;
+                    font-size: 13px;
+                }
+
+                    .search-box input::placeholder {
+                        color: #666d78;
+                    }
+
+            .toolbar-info {
+                color: #838a96;
+                font-size: 12px;
+            }
+
+            /* =========================================================
+                       APPOINTMENT GRID
+                    ========================================================= */
+
+            .appointment-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0,1fr));
+                gap: 18px;
+                padding: 20px;
+            }
+
+            .appointment-card {
+                position: relative;
+                padding: 20px;
+                border-radius: 15px;
+                background: linear-gradient( 145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018) );
+                border: 1px solid rgba(255,255,255,0.07);
+                transition: 0.25s;
+            }
+
+                .appointment-card:hover {
+                    transform: translateY(-3px);
+                    border-color: rgba(255,23,53,0.28);
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+                }
+
+            .appointment-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 18px;
+            }
+
+            .appointment-id {
+                color: #727985;
+                font-size: 10px;
+                margin-top: 4px;
+            }
+
+            .appointment-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px;
+                border-radius: 20px;
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+                .appointment-status.pending {
+                    color: #ffc34d;
+                    background: rgba(255,195,77,0.10);
+                }
+
+                .appointment-status.confirmed {
+                    color: #55a8ff;
+                    background: rgba(70,150,255,0.10);
+                }
+
+                .appointment-status.completed {
+                    color: #48df9b;
+                    background: rgba(43,215,137,0.10);
+                }
+
+                .appointment-status.cancelled {
+                    color: #ff6478;
+                    background: rgba(255,23,53,0.10);
+                }
+
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+
+            /* =========================================================
+                       PEOPLE
+                    ========================================================= */
+
+            .people-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 18px;
+            }
+
+            .person-box {
+                display: flex;
+                align-items: center;
+                padding: 12px;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.035);
+                border: 1px solid rgba(255,255,255,0.05);
+            }
+
+            .person-image,
+            .person-letter {
+                width: 44px;
+                height: 44px;
+                flex-shrink: 0;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid rgba(255,23,53,0.55);
+            }
+
+            .person-letter {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient( 135deg, #ff1735, #a9001d );
+                font-weight: 700;
+            }
+
+            .person-info {
+                min-width: 0;
+                margin-left: 10px;
+            }
+
+            .person-label {
+                color: #707783;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+            }
+
+            .person-name {
+                margin-top: 4px;
+                color: white;
+                font-size: 12px;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* =========================================================
+                       DETAILS
+                    ========================================================= */
+
+            .appointment-details {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0,1fr));
+                gap: 10px;
+                margin-bottom: 18px;
+            }
+
+            .detail-box {
+                padding: 12px;
+                border-radius: 10px;
+                background: rgba(255,255,255,0.025);
+                border: 1px solid rgba(255,255,255,0.045);
+            }
+
+            .detail-label {
+                color: #707783;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.7px;
+            }
+
+            .detail-value {
+                margin-top: 5px;
+                color: #e4e7eb;
+                font-size: 12px;
+                word-break: break-word;
+            }
+
+            .reason-box {
+                margin-bottom: 18px;
+                padding: 12px;
+                border-radius: 10px;
+                background: rgba(255,255,255,0.025);
+                border: 1px solid rgba(255,255,255,0.045);
+            }
+
+            .reason-text {
+                margin-top: 6px;
+                color: #bfc4cc;
+                font-size: 11px;
+                line-height: 1.5;
+            }
+
+            /* =========================================================
+                       ACTIONS
+                    ========================================================= */
+
+            .card-actions {
+                display: flex;
+                gap: 8px;
+                padding-top: 15px;
+                border-top: 1px solid rgba(255,255,255,0.055);
+            }
+
+            .action-btn {
+                height: 36px;
+                border: none;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: 0.2s;
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+                .action-btn i {
+                    margin-right: 6px;
+                }
+
+            .view-btn {
+                flex: 1;
+                color: #5da8ff;
+                background: rgba(70,150,255,0.10);
+            }
+
+            .edit-btn {
+                flex: 1;
+                color: #ffc34d;
+                background: rgba(255,195,77,0.10);
+            }
+
+            .delete-btn {
+                flex: 1;
+                color: #ff5a70;
+                background: rgba(255,23,53,0.10);
+            }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+            }
+
+            /* =========================================================
+                       EMPTY
+                    ========================================================= */
+
+            .empty-state {
+                grid-column: 1 / -1;
+                padding: 70px 20px;
+                text-align: center;
+                color: #747b87;
+            }
+
+                .empty-state i {
+                    font-size: 42px;
+                    color: #ff1735;
+                    margin-bottom: 15px;
+                }
+
+                .empty-state h3 {
+                    color: white;
+                    font-size: 18px;
+                }
+
+                .empty-state p {
+                    margin-top: 7px;
+                    font-size: 12px;
+                }
+
+            /* =========================================================
+                       MODAL
+                    ========================================================= */
+
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                background: rgba(0,0,0,0.78);
+                backdrop-filter: blur(7px);
+                z-index: 3000;
+            }
+
+                .modal-overlay.show {
+                    display: flex;
+                }
+
+            .modal {
+                width: 100%;
+                max-width: 650px;
+                max-height: 90vh;
+                overflow-y: auto;
+                border-radius: 18px;
+                background: linear-gradient( 145deg, #171a20, #0e1014 );
+                border: 1px solid rgba(255,255,255,0.09);
+                box-shadow: 0 25px 70px rgba(0,0,0,0.55);
+            }
+
+            .modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 20px 22px;
+                border-bottom: 1px solid rgba(255,255,255,0.07);
+            }
+
+                .modal-header h2 {
+                    font-size: 18px;
+                }
+
+            .modal-close {
+                width: 34px;
+                height: 34px;
+                border: none;
+                border-radius: 8px;
+                background: #252932;
+                color: #cdd1d7;
+                cursor: pointer;
+            }
+
+            .modal-body {
+                padding: 22px;
+            }
+
+            .form-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0,1fr));
+                gap: 15px;
+            }
+
+            .form-group.full {
+                grid-column: 1 / -1;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 7px;
+                color: #9da4ae;
+                font-size: 11px;
+                font-weight: 600;
+            }
+
+            .form-control {
+                width: 100%;
+                height: 43px;
+                padding: 0 12px;
+                border-radius: 9px;
+                outline: none;
+                border: 1px solid rgba(255,255,255,0.08);
+                background: #0c0f13;
+                color: white;
+                font-size: 13px;
+            }
+
+            textarea.form-control {
+                height: 90px;
+                padding-top: 11px;
+                resize: vertical;
+            }
+
+            select.form-control option {
+                background: #101318;
+                color: white;
+            }
+
+            .form-control:focus {
+                border-color: rgba(255,23,53,0.65);
+                box-shadow: 0 0 0 3px rgba(255,23,53,0.08);
+            }
+
+            .modal-footer {
+                padding: 18px 22px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                border-top: 1px solid rgba(255,255,255,0.07);
+            }
+
+            .btn-cancel,
+            .btn-save {
+                height: 42px;
+                padding: 0 18px;
+                border: none;
+                border-radius: 9px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .btn-cancel {
+                background: #272b33;
+                color: #c9ced6;
+            }
+
+            .btn-save {
+                background: linear-gradient( 135deg, #ff1735, #d90027 );
+                color: white;
+            }
+
+            /* =========================================================
+                       DETAILS MODAL
+                    ========================================================= */
+
+            .view-profile {
+                text-align: center;
+                padding: 5px 0 20px;
+            }
+
+            .view-avatar {
+                width: 82px;
+                height: 82px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid #ff1735;
+                background: #22262e;
+            }
+
+            .view-name {
+                margin-top: 10px;
+                font-size: 20px;
+                font-weight: 800;
+            }
+
+            .view-role {
+                margin-top: 4px;
+                color: #ff4b63;
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+            .view-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0,1fr));
+                gap: 10px;
+            }
+
+            /* =========================================================
+                       TOAST
+                    ========================================================= */
+
+            .toast {
+                position: fixed;
+                right: 25px;
+                bottom: 25px;
+                min-width: 280px;
+                padding: 14px 17px;
+                border-radius: 11px;
+                background: #191c22;
+                border: 1px solid rgba(255,255,255,0.08);
+                box-shadow: 0 15px 40px rgba(0,0,0,0.45);
+                color: white;
+                font-size: 12px;
+                display: none;
+                z-index: 5000;
+            }
+
+                .toast.show {
+                    display: block;
+                }
+
+                .toast.success {
+                    border-left: 4px solid #32d58c;
+                }
+
+                .toast.error {
+                    border-left: 4px solid #ff1735;
+                }
+
+            /* =========================================================
+                       RESPONSIVE
+                    ========================================================= */
+
+            @@media (max-width: 1200px) {
+
+                .stats-grid {
+                    grid-template-columns: repeat(2, minmax(0,1fr));
+                }
+
+                .appointment-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @@media (max-width: 800px) {
+
+                .admin-sidebar {
+                    transform: translateX(-100%);
+                    transition: 0.25s;
+                }
+
+                    .admin-sidebar.open {
+                        transform: translateX(0);
+                    }
+
+                .admin-main {
+                    margin-left: 0;
+                }
+
+                .mobile-menu {
+                    display: block;
+                }
+
+                .content {
+                    padding: 20px;
+                }
+
+                .page-heading {
+                    flex-direction: column;
+                    gap: 15px;
+                }
+
+                .toolbar {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .search-box {
+                    width: 100%;
+                }
+
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .people-row,
+                .appointment-details,
+                .form-grid,
+                .view-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .form-group.full {
+                    grid-column: auto;
+                }
+            }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================= -->
+
+    <aside class="admin-sidebar" id="adminSidebar">
+
+        <div class="logo-area">
+
+            <div class="logo-icon">
+                <i class="fa-solid fa-dumbbell"></i>
+            </div>
+
+            <div class="logo-text">
+                Health<span>Track</span>
+            </div>
+
+        </div>
+
+
+        <div class="admin-profile">
+
+            <div class="profile-box">
+
+                @{
+                    var safeAdminImage =
+                        string.IsNullOrWhiteSpace(adminProfileImage)
+                            ? ""
+                            : (
+                                adminProfileImage.StartsWith("/")
+                                    ? adminProfileImage
+                                    : "/images/" + adminProfileImage
+                              );
+                }
+
+                @if (!string.IsNullOrWhiteSpace(safeAdminImage))
+                {
+                    <img class="profile-image"
+                         src="@safeAdminImage"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+
+                    <div class="profile-letter" style="display:none;">
+                        @(string.IsNullOrWhiteSpace(adminName)
+                            ? "A"
+                            : adminName.Substring(0, 1).ToUpper())
+                    </div>
+                }
+                else
+                {
+                    <div class="profile-letter">
+                        @(string.IsNullOrWhiteSpace(adminName)
+                            ? "A"
+                            : adminName.Substring(0, 1).ToUpper())
+                    </div>
+                }
+
+                <div class="profile-info">
+
+                    <div class="profile-name">
+                        @adminName
+                    </div>
+
+                    <div class="profile-role">
+                        ADMINISTRATOR
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            MAIN MENU
+        </div>
+
+        <nav class="sidebar-menu">
+
+            <a href="@Url.Action("Dashboard", "Home")">
+                <i class="fa-solid fa-chart-pie"></i>
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("Clients", "Home")">
+                <i class="fa-solid fa-users"></i>
+                Clients
+            </a>
+
+            <a href="@Url.Action("Trainers", "Home")">
+                <i class="fa-solid fa-user-tie"></i>
+                Trainers
+            </a>
+
+            <a class="active"
+               href="@Url.Action("Appointments", "Home")">
+                <i class="fa-solid fa-calendar-check"></i>
+                Appointments
+            </a>
+
+            <a href="@Url.Action("WorkoutPlans", "Home")">
+                <i class="fa-solid fa-dumbbell"></i>
+                Workout Plans
+            </a>
+
+            <a href="@Url.Action("DietPlans", "Home")">
+                <i class="fa-solid fa-utensils"></i>
+                Diet Plans
+            </a>
+
+            <a href="@Url.Action("HealthMetrics", "Home")">
+                <i class="fa-solid fa-heart-pulse"></i>
+                Health Metrics
+            </a>
+
+            <a href="@Url.Action("Reports", "Home")">
+                <i class="fa-solid fa-chart-column"></i>
+                Reports
+            </a>
+
+            <a href="@Url.Action("Notifications", "Home")">
+                <i class="fa-solid fa-bell"></i>
+                Notifications
+            </a>
+
+            <a href="@Url.Action("Settings", "Home")">
+                <i class="fa-solid fa-gear"></i>
+                Settings
+            </a>
+
+            <a class="logout"
+               href="@Url.Action("Logout", "Account")">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN
+    ========================================================= -->
+
+    <main class="admin-main">
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button class="mobile-menu"
+                        onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="page-title-small">
+                    Admin / Appointments
+                </div>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <a href="@Url.Action("Notifications", "Home")"
+                   class="notification notification-link"
+                   title="Notifications">
+
+                    <i class="fa-regular fa-bell"></i>
+
+                    @{
+                        var notificationCount =
+                            Convert.ToInt32(ViewBag.UnreadNotifications ?? ViewBag.TotalNotifications ?? 0);
+                    }
+
+                    @if (notificationCount > 0)
+                    {
+                        <span class="notification-badge">
+                            @(notificationCount > 99 ? "99+" : notificationCount.ToString())
+                        </span>
+                    }
+
+                </a>
+
+
+                <div class="top-admin">
+
+                    @if (!string.IsNullOrWhiteSpace(safeAdminImage))
+                    {
+                        <img src="@safeAdminImage"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+
+                        <div class="top-admin-letter"
+                             style="display:none;">
+                            @(string.IsNullOrWhiteSpace(adminName)
+                                ? "A"
+                                : adminName.Substring(0, 1).ToUpper())
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="top-admin-letter">
+                            @(string.IsNullOrWhiteSpace(adminName)
+                                ? "A"
+                                : adminName.Substring(0, 1).ToUpper())
+                        </div>
+                    }
+
+                    <div class="top-admin-info">
+
+                        <strong>
+                            @adminName
+                        </strong>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <section class="content">
+
+            <div class="page-heading">
+
+                <div class="heading-left">
+
+                    <h1>
+                        <i class="fa-solid fa-calendar-check"
+                           style="color:#ff1735;margin-right:8px;"></i>
+
+                        Appointments
+                    </h1>
+
+                    <p>
+                        Manage HealthTrack appointments, schedules and sessions.
+                    </p>
+
+                </div>
+
+                <button class="add-btn"
+                        onclick="openAddModal()">
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Add Appointment
+
+                </button>
+
+            </div>
+
+
+            <!-- =====================================================
+                 STATS
+            ====================================================== -->
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div>
+                            <div class="stat-number">
+                                @totalAppointments
+                            </div>
+
+                            <div class="stat-label">
+                                Total Appointments
+                            </div>
+                        </div>
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div>
+                            <div class="stat-number">
+                                @pendingCount
+                            </div>
+
+                            <div class="stat-label">
+                                Pending
+                            </div>
+                        </div>
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div>
+                            <div class="stat-number">
+                                @confirmedCount
+                            </div>
+
+                            <div class="stat-label">
+                                Confirmed
+                            </div>
+                        </div>
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div>
+                            <div class="stat-number">
+                                @completedCount
+                            </div>
+
+                            <div class="stat-label">
+                                Completed
+                            </div>
+                        </div>
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 APPOINTMENTS
+            ====================================================== -->
+
+            <div class="appointments-card">
+
+                <div class="toolbar">
+
+                    <form method="get"
+                          action="@Url.Action("Appointments", "Home")"
+                          style="margin:0;">
+
+                        <div class="search-box">
+
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                            <input type="text"
+                                   name="search"
+                                   value="@searchText"
+                                   placeholder="Search client, trainer, reason..." />
+
+                        </div>
+
+                    </form>
+
+                    <div class="toolbar-info">
+
+                        @totalAppointments appointment(s)
+
+                    </div>
+
+                </div>
+
+
+                <div class="appointment-grid">
+
+                    @if (!appointments.Any())
+                    {
+                        <div class="empty-state">
+
+                            <i class="fa-regular fa-calendar-xmark"></i>
+
+                            <h3>
+                                No appointments found
+                            </h3>
+
+                            <p>
+                                Add a new appointment to get started.
+                            </p>
+
+                        </div>
+                    }
+                    else
+                    {
+                        foreach (var appointment in appointments)
+                        {
+                            var clientName =
+                                appointment.Client?.FullName ?? "Unknown Client";
+
+                            var trainerName =
+                                appointment.Trainer?.FullName ?? "Unknown Trainer";
+
+                            var clientInitial =
+                                string.IsNullOrWhiteSpace(clientName)
+                                    ? "C"
+                                    : clientName.Substring(0, 1).ToUpper();
+
+                            var trainerInitial =
+                                string.IsNullOrWhiteSpace(trainerName)
+                                    ? "T"
+                                    : trainerName.Substring(0, 1).ToUpper();
+
+                            var status =
+                                string.IsNullOrWhiteSpace(appointment.Status)
+                                    ? "Pending"
+                                    : appointment.Status;
+
+                            var statusClass =
+                                status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase)
+                                    ? "confirmed"
+                                    : status.Equals("Completed", StringComparison.OrdinalIgnoreCase)
+                                        ? "completed"
+                                        : status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase)
+                                            ? "cancelled"
+                                            : "pending";
+
+                            var clientImage =
+                                appointment.Client?.ProfileImage;
+
+                            var trainerImage =
+                                appointment.Trainer?.ProfileImage;
+
+                            var clientImageUrl =
+                                string.IsNullOrWhiteSpace(clientImage)
+                                    ? ""
+                                    : (
+                                        clientImage.StartsWith("/")
+                                            ? clientImage
+                                            : "/images/" + clientImage
+                                      );
+
+                            var trainerImageUrl =
+                                string.IsNullOrWhiteSpace(trainerImage)
+                                    ? ""
+                                    : (
+                                        trainerImage.StartsWith("/")
+                                            ? trainerImage
+                                            : "/images/" + trainerImage
+                                      );
+
+                            <div class="appointment-card">
+
+                                <div class="appointment-top">
+
+                                    <div>
+
+                                        <strong>
+                                            Appointment
+                                        </strong>
+
+                                        <div class="appointment-id">
+                                            ID #@appointment.AppointmentId
+                                        </div>
+
+                                    </div>
+
+                                    <span class="appointment-status @statusClass">
+
+                                        <span class="status-dot"></span>
+
+                                        @status
+
+                                    </span>
+
+                                </div>
+
+
+                                <!-- PEOPLE -->
+
+                                <div class="people-row">
+
+                                    <!-- CLIENT -->
+
+                                    <div class="person-box">
+
+                                        @if (!string.IsNullOrWhiteSpace(clientImageUrl))
+                                        {
+                                            <img class="person-image"
+                                                 src="@clientImageUrl"
+                                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+
+                                            <div class="person-letter"
+                                                 style="display:none;">
+                                                @clientInitial
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="person-letter">
+                                                @clientInitial
+                                            </div>
+                                        }
+
+                                        <div class="person-info">
+
+                                            <div class="person-label">
+                                                Client
+                                            </div>
+
+                                            <div class="person-name">
+                                                @clientName
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- TRAINER -->
+
+                                    <div class="person-box">
+
+                                        @if (!string.IsNullOrWhiteSpace(trainerImageUrl))
+                                        {
+                                            <img class="person-image"
+                                                 src="@trainerImageUrl"
+                                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+
+                                            <div class="person-letter"
+                                                 style="display:none;">
+                                                @trainerInitial
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="person-letter">
+                                                @trainerInitial
+                                            </div>
+                                        }
+
+                                        <div class="person-info">
+
+                                            <div class="person-label">
+                                                Trainer
+                                            </div>
+
+                                            <div class="person-name">
+                                                @trainerName
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- DETAILS -->
+
+                                <div class="appointment-details">
+
+                                    <div class="detail-box">
+
+                                        <div class="detail-label">
+                                            Date
+                                        </div>
+
+                                        <div class="detail-value">
+                                            @appointment.AppointmentDate.ToString("dd MMM yyyy")
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="detail-box">
+
+                                        <div class="detail-label">
+                                            Time
+                                        </div>
+
+                                        <div class="detail-value">
+                                            @appointment.AppointmentTime.ToString("hh:mm tt")
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- REASON -->
+
+                                <div class="reason-box">
+
+                                    <div class="detail-label">
+                                        Reason
+                                    </div>
+
+                                    <div class="reason-text">
+
+                                        @(string.IsNullOrWhiteSpace(appointment.Reason)
+                                            ? "No reason provided."
+                                            : appointment.Reason)
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- ACTIONS -->
+
+                                <div class="card-actions">
+
+                                    <button type="button"
+                                            class="action-btn view-btn"
+                                            onclick="viewAppointment(
+                                        @appointment.AppointmentId,
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(clientName))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(trainerName))',
+                                        '@appointment.AppointmentDate.ToString("dd MMM yyyy")',
+                                        '@appointment.AppointmentTime.ToString("hh:mm tt")',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(status))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(appointment.Reason ?? ""))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(appointment.Notes ?? ""))'
+                                        )">
+
+                                        <i class="fa-solid fa-eye"></i>
+                                        View
+
+                                    </button>
+
+
+                                    <button type="button"
+                                            class="action-btn edit-btn"
+                                            onclick="openEditModal(
+                                        @appointment.AppointmentId,
+                                        @appointment.ClientId,
+                                        @appointment.TrainerId,
+                                        '@appointment.AppointmentDate.ToString("yyyy-MM-dd")',
+                                        '@appointment.AppointmentTime.ToString("HH:mm")',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(appointment.Reason ?? ""))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(status))',
+                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(appointment.Notes ?? ""))'
+                                        )">
+
+                                        <i class="fa-solid fa-pen"></i>
+                                        Edit
+
+                                    </button>
+
+
+                                    <form method="post"
+                                          action="@Url.Action("DeleteAppointment", "Home")"
+                                          style="flex:1;margin:0;"
+                                          onsubmit="return confirm('Are you sure you want to delete this appointment?');">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@appointment.AppointmentId" />
+
+                                        <button type="submit"
+                                                class="action-btn delete-btn"
+                                                style="width:100%;">
+
+                                            <i class="fa-solid fa-trash"></i>
+                                            Delete
+
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+         ADD / EDIT MODAL
+    ========================================================= -->
+
+    <div class="modal-overlay"
+         id="appointmentModal">
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <h2 id="modalTitle">
+                    Add Appointment
+                </h2>
+
+                <button class="modal-close"
+                        type="button"
+                        onclick="closeModal('appointmentModal')">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <form method="post"
+                  id="appointmentForm"
+                  action="@Url.Action("AddAppointment", "Home")">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       id="AppointmentId"
+                       name="AppointmentId"
+                       value="0" />
+
+
+                <div class="modal-body">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                Client *
+                            </label>
+
+                            <select class="form-control"
+                                    id="ClientId"
+                                    name="ClientId"
+                                    required>
+
+                                <option value="">
+                                    Select Client
+                                </option>
+
+                                @foreach (var client in clients)
+                                {
+                                    <option value="@client.UserId">
+                                        @client.FullName
+                                    </option>
+                                }
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Trainer *
+                            </label>
+
+                            <select class="form-control"
+                                    id="TrainerId"
+                                    name="TrainerId"
+                                    required>
+
+                                <option value="">
+                                    Select Trainer
+                                </option>
+
+                                @foreach (var trainer in trainers)
+                                {
+                                    <option value="@trainer.UserId">
+                                        @trainer.FullName
+                                    </option>
+                                }
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Appointment Date *
+                            </label>
+
+                            <input type="date"
+                                   class="form-control"
+                                   id="AppointmentDate"
+                                   name="AppointmentDate"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Appointment Time *
+                            </label>
+
+                            <input type="time"
+                                   class="form-control"
+                                   id="AppointmentTime"
+                                   name="AppointmentTime"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Reason
+                            </label>
+
+                            <input type="text"
+                                   class="form-control"
+                                   id="Reason"
+                                   name="Reason"
+                                   maxlength="300"
+                                   placeholder="Example: Fitness consultation" />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Status
+                            </label>
+
+                            <select class="form-control"
+                                    id="Status"
+                                    name="Status">
+
+                                <option value="Pending">
+                                    Pending
+                                </option>
+
+                                <option value="Confirmed">
+                                    Confirmed
+                                </option>
+
+                                <option value="Completed">
+                                    Completed
+                                </option>
+
+                                <option value="Cancelled">
+                                    Cancelled
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Notes
+                            </label>
+
+                            <input type="text"
+                                   class="form-control"
+                                   id="Notes"
+                                   name="Notes"
+                                   maxlength="500"
+                                   placeholder="Optional notes" />
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn-cancel"
+                            onclick="closeModal('appointmentModal')">
+
+                        Cancel
+
+                    </button>
+
+                    <button type="submit"
+                            class="btn-save">
+
+                        <i class="fa-solid fa-floppy-disk"></i>
+
+                        Save Appointment
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         VIEW MODAL
+    ========================================================= -->
+
+    <div class="modal-overlay"
+         id="viewModal">
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <h2>
+                    Appointment Details
+                </h2>
+
+                <button class="modal-close"
+                        type="button"
+                        onclick="closeModal('viewModal')">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <div class="view-profile">
+
+                    <div class="person-letter"
+                         style="margin:auto;width:82px;height:82px;font-size:28px;"
+                         id="viewInitial">
+
+                        A
+
+                    </div>
+
+                    <div class="view-name"
+                         id="viewClientName">
+                        Client
+                    </div>
+
+                    <div class="view-role">
+                        APPOINTMENT
+                    </div>
+
+                </div>
+
+
+                <div class="view-grid">
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Appointment ID
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewId">
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Status
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewStatus">
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Client
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewClient">
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Trainer
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewTrainer">
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Date
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewDate">
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Time
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewTime">
+                            -
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="reason-box"
+                     style="margin-top:12px;">
+
+                    <div class="detail-label">
+                        Reason
+                    </div>
+
+                    <div class="reason-text"
+                         id="viewReason">
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="reason-box">
+
+                    <div class="detail-label">
+                        Notes
+                    </div>
+
+                    <div class="reason-text"
+                         id="viewNotes">
+                        -
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn-cancel"
+                        onclick="closeModal('viewModal')">
+
+                    Close
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         TOAST
+    ========================================================= -->
+
+    <div id="toast"
+         class="toast">
+
+        <span id="toastMessage"></span>
+
+    </div>
+
+
+    <script>
+
+            function toggleSidebar() {
+
+                document
+                    .getElementById("adminSidebar")
+                    .classList
+                    .toggle("open");
+
+            }
+
+
+            function openAddModal() {
+
+                document.getElementById("modalTitle").innerText =
+                    "Add Appointment";
+
+                document.getElementById("appointmentForm").action =
+                    "@Url.Action("AddAppointment", "Home")";
+
+                document.getElementById("AppointmentId").value = "0";
+
+                document.getElementById("ClientId").value = "";
+
+                document.getElementById("TrainerId").value = "";
+
+                document.getElementById("AppointmentDate").value = "";
+
+                document.getElementById("AppointmentTime").value = "";
+
+                document.getElementById("Reason").value = "";
+
+                document.getElementById("Status").value = "Pending";
+
+                document.getElementById("Notes").value = "";
+
+                document
+                    .getElementById("appointmentModal")
+                    .classList
+                    .add("show");
+
+            }
+
+
+            function openEditModal(
+                id,
+                clientId,
+                trainerId,
+                date,
+                time,
+                reason,
+                status,
+                notes
+            ) {
+
+                document.getElementById("modalTitle").innerText =
+                    "Edit Appointment";
+
+                document.getElementById("appointmentForm").action =
+                    "@Url.Action("EditAppointment", "Home")";
+
+                document.getElementById("AppointmentId").value = id;
+
+                document.getElementById("ClientId").value = clientId;
+
+                document.getElementById("TrainerId").value = trainerId;
+
+                document.getElementById("AppointmentDate").value = date;
+
+                document.getElementById("AppointmentTime").value = time;
+
+                document.getElementById("Reason").value = reason;
+
+                document.getElementById("Status").value = status;
+
+                document.getElementById("Notes").value = notes;
+
+                document
+                    .getElementById("appointmentModal")
+                    .classList
+                    .add("show");
+
+            }
+
+
+            function viewAppointment(
+                id,
+                client,
+                trainer,
+                date,
+                time,
+                status,
+                reason,
+                notes
+            ) {
+
+                document.getElementById("viewId").innerText =
+                    id;
+
+                document.getElementById("viewClient").innerText =
+                    client;
+
+                document.getElementById("viewClientName").innerText =
+                    client;
+
+                document.getElementById("viewTrainer").innerText =
+                    trainer;
+
+                document.getElementById("viewDate").innerText =
+                    date;
+
+                document.getElementById("viewTime").innerText =
+                    time;
+
+                document.getElementById("viewStatus").innerText =
+                    status;
+
+                document.getElementById("viewReason").innerText =
+                    reason || "No reason provided.";
+
+                document.getElementById("viewNotes").innerText =
+                    notes || "No notes.";
+
+                document.getElementById("viewInitial").innerText =
+                    client
+                        ? client.substring(0, 1).toUpperCase()
+                        : "C";
+
+                document
+                    .getElementById("viewModal")
+                    .classList
+                    .add("show");
+
+            }
+
+
+            function closeModal(id) {
+
+                document
+                    .getElementById(id)
+                    .classList
+                    .remove("show");
+
+            }
+
+
+            window.addEventListener("click", function(event) {
+
+                if (event.target.classList.contains("modal-overlay")) {
+
+                    event.target.classList.remove("show");
+
+                }
+
+            });
+
+
+            document.addEventListener("keydown", function(event) {
+
+                if (event.key === "Escape") {
+
+                    document
+                        .querySelectorAll(".modal-overlay")
+                        .forEach(function(modal) {
+
+                            modal.classList.remove("show");
+
+                        });
+
+                }
+
+            });
+
+
+            @if (TempData["Success"] != null)
+                {
+                    <text>
+
+                            document.addEventListener("DOMContentLoaded", function () {
+
+                                showToast(
+                                    "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(TempData["Success"]!.ToString()!))",
+                                    "success"
+                                );
+
+                                    });
+
+                    </text>
+            }
+
+
+                @if (TempData["Error"] != null)
+                {
+                    <text>
+
+                            document.addEventListener("DOMContentLoaded", function () {
+
+                                showToast(
+                                    "@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(TempData["Error"]!.ToString()!))",
+                                    "error"
+                                );
+
+                                    });
+
+                    </text>
+            }
+
+
+                function showToast(message, type) {
+
+                    var toast =
+                        document.getElementById("toast");
+
+                    var messageBox =
+                        document.getElementById("toastMessage");
+
+                    messageBox.innerText = message;
+
+                    toast.className =
+                        "toast show " + type;
+
+                    setTimeout(function() {
+
+                        toast.classList.remove("show");
+
+                    }, 3500);
+
+                }
+
+    </script>
+
+</body>
+</html>

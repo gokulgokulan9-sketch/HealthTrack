@@ -1,0 +1,969 @@
+@using System.Text.Json
+@using HealthTrack.Models
+@{
+    Layout = null;
+
+    var trainerName = ViewBag.UserName as string ?? "Trainer";
+    var profilePath = ViewBag.ProfileImage as string;
+    var trainerInitial = !string.IsNullOrWhiteSpace(trainerName)
+        ? trainerName.Trim().Substring(0, 1).ToUpper()
+        : "T";
+
+    var clients = ViewBag.Clients as IEnumerable<User> ?? Enumerable.Empty<User>();
+    var metrics = ViewBag.ProgressMetrics as IEnumerable<HealthMetric> ?? Enumerable.Empty<HealthMetric>();
+
+    int selectedClientId = ViewBag.SelectedClientId ?? 0;
+    string selectedClientName = ViewBag.SelectedClientName as string ?? "Select a client";
+
+    User? selectedClient = selectedClientId > 0
+        ? clients.FirstOrDefault(c => c.UserId == selectedClientId)
+        : null;
+
+    selectedClientName = selectedClient?.FullName ?? "Select a client";
+
+    var selectedClientImage = string.IsNullOrWhiteSpace(selectedClient?.ProfileImage)
+        ? ""
+        : (selectedClient.ProfileImage.StartsWith("/images/")
+            ? selectedClient.ProfileImage
+            : "/images/" + selectedClient.ProfileImage.TrimStart('/'));
+
+    var chatMessages = ViewBag.ChatMessages as IEnumerable<ChatMessage>
+                       ?? Enumerable.Empty<ChatMessage>();
+
+    decimal? currentWeight = ViewBag.CurrentWeight;
+    decimal? currentBmi = ViewBag.CurrentBmi;
+    decimal? currentBodyFat = ViewBag.CurrentBodyFat;
+    int? currentCalories = ViewBag.CurrentCalories;
+    decimal? weightChange = ViewBag.WeightChange;
+    decimal? bmiChange = ViewBag.BmiChange;
+
+    int totalWorkoutPlans = ViewBag.TotalWorkoutPlans ?? 0;
+    int completedWorkoutPlans = ViewBag.CompletedWorkoutPlans ?? 0;
+    decimal workoutProgress = ViewBag.WorkoutProgress ?? 0m;
+
+    var dates = ViewBag.ProgressDates as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var weightValues = ViewBag.WeightValues as IEnumerable<decimal> ?? Enumerable.Empty<decimal>();
+    var bmiValues = ViewBag.BmiValues as IEnumerable<decimal> ?? Enumerable.Empty<decimal>();
+    var bodyFatValues = ViewBag.BodyFatValues as IEnumerable<decimal> ?? Enumerable.Empty<decimal>();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Progress Reports - HealthTrack</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <style>
+
+        :root {
+            --navy: #071a2f;
+            --navy-2: #0b2545;
+            --navy-3: #12365d;
+            --emerald: #20c997;
+            --text: #eef6ff;
+            --muted: #9db0c6;
+            --card: #203c5c;
+            --card-2: #294966;
+            --border: #365876;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: radial-gradient(circle at 85% 10%, rgba(32,201,151,.10), transparent 25%), linear-gradient(135deg, #061629 0%, #0a203a 55%, #071a2f 100%);
+            color: var(--text);
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 245px;
+            height: 100vh;
+            background: linear-gradient(180deg, #061522 0%, #0B2438 55%, #04101C 100%);
+            color: white;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 30px rgba(0,0,0,.22);
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #00B894;
+            border-radius: 10px;
+        }
+
+        .brand {
+            height: 82px;
+            display: flex;
+            align-items: center;
+            padding: 0 22px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+
+        .brand-icon {
+            width: 43px;
+            height: 43px;
+            border-radius: 12px;
+            background: #00B894;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 7px 20px rgba(0,184,148,.30);
+        }
+
+        .brand-text {
+            margin-left: 12px;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -.6px;
+        }
+
+        .brand-text span {
+            color: #00B894;
+        }
+
+        .side-profile {
+            margin: 18px 15px 10px;
+            padding: 14px;
+            border-radius: 15px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.06);
+            display: flex;
+            align-items: center;
+        }
+
+        .side-profile-image,
+        .side-profile-fallback {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+        }
+
+        .side-profile-image {
+            object-fit: cover;
+            border: 2px solid #00B894;
+            background: #222;
+        }
+
+        .side-profile-fallback {
+            background: #00B894;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .side-profile-info {
+            margin-left: 11px;
+            min-width: 0;
+        }
+
+        .side-profile-name {
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .side-profile-role {
+            color: #aaa;
+            font-size: 11px;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .menu-title {
+            padding: 13px 22px 8px;
+            color: #777;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+        }
+
+        .sidebar-menu {
+            padding: 0 10px 25px;
+        }
+
+        .menu-item {
+            height: 46px;
+            margin-bottom: 5px;
+            padding: 0 14px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            color: #d7d7d7;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: .2s ease;
+        }
+
+        .menu-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,.08);
+            color: white;
+            transform: translateX(2px);
+        }
+
+        .menu-item.active {
+            background: #00B894;
+            color: white;
+            box-shadow: 0 7px 18px rgba(0,184,148,.30);
+        }
+
+        .menu-arrow {
+            margin-left: auto;
+            font-size: 10px;
+            color: #888;
+        }
+
+        .menu-item.active .menu-arrow {
+            color: white;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 18px 18px 22px;
+            border-top: 1px solid rgba(255,255,255,.06);
+        }
+
+        .sidebar-motivation {
+            color: white;
+            font-size: 14px;
+            line-height: 1.25;
+            font-weight: 800;
+        }
+
+        .sidebar-motivation span {
+            color: #00B894;
+        }
+
+        .motivation-line {
+            width: 42px;
+            height: 3px;
+            background: #00B894;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+
+        /* =====================================================
+           MAIN / TOPBAR
+        ===================================================== */
+
+        .main { margin-left: 245px; min-height: 100vh; }
+
+        .topbar {
+            height: 86px;
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(90deg, rgba(7,26,47,.98), rgba(13,47,78,.95));
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            position: sticky;
+            top: 0;
+            z-index: 500;
+            box-shadow: 0 8px 30px rgba(0,0,0,.16);
+        }
+
+        .page-title { font-size: 24px; font-weight: 800; letter-spacing: -.4px; }
+        .page-subtitle { color: #8fa6bd; font-size: 12px; margin-top: 4px; }
+        .trainer-box { display:flex; align-items:center; gap:11px; }
+        .trainer-avatar { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #20c997; background:#183752; }
+        .trainer-name { font-size:13px; font-weight:700; }
+        .trainer-role { color:#8da5bc; font-size:10px; text-transform:uppercase; margin-top:3px; }
+
+        .content { padding: 28px 34px 45px; }
+
+        .alert-box { border-radius:12px; padding:11px 13px; margin-bottom:18px; font-size:11px; }
+        .alert-success { background:rgba(32,201,151,.12); color:#67e0bd; border:1px solid rgba(32,201,151,.18); }
+        .alert-danger { background:rgba(255,107,129,.10); color:#ff9bad; border:1px solid rgba(255,107,129,.18); }
+
+        .hero {
+            border-radius:20px; padding:23px 25px;
+            background:linear-gradient(120deg,#102e49 0%,#123b5a 65%,#104b5b 100%);
+            color:white; display:flex; justify-content:space-between; align-items:center;
+            box-shadow:0 16px 35px rgba(0,0,0,.18); margin-bottom:22px;
+            border:1px solid rgba(255,255,255,.06);
+        }
+        .hero h2 { margin:0; font-size:22px; font-weight:800; }
+        .hero p { margin:6px 0 0; color:#9bb2c3; font-size:12px; }
+        .hero-client { color:#20c997; font-weight:800; }
+        .select-wrap { min-width:290px; }
+        .select-wrap label { display:block; color:#9bb2c3; font-size:10px; margin-bottom:6px; font-weight:700; }
+        .select-wrap select { width:100%; border:1px solid #365876; border-radius:10px; height:43px; padding:0 13px; font-size:12px; font-weight:700; color:#eef6ff; background:#203c5c; outline:none; }
+
+        .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-bottom:20px; }
+        .stat-card { background:linear-gradient(145deg,#173552,#203f5f); border:1px solid #365876; border-radius:17px; padding:19px; box-shadow:0 8px 24px rgba(0,0,0,.16); }
+        .stat-top { display:flex; justify-content:space-between; align-items:center; }
+        .stat-label { color:#9db0c6; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
+        .stat-icon { width:37px; height:37px; border-radius:11px; background:rgba(32,201,151,.14); color:#20c997; display:flex; align-items:center; justify-content:center; }
+        .stat-value { margin-top:12px; color:#fff; font-size:24px; font-weight:800; }
+        .stat-note { margin-top:4px; color:#8fa6bd; font-size:10px; }
+        .positive { color:#20c997; } .negative { color:#ff8799; }
+
+        .grid-2 { display:grid; grid-template-columns:1.65fr 1fr; gap:18px; margin-bottom:20px; }
+        .panel { background:linear-gradient(145deg,#173552,#203f5f); border:1px solid #365876; border-radius:17px; padding:21px; box-shadow:0 8px 24px rgba(0,0,0,.16); }
+        .panel-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+        .panel-title { color:#eef6ff; font-size:14px; font-weight:800; }
+        .panel-sub { color:#8fa6bd; font-size:10px; margin-top:3px; }
+        .chart-box { height:285px; position:relative; }
+        .workout-progress { text-align:center; padding:13px 0 4px; }
+        .ring { width:150px; height:150px; border-radius:50%; margin:10px auto 18px; display:grid; place-items:center; background:conic-gradient(#20c997 @(workoutProgress)% , #365876 0); position:relative; }
+        .ring::after { content:""; position:absolute; width:116px; height:116px; border-radius:50%; background:#173552; }
+        .ring-text { position:relative; z-index:1; font-size:28px; font-weight:800; color:#fff; }
+        .workout-label { font-size:11px; color:#8fa6bd; }
+        .workout-count { margin-top:7px; font-size:13px; font-weight:800; color:#eef6ff; }
+
+        .table-panel { overflow:hidden; }
+        .table-responsive { border-radius:12px; overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#173552; color:#8fa6bd; font-size:9px; text-transform:uppercase; letter-spacing:.5px; padding:12px 13px; text-align:left; white-space:nowrap; }
+        td { padding:13px; border-top:1px solid #365876; font-size:11px; color:#d9e5ef; white-space:nowrap; }
+        .date-badge { font-weight:800; color:#eef6ff; }
+        .status { display:inline-flex; padding:5px 9px; border-radius:20px; background:rgba(32,201,151,.13); color:#55ddb9; font-size:9px; font-weight:800; }
+        .empty { padding:48px 20px; text-align:center; color:#8fa6bd; }
+        .empty i { font-size:32px; color:#52708b; margin-bottom:12px; }
+        .empty-title { color:#eef6ff; font-size:13px; font-weight:800; }
+        .empty-text { font-size:11px; margin-top:5px; }
+
+        @@media (max-width:1050px) { .stats { grid-template-columns:repeat(2,1fr); } .grid-2 { grid-template-columns:1fr; } }
+        @@media (max-width:800px) {
+            .sidebar { width:72px; } .brand { justify-content:center; padding:0; }
+            .brand-text,.menu-title,.menu-item span,.side-profile-info,.sidebar-bottom { display:none; }
+            .brand-icon { margin:0; } .menu-item { justify-content:center; padding:0; } .menu-arrow { display:none; }
+            .main { margin-left:72px; } .content { padding:18px; } .topbar { padding:0 18px; }
+            .trainer-name,.trainer-role { display:none; } .hero { flex-direction:column; align-items:stretch; gap:16px; } .select-wrap { min-width:0; }
+        }
+        @@media (max-width:600px) { .stats { grid-template-columns:1fr; } .content { padding:15px; } .topbar { height:76px; } .page-title { font-size:20px; } }
+
+</style>
+
+<style>
+.messages-content{padding:24px 30px 30px;}
+.messages-shell{
+    height:calc(100vh - 126px);
+    min-height:0;
+    display:grid;
+    grid-template-columns:310px minmax(0,1fr);
+    background:#102b46;
+    border:1px solid #294a68;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 18px 45px rgba(0,0,0,.22);
+}
+.client-panel{background:#0b2238;border-right:1px solid #294a68;display:flex;flex-direction:column;min-width:0;}
+.client-panel-head{padding:18px;border-bottom:1px solid #294a68;}
+.client-panel-title{font-size:15px;font-weight:800;color:#fff;}
+.client-panel-sub{font-size:10px;color:#86a0b7;margin-top:4px;}
+.client-search{margin-top:14px;height:38px;background:#102f4d;border:1px solid #315572;border-radius:9px;display:flex;align-items:center;padding:0 11px;gap:8px;}
+.client-search i{font-size:11px;color:#7d98ae;}
+.client-search input{border:0;outline:0;background:transparent;color:#eef6ff;width:100%;font-size:11px;}
+.client-search input::placeholder{color:#718ba1;}
+.client-list{overflow-y:auto;flex:1;padding:8px;scrollbar-width:thin;scrollbar-color:#365875 transparent;}
+.client-list::-webkit-scrollbar{width:5px}.client-list::-webkit-scrollbar-thumb{background:#365875;border-radius:10px}
+.client-item{width:100%;border:0;background:transparent;color:#fff;text-align:left;padding:11px 10px;border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:3px;transition:.18s;}
+.client-item:hover{background:#153a59}.client-item.active{background:#00b894;box-shadow:0 7px 18px rgba(0,184,148,.18);}
+.client-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#173b59;border:1px solid #3a5d78;display:flex;align-items:center;justify-content:center;font-weight:800;color:#75e6c2;flex:0 0 40px;}
+.client-item.active .client-avatar{border-color:rgba(255,255,255,.45);color:#062238;}
+.client-info{min-width:0;flex:1}.client-name{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.client-preview{font-size:9px;color:#7f9ab0;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.client-item.active .client-preview{color:#d9fff4;}
+.client-status{width:7px;height:7px;border-radius:50%;background:#20c997;box-shadow:0 0 0 3px rgba(32,201,151,.12);}
+.chat-panel{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+    height:100%;
+    background:#0e2943;
+}
+.chat-header{height:72px;padding:0 20px;border-bottom:1px solid #294a68;display:flex;align-items:center;gap:11px;background:linear-gradient(90deg,#0d2943,#123b5f);}
+.chat-header-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#173b59;border:2px solid #20c997;display:flex;align-items:center;justify-content:center;color:#75e6c2;font-weight:800;}
+.chat-header-info{min-width:0;flex:1}.chat-header-name{font-size:14px;font-weight:800;color:#fff}.chat-header-state{font-size:9px;color:#79e4c0;margin-top:3px}.chat-actions{display:flex;gap:7px}.chat-action{width:34px;height:34px;border:1px solid #365876;background:#123451;color:#9eb4c8;border-radius:9px;display:grid;place-items:center;cursor:pointer}.chat-action:hover{color:#fff;background:#17405f}.chat-action.call{color:#69e0b9;border-color:#2b6a5b}
+.chat-messages{
+    flex:1 1 auto;
+    height:0;
+    min-height:0;
+    overflow-y:scroll !important;
+    overflow-x:hidden;
+    padding:22px 24px;
+    background:radial-gradient(circle at 80% 10%,rgba(0,184,148,.055),transparent 30%),#0b243b;
+    scrollbar-width:auto;
+    scrollbar-color:#365875 #0b243b;
+}
+.chat-messages::-webkit-scrollbar{
+    width:10px;
+}
+.chat-messages::-webkit-scrollbar-track{
+    background:#0b243b;
+}
+.chat-messages::-webkit-scrollbar-thumb{
+    background:#365875;
+    border-radius:10px;
+    border:2px solid #0b243b;
+}
+.chat-messages::-webkit-scrollbar-thumb:hover{
+    background:#4b718f;
+}
+.chat-day{text-align:center;color:#69869d;font-size:9px;margin:2px 0 18px;}
+.message-row{display:flex;margin-bottom:12px}.message-row.client{justify-content:flex-start}.message-row.trainer{justify-content:flex-end}.bubble{max-width:68%;padding:10px 12px;border-radius:13px;background:#173b59;color:#eaf4fb;border:1px solid #294d6b;font-size:11px;line-height:1.45;box-shadow:0 5px 14px rgba(0,0,0,.12)}.trainer .bubble{background:#00a982;color:#06251d;border-color:#00c99e;border-bottom-right-radius:4px}.client .bubble{border-bottom-left-radius:4px}.message-time{display:block;font-size:8px;margin-top:5px;opacity:.65;text-align:right}.empty-chat{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;color:#7893a8}.empty-chat i{font-size:38px;color:#2c5a78;margin-bottom:12px}.empty-chat-title{font-size:14px;font-weight:800;color:#a9bfd0}.empty-chat-text{font-size:10px;margin-top:5px;}
+.composer{padding:13px 16px;border-top:1px solid #294a68;background:#0b2238;display:flex;gap:8px;align-items:center}.composer-input{flex:1;height:42px;border:1px solid #315572;background:#102f4d;color:#eef6ff;border-radius:10px;padding:0 13px;outline:none;font-size:11px}.composer-input:focus{border-color:#20c997;box-shadow:0 0 0 3px rgba(32,201,151,.08)}.composer-input::placeholder{color:#718ba1}.send-btn{width:42px;height:42px;border:0;border-radius:10px;background:#00b894;color:#062238;font-size:14px;cursor:pointer}.send-btn:hover{background:#20c997}.attach-btn{width:38px;height:38px;border:0;background:transparent;color:#7190a7;cursor:pointer}.attach-btn:hover{color:#20c997}
+.no-client{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;color:#7893a8}.no-client i{font-size:42px;color:#2c5a78;margin-bottom:12px}.no-client-title{font-size:15px;font-weight:800;color:#b3c7d6}.no-client-text{font-size:10px;margin-top:5px}
+
+.attachment-card{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);color:inherit;text-decoration:none;min-width:150px;max-width:260px}
+.attachment-card i{font-size:18px;color:#75e6c2}
+.attachment-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700}
+.call-panel{position:absolute;inset:0;z-index:30;display:none;flex-direction:column;background:linear-gradient(180deg,#071c2b,#0b243b);color:#fff}
+.chat-panel{position:relative}
+.call-panel.show{display:flex}
+.call-panel-head{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.call-panel-title{font-size:14px;font-weight:800}.call-panel-subtitle{font-size:9px;color:#9eb4c8;margin-top:3px}
+.call-close{width:35px;height:35px;border:0;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer}
+.call-stage{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.call-avatar{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #20c997;background:#173b59}
+.call-remote-video{display:none;width:100%;height:100%;object-fit:contain;background:#061a29}
+.call-local-video{display:none;position:absolute;right:18px;top:18px;width:150px;height:105px;object-fit:cover;border:2px solid #20c997;border-radius:10px;background:#061a29;z-index:2}
+.call-name{margin-top:16px;font-size:18px;font-weight:800}.call-status{margin-top:5px;color:#93afc3;font-size:11px}
+.call-controls{display:flex;justify-content:center;gap:13px;padding:22px}
+.call-control{width:48px;height:48px;border:0;border-radius:50%;background:#233b4d;color:#fff;cursor:pointer}.call-control.active{background:#00a982}.call-control.end{background:#c93d3d}
+@@media(max-width:900px){.messages-shell{grid-template-columns:260px 1fr}.messages-content{padding:18px}.bubble{max-width:78%}}
+@@media(max-width:700px){.messages-shell{grid-template-columns:1fr;height:calc(100vh - 110px)}.client-panel{display:none}.chat-panel{width:100%}.topbar{padding:0 18px}.trainer-name,.trainer-role{display:none}}
+</style>
+</head>
+
+
+<body>
+<aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-apple-whole"></i>
+            </div>
+
+            <div class="brand-text">
+                Health<span>Track</span>
+            </div>
+        </div>
+
+        <div class="side-profile">
+
+            @if (!string.IsNullOrWhiteSpace(profilePath))
+            {
+                <img src="@profilePath"
+                     class="side-profile-image"
+                     alt="Trainer" />
+            }
+            else
+            {
+                <div class="side-profile-fallback">
+                    @trainerInitial
+                </div>
+            }
+
+            <div class="side-profile-info">
+                <div class="side-profile-name">
+                    @trainerName
+                </div>
+
+                <div class="side-profile-role">
+                    Trainer
+                </div>
+            </div>
+
+        </div>
+
+        <div class="menu-title">
+            MAIN MENU
+        </div>
+
+        <nav class="sidebar-menu">
+
+            <a href="@Url.Action("TrainerDashboard", "Home")"
+               class="menu-item">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="@Url.Action("MyClients", "Home")"
+               class="menu-item">
+                <i class="fa-solid fa-users"></i>
+                <span>My Clients</span>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </a>
+
+            <a href="@Url.Action("TrainerAppointments", "Home")"
+               class="menu-item">
+                <i class="fa-regular fa-calendar-check"></i>
+                <span>Appointments</span>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </a>
+
+            <a href="@Url.Action("TrainerWorkoutPlans", "Home")"
+               class="menu-item">
+                <i class="fa-solid fa-dumbbell"></i>
+                <span>Workout Plans</span>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </a>
+
+            <a href="@Url.Action("TrainerDietPlans", "Home")"
+               class="menu-item">
+                <i class="fa-solid fa-apple-whole"></i>
+                <span>Diet Plans</span>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </a>
+
+            <a href="@Url.Action("TrainerHealthRecords", "Home")"
+               class="menu-item">
+                <i class="fa-solid fa-chart-simple"></i>
+                <span>Progress Reports</span>
+                <i class="fa-solid fa-chevron-right menu-arrow"></i>
+            </a>
+
+            <a href="@Url.Action("TrainerMessages", "Home")"
+               class="menu-item active">
+                <i class="fa-solid fa-message"></i>
+                <span>Messages</span>
+                <span class="menu-arrow">0</span>
+            </a>
+
+            <a href="@Url.Action("TrainerNotifications", "Home")"
+               class="menu-item">
+                <i class="fa-regular fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-motivation">
+                STRONGER <span>PEOPLE</span><br />
+                HEALTHIER TOMORROW
+            </div>
+
+            <div class="motivation-line"></div>
+
+        </div>
+
+    </aside>
+<main class="main">
+    <header class="topbar">
+        <div>
+            <div class="page-title">Messages</div>
+            <div class="page-subtitle">Communicate with your clients securely</div>
+        </div>
+        <div class="trainer-box">
+            @if (!string.IsNullOrWhiteSpace(profilePath))
+            {
+                <img src="@profilePath" class="trainer-avatar" alt="Trainer" />
+            }
+            else
+            {
+                <div class="trainer-avatar d-flex align-items-center justify-content-center"><i class="fa-solid fa-user" style="color:#8da5bc"></i></div>
+            }
+            <div><div class="trainer-name">@trainerName</div><div class="trainer-role">Trainer</div></div>
+        </div>
+    </header>
+
+    <section class="messages-content">
+        <div class="messages-shell">
+            <aside class="client-panel">
+                <div class="client-panel-head">
+                    <div class="client-panel-title">Client Messages</div>
+                    <div class="client-panel-sub">Select a client to start a conversation</div>
+                    <div class="client-search"><i class="fa-solid fa-magnifying-glass"></i><input id="clientSearch" type="text" placeholder="Search clients..." autocomplete="off"></div>
+                </div>
+                <div class="client-list" id="clientList">
+                    @if (!clients.Any())
+                    {
+                        <div style="padding:25px 12px;text-align:center;color:#708aa0;font-size:10px;">No clients available.</div>
+                    }
+                    else
+                    {
+                        var first = true;
+                        foreach (var client in clients)
+                        {
+                            var name = client.FullName ?? "Client";
+                            var initial = string.IsNullOrWhiteSpace(name) ? "C" : name.Trim().Substring(0,1).ToUpper();
+                            var image = string.IsNullOrWhiteSpace(client.ProfileImage) ? "" : (client.ProfileImage.StartsWith("/images/") ? client.ProfileImage : "/images/" + client.ProfileImage.TrimStart('/'));
+                            <button type="button" class="client-item @(first ? "active" : "")" data-client-id="@client.UserId" data-client-name="@name" data-client-email="@client.Email" data-client-image="@image">
+                                @if (!string.IsNullOrWhiteSpace(image)) { <img src="@image" class="client-avatar" alt="Client" /> } else { <span class="client-avatar">@initial</span> }
+                                <span class="client-info"><span class="client-name">@name</span><span class="client-preview">Start a conversation</span></span>
+                                <span class="client-status"></span>
+                            </button>
+                            first = false;
+                        }
+                    }
+                </div>
+            </aside>
+
+            <section class="chat-panel">
+                <div class="chat-header" id="chatHeader">
+                    <div id="chatAvatar" class="chat-header-avatar">
+                        @if (!string.IsNullOrWhiteSpace(selectedClientImage))
+                        {
+                            <img src="@selectedClientImage" class="chat-header-avatar" alt="Client" />
+                        }
+                        else
+                        {
+                            <span>@(selectedClientName == "Select a client" ? "C" : selectedClientName.Trim().Substring(0, 1).ToUpper())</span>
+                        }
+                    </div>
+                    <div class="chat-header-info"><div id="chatName" class="chat-header-name">@selectedClientName</div><div id="chatState" class="chat-header-state">@(selectedClientId > 0 ? "Ready to chat" : "Select a client")</div></div>
+                    <div class="chat-actions">
+                        <button type="button" class="chat-action call" title="Voice call" onclick="startClientCall('voice')"><i class="fa-solid fa-phone"></i></button>
+                        <button type="button" class="chat-action" title="Video call" onclick="startClientCall('video')"><i class="fa-solid fa-video"></i></button>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+
+                    @if (selectedClientId > 0 && chatMessages.Any())
+                    {
+                        foreach (var msg in chatMessages)
+                        {
+                            var isTrainerMessage = msg.SenderId != selectedClientId;
+
+                            <div class="message-row @(isTrainerMessage ? "trainer" : "client")">
+                                <div class="bubble">
+                                    @if (msg.MessageText != null &&
+                                         msg.MessageText.StartsWith("__HT_ATTACHMENT__|"))
+                                    {
+                                        var attachmentParts = msg.MessageText.Split('|');
+                                        var attachmentName =
+                                            attachmentParts.Length > 1
+                                                ? attachmentParts[1]
+                                                : "Attachment";
+                                        var attachmentUrl =
+                                            attachmentParts.Length > 2
+                                                ? attachmentParts[2]
+                                                : "#";
+                                        var attachmentType =
+                                            attachmentParts.Length > 3
+                                                ? attachmentParts[3]
+                                                : "";
+
+                                        var attachmentIcon = "fa-file";
+
+                                        if (attachmentType.StartsWith("image/"))
+                                            attachmentIcon = "fa-image";
+                                        else if (attachmentType.StartsWith("video/"))
+                                            attachmentIcon = "fa-video";
+                                        else if (attachmentType.StartsWith("audio/"))
+                                            attachmentIcon = "fa-file-audio";
+                                        else if (attachmentType.Contains("pdf"))
+                                            attachmentIcon = "fa-file-pdf";
+
+                                        <a href="@attachmentUrl"
+                                           target="_blank"
+                                           rel="noopener"
+                                           class="attachment-card">
+                                            <i class="fa-solid @attachmentIcon"></i>
+                                            <span class="attachment-name">@attachmentName</span>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        @msg.MessageText
+                                    }
+
+                                    <span class="message-time">
+                                        @msg.SentAt.ToString("hh:mm tt")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-chat" id="emptyChat">
+                            <div>
+                                <i class="fa-regular fa-comments"></i>
+                                <div class="empty-chat-title">
+                                    @(selectedClientId > 0
+                                        ? $"Start a conversation with {selectedClientName}"
+                                        : "Start a conversation")
+                                </div>
+                                <div class="empty-chat-text">
+                                    Select a client from the left to send a message.
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <div class="composer">
+                    <input type="file" id="chatAttachment" hidden />
+                    <button type="button" class="attach-btn" title="Attach" onclick="document.getElementById('chatAttachment').click()"><i class="fa-solid fa-paperclip"></i></button>
+                    <input id="messageInput" class="composer-input" type="text" placeholder="Type a message..." autocomplete="off" disabled />
+                    <button type="button" class="send-btn" id="sendBtn" title="Send" disabled><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+
+                <div id="callPanel" class="call-panel">
+                    <div class="call-panel-head">
+                        <div>
+                            <div id="callTitle" class="call-panel-title">Voice Call</div>
+                            <div id="callSubtitle" class="call-panel-subtitle">Connecting...</div>
+                        </div>
+                        <button type="button" class="call-close" onclick="endClientCall()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="call-stage">
+                        <img id="callClientImage" class="call-avatar" src="/images/default-user.png" alt="Client" />
+                        <video id="callRemoteVideo" class="call-remote-video" autoplay playsinline></video>
+                        <video id="callLocalVideo" class="call-local-video" autoplay muted playsinline></video>
+                        <audio id="callRemoteAudio" autoplay></audio>
+                        <div id="callName" class="call-name">Client</div>
+                        <div id="callStatus" class="call-status">Calling...</div>
+                    </div>
+                    <div class="call-controls">
+                        <button type="button" class="call-control" title="Mute" onclick="toggleCallMute(this)"><i class="fa-solid fa-microphone"></i></button>
+                        <button type="button" class="call-control" title="Camera" onclick="toggleCallCamera(this)"><i class="fa-solid fa-video"></i></button>
+                        <button type="button" class="call-control end" title="End Call" onclick="endClientCall()"><i class="fa-solid fa-phone-slash"></i></button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+</main>
+
+<form id="chatAntiForgeryForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<script>
+(function () {
+    let activeClient = null;
+    let callState = {
+        active:false,isCaller:false,peerId:0,roomId:"",type:"",
+        pc:null,localStream:null,remoteStream:null,pendingCandidates:[],pollTimer:null
+    };
+
+    const search=document.getElementById("clientSearch");
+    const input=document.getElementById("messageInput");
+    const send=document.getElementById("sendBtn");
+    const messages=document.getElementById("chatMessages");
+    const attachment=document.getElementById("chatAttachment");
+
+    function tokenValue(){return document.querySelector('input[name="__RequestVerificationToken"]')?.value||"";}
+    function esc(v){const d=document.createElement("div");d.textContent=v??"";return d.innerHTML;}
+    function escAttr(v){return String(v??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+    function setActiveClient(button){
+        document.querySelectorAll(".client-item").forEach(x=>x.classList.remove("active"));
+        button.classList.add("active");
+        activeClient={id:button.dataset.clientId,name:button.dataset.clientName||"Client",email:button.dataset.clientEmail||"",image:button.dataset.clientImage||""};
+        const u=new URL(window.location.href);u.searchParams.set("clientId",activeClient.id);window.location.href=u.toString();
+    }
+    document.querySelectorAll(".client-item").forEach(b=>b.addEventListener("click",()=>setActiveClient(b)));
+    search?.addEventListener("input",function(){
+        const q=this.value.toLowerCase().trim();
+        document.querySelectorAll(".client-item").forEach(b=>{
+            const n=(b.dataset.clientName||"").toLowerCase();b.style.display=n.includes(q)?"flex":"none";
+        });
+    });
+
+    async function sendMessage(){
+        if(!activeClient)return;
+        const text=input.value.trim();if(!text)return;
+        const body=new URLSearchParams();
+        body.set("__RequestVerificationToken",tokenValue());body.set("receiverId",activeClient.id);body.set("message",text);
+        send.disabled=true;
+        try{
+            const r=await fetch('@Url.Action("SendTrainerMessage","Home")',{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8","X-Requested-With":"XMLHttpRequest"},body:body.toString()});
+            if(r.redirected){window.location.href=r.url;return;}
+            if(!r.ok){alert("Unable to send the message.");return;}
+            input.value="";
+            window.location.href='@Url.Action("TrainerMessages","Home")'+"?clientId="+encodeURIComponent(activeClient.id);
+        }catch(e){console.error(e);alert("Unable to send the message.");}
+        finally{send.disabled=false;}
+    }
+    send?.addEventListener("click",sendMessage);
+    input?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}});
+
+    async function uploadAttachment(file){
+        if(!activeClient||!file)return;
+        const fd=new FormData();fd.append("__RequestVerificationToken",tokenValue());fd.append("receiverId",activeClient.id);fd.append("file",file);
+        try{
+            const r=await fetch('@Url.Action("UploadChatAttachment","Home")',{method:"POST",credentials:"same-origin",headers:{"X-Requested-With":"XMLHttpRequest"},body:fd});
+            const data=await r.json();
+            if(!r.ok||!data.success){alert(data.message||"Unable to upload the attachment.");return;}
+            window.location.href='@Url.Action("TrainerMessages","Home")'+"?clientId="+encodeURIComponent(activeClient.id);
+        }catch(e){console.error(e);alert("Unable to upload the attachment.");}
+        finally{attachment.value="";}
+    }
+    attachment?.addEventListener("change",function(){if(this.files?.length)uploadAttachment(this.files[0]);});
+
+    const selectedClientId='@selectedClientId';
+    const selectedButton=document.querySelector('.client-item[data-client-id="'+selectedClientId+'"]');
+    if(selectedButton){
+        selectedButton.classList.add("active");
+        activeClient={id:selectedButton.dataset.clientId,name:selectedButton.dataset.clientName||"Client",email:selectedButton.dataset.clientEmail||"",image:selectedButton.dataset.clientImage||""};
+        input.disabled=false;send.disabled=false;
+        requestAnimationFrame(()=>{messages.scrollTop=messages.scrollHeight;});
+    }else{
+        const first=document.querySelector(".client-item");
+        if(first){activeClient={id:first.dataset.clientId,name:first.dataset.clientName||"Client",email:first.dataset.clientEmail||"",image:first.dataset.clientImage||""};input.disabled=false;send.disabled=false;}
+    }
+
+    async function sendCallSignal(type,payload){
+        if(!callState.peerId||!callState.roomId)return;
+        const b=new URLSearchParams();
+        b.set("__RequestVerificationToken",tokenValue());b.set("receiverId",String(callState.peerId));b.set("roomId",callState.roomId);b.set("callType",callState.type);b.set("signalType",type);b.set("payload",JSON.stringify(payload||{}));
+        try{await fetch('@Url.Action("SendCallSignal","Home")',{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8","X-Requested-With":"XMLHttpRequest"},body:b.toString()});}catch(e){console.error(e);}
+    }
+
+    function showCallPanel(type){
+        const p=document.getElementById("callPanel");if(!p)return;
+        document.getElementById("callTitle").textContent=type==="video"?"Video Call":"Voice Call";
+        document.getElementById("callSubtitle").textContent=activeClient?.name||"Client";
+        document.getElementById("callName").textContent=activeClient?.name||"Client";
+        document.getElementById("callStatus").textContent=callState.isCaller?"Calling client...":"Incoming call...";
+        document.getElementById("callClientImage").src=activeClient?.image||"/images/default-user.png";
+        const rv=document.getElementById("callRemoteVideo"),lv=document.getElementById("callLocalVideo"),av=document.getElementById("callClientImage");
+        rv.style.display=type==="video"?"block":"none";lv.style.display=type==="video"?"block":"none";av.style.display=type==="video"?"none":"block";
+        p.classList.add("show");
+    }
+
+    async function getLocalMedia(type){
+        if(callState.localStream)return;
+        callState.localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==="video"});
+        const lv=document.getElementById("callLocalVideo");
+        if(type==="video"){lv.srcObject=callState.localStream;lv.play().catch(()=>{});}
+    }
+
+    async function createPeerConnection(){
+        if(callState.pc)return callState.pc;
+        callState.remoteStream=new MediaStream();
+        const pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});
+        callState.pc=pc;
+        callState.localStream?.getTracks().forEach(t=>pc.addTrack(t,callState.localStream));
+        pc.onicecandidate=e=>{if(e.candidate)sendCallSignal("ice",e.candidate.toJSON());};
+        pc.ontrack=e=>{
+            e.streams[0]?.getTracks().forEach(t=>callState.remoteStream.addTrack(t));
+            document.getElementById("callRemoteVideo").srcObject=callState.remoteStream;
+            document.getElementById("callRemoteAudio").srcObject=callState.remoteStream;
+            document.getElementById("callRemoteVideo").play().catch(()=>{});
+            document.getElementById("callRemoteAudio").play().catch(()=>{});
+            document.getElementById("callStatus").textContent="Connected";
+        };
+        pc.onconnectionstatechange=()=>{if(pc.connectionState==="failed")document.getElementById("callStatus").textContent="Call connection failed";};
+        return pc;
+    }
+
+    async function startClientCall(type){
+        if(!activeClient||callState.active)return;
+        if(!navigator.mediaDevices?.getUserMedia){alert("Camera and microphone are not available in this browser.");return;}
+        callState={active:true,isCaller:true,peerId:Number(activeClient.id),roomId:"ht-"+Date.now()+"-"+Math.random().toString(36).slice(2,9),type:type,pc:null,localStream:null,remoteStream:null,pendingCandidates:[],pollTimer:callState.pollTimer};
+        try{
+            showCallPanel(type);await getLocalMedia(type);const pc=await createPeerConnection();
+            const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+            await sendCallSignal("offer",{sdp:offer.sdp,type:offer.type});
+            document.getElementById("callStatus").textContent="Calling client...";
+        }catch(e){console.error(e);alert("Unable to start the call. Please allow camera/microphone access.");await endClientCall(false);}
+    }
+
+    async function handleCallSignal(s){
+        if(!s)return;
+        if(s.signalType==="offer"){
+            if(callState.active)return;
+
+            const incomingButton =
+                document.querySelector('.client-item[data-client-id="' + Number(s.senderId) + '"]');
+
+            if (!incomingButton) return;
+
+            activeClient = {
+                id: incomingButton.dataset.clientId,
+                name: incomingButton.dataset.clientName || "Client",
+                email: incomingButton.dataset.clientEmail || "",
+                image: incomingButton.dataset.clientImage || ""
+            };
+
+            document.querySelectorAll(".client-item").forEach(x => x.classList.remove("active"));
+            incomingButton.classList.add("active");
+
+            let offer;try{offer=JSON.parse(s.payload||"{}");}catch{return;}
+            callState={active:true,isCaller:false,peerId:Number(s.senderId),roomId:s.roomId,type:s.callType==="video"?"video":"voice",pc:null,localStream:null,remoteStream:null,pendingCandidates:[],pollTimer:callState.pollTimer};
+            if(!activeClient){
+                const b=document.querySelector('.client-item[data-client-id="'+callState.peerId+'"]');
+                if(b)activeClient={id:b.dataset.clientId,name:b.dataset.clientName||"Client",email:b.dataset.clientEmail||"",image:b.dataset.clientImage||""};
+            }
+            try{
+                showCallPanel(callState.type);await getLocalMedia(callState.type);const pc=await createPeerConnection();
+                await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+                await sendCallSignal("answer",{sdp:answer.sdp,type:answer.type});
+                document.getElementById("callStatus").textContent="Connecting...";
+            }catch(e){console.error(e);alert("Unable to answer the call. Please allow camera/microphone access.");await endClientCall(false);}
+            return;
+        }
+        if(!callState.active||Number(s.senderId)!==Number(callState.peerId)||s.roomId!==callState.roomId)return;
+        if(s.signalType==="answer"){
+            let a;try{a=JSON.parse(s.payload||"{}");}catch{return;}
+            if(callState.pc&&!callState.pc.remoteDescription)await callState.pc.setRemoteDescription(new RTCSessionDescription(a));
+        }else if(s.signalType==="ice"){
+            let c;try{c=JSON.parse(s.payload||"{}");}catch{return;}
+            if(callState.pc?.remoteDescription)await callState.pc.addIceCandidate(c).catch(()=>{});else callState.pendingCandidates.push(c);
+        }else if(s.signalType==="hangup"){await endClientCall(false);}
+    }
+
+    async function pollCallSignals(){
+        try{
+            const r=await fetch('@Url.Action("GetCallSignals","Home")',{credentials:"same-origin",headers:{"X-Requested-With":"XMLHttpRequest"}});
+            if(r.ok){const d=await r.json();for(const s of(d.signals||[]))await handleCallSignal(s);}
+        }catch(e){console.error("Call polling error:",e);}
+        callState.pollTimer=setTimeout(pollCallSignals,700);
+    }
+
+    async function endClientCall(sendHangup=true){
+        if(sendHangup&&callState.active&&callState.peerId)await sendCallSignal("hangup",{});
+        callState.pc?.close();
+        callState.localStream?.getTracks().forEach(t=>t.stop());
+        ["callRemoteVideo","callLocalVideo","callRemoteAudio"].forEach(id=>{const el=document.getElementById(id);if(el)el.srcObject=null;});
+        document.getElementById("callPanel")?.classList.remove("show");
+        callState.active=false;callState.isCaller=false;callState.peerId=0;callState.roomId="";callState.type="";callState.pc=null;callState.localStream=null;callState.remoteStream=null;callState.pendingCandidates=[];
+    }
+
+    function toggleCallMute(btn){
+        if(callState.localStream){callState.localStream.getAudioTracks().forEach(t=>t.enabled=!t.enabled);const off=callState.localStream.getAudioTracks().some(t=>!t.enabled);btn.classList.toggle("active",off);btn.querySelector("i").className=off?"fa-solid fa-microphone-slash":"fa-solid fa-microphone";return;}
+        btn.classList.toggle("active");
+    }
+    function toggleCallCamera(btn){
+        if(callState.localStream){callState.localStream.getVideoTracks().forEach(t=>t.enabled=!t.enabled);const off=callState.localStream.getVideoTracks().some(t=>!t.enabled);btn.classList.toggle("active",off);btn.querySelector("i").className=off?"fa-solid fa-video-slash":"fa-solid fa-video";return;}
+        btn.classList.toggle("active");
+    }
+
+    window.startClientCall=startClientCall;window.endClientCall=endClientCall;window.toggleCallMute=toggleCallMute;window.toggleCallCamera=toggleCallCamera;
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")endClientCall();});
+    pollCallSignals();
+})();
+</script>
+</body>
+</html>

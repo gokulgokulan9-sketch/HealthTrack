@@ -62,11 +62,11 @@
 
             body {
                 font-family: "Segoe UI", Arial, sans-serif;
-                background: linear-gradient( rgba(245,247,249,0.91), rgba(245,247,249,0.94) ), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2200&q=85");
+                background: linear-gradient( rgba(232,241,248,0.70), rgba(239,247,251,0.76) ), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2200&q=85");
                 background-size: cover;
                 background-position: center;
                 background-attachment: fixed;
-                color: #171a1f;
+                color: #172033;
                 min-height: 100vh;
                 overflow-x: hidden;
             }
@@ -82,7 +82,7 @@
                 top: 0;
                 width: 245px;
                 height: 100vh;
-                background: linear-gradient( 180deg, #080a0d 0%, #101419 55%, #07090c 100% );
+                background: linear-gradient( 180deg, #061522 0%, #0B2438 55%, #04101C 100% );
                 color: white;
                 z-index: 1000;
                 display: flex;
@@ -97,7 +97,7 @@
                 }
 
                 .sidebar::-webkit-scrollbar-thumb {
-                    background: #ef233c;
+                    background: #00B894;
                     border-radius: 10px;
                 }
 
@@ -118,7 +118,7 @@
                 width: 43px;
                 height: 43px;
                 border-radius: 12px;
-                background: #ef233c;
+                background: #00B894;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -134,7 +134,7 @@
             }
 
                 .brand-text span {
-                    color: #ef233c;
+                    color: #00B894;
                 }
 
 
@@ -157,7 +157,7 @@
                 height: 48px;
                 border-radius: 50%;
                 object-fit: cover;
-                border: 2px solid #ef233c;
+                border: 2px solid #00B894;
                 background: #222;
             }
 
@@ -165,7 +165,7 @@
                 width: 48px;
                 height: 48px;
                 border-radius: 50%;
-                background: #ef233c;
+                background: #00B894;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -238,7 +238,7 @@
                 }
 
                 .menu-item.active {
-                    background: #ef233c;
+                    background: #00B894;
                     color: white;
                     box-shadow: 0 7px 18px rgba(239,35,60,0.30);
                 }
@@ -273,13 +273,13 @@
             }
 
                 .sidebar-motivation span {
-                    color: #ef233c;
+                    color: #00B894;
                 }
 
             .motivation-line {
                 width: 40px;
                 height: 3px;
-                background: #ef233c;
+                background: #00B894;
                 margin-top: 10px;
                 border-radius: 5px;
             }
@@ -292,7 +292,7 @@
             .main {
                 margin-left: 245px;
                 min-height: 100vh;
-                padding: 0 22px 35px;
+                padding: 0 0 35px;
             }
 
 
@@ -302,22 +302,28 @@
 
             .topbar {
                 height: 70px;
+                width: 100%;
                 display: flex;
                 align-items: center;
                 gap: 18px;
                 position: sticky;
                 top: 0;
                 z-index: 100;
-                background: rgba(255,255,255,0.88);
-                backdrop-filter: blur(18px);
-                border-bottom: 1px solid rgba(0,0,0,0.06);
+                margin: 0;
+                padding: 0 22px;
+                background: linear-gradient(180deg, #061522 0%, #0B2438 55%, #04101C 100%);
+                border-left: 0;
+                border-top: 0;
+                border-right: 0;
+                border-bottom: 1px solid rgba(0,184,148,0.28);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.18);
             }
 
             .search-box {
                 width: 370px;
                 height: 40px;
-                background: #f3f5f7;
-                border: 1px solid #e5e7ea;
+                background: rgba(255,255,255,0.09);
+                border: 1px solid rgba(255,255,255,0.12);
                 border-radius: 10px;
                 display: flex;
                 align-items: center;
@@ -335,7 +341,7 @@
                     background: transparent;
                     width: 100%;
                     font-size: 12px;
-                    color: #333;
+                    color: #EAF4FA;
                 }
 
 
@@ -348,17 +354,17 @@
                 align-items: center;
                 gap: 9px;
                 font-size: 11px;
-                color: #555;
+                color: #D7E4EE;
             }
 
                 .date-box i {
-                    color: #ef233c;
+                    color: #00B894;
                     font-size: 16px;
                 }
 
             .report-btn {
                 border: none;
-                background: #ef233c;
+                background: #00B894;
                 color: white;
                 height: 40px;
                 padding: 0 16px;
@@ -382,7 +388,7 @@
                 align-items: center;
                 justify-content: center;
                 cursor: pointer;
-                color: #25282c;
+                color: #EAF4FA;
             }
 
                 .notification i {
@@ -397,7 +403,7 @@
                 height: 17px;
                 padding: 0 4px;
                 border-radius: 20px;
-                background: #ef233c;
+                background: #00B894;
                 color: white;
                 font-size: 9px;
                 display: flex;
@@ -418,14 +424,14 @@
                     height: 39px;
                     border-radius: 50%;
                     object-fit: cover;
-                    border: 2px solid #ef233c;
+                    border: 2px solid #00B894;
                 }
 
             .top-profile-fallback {
                 width: 39px;
                 height: 39px;
                 border-radius: 50%;
-                background: #ef233c;
+                background: #00B894;
                 color: white;
                 display: flex;
                 align-items: center;
@@ -436,18 +442,84 @@
 
             .top-profile-name {
                 font-size: 12px;
-                font-weight: 700;
+                font-weight: 800;
+                color: #FFFFFF;
+                line-height: 1.15;
             }
 
             .top-profile-role {
                 font-size: 10px;
-                color: #777;
-                margin-top: 2px;
+                color: #9FB5C7;
+                margin-top: 3px;
             }
 
             .top-profile-chevron {
                 font-size: 9px;
                 margin-left: 3px;
+                color: #9FB5C7;
+            }
+
+            /* =====================================================
+                       TOP PROFILE DROPDOWN
+                    ===================================================== */
+
+            .top-profile-wrap {
+                position: relative;
+            }
+
+            .top-profile {
+                user-select: none;
+            }
+
+            .top-profile-menu {
+                position: absolute;
+                top: calc(100% + 10px);
+                right: 0;
+                width: 190px;
+                padding: 7px;
+                background: #0B2438;
+                border: 1px solid rgba(0,184,148,.25);
+                border-radius: 12px;
+                box-shadow: 0 18px 40px rgba(0,0,0,.30);
+                display: none;
+                z-index: 3000;
+            }
+
+            .top-profile-menu.show {
+                display: block;
+            }
+
+            .top-profile-menu a {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 11px;
+                border-radius: 8px;
+                color: #D8E6EE;
+                text-decoration: none;
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+            .top-profile-menu a i {
+                width: 16px;
+                text-align: center;
+                color: #00B894;
+            }
+
+            .top-profile-menu a:hover {
+                background: rgba(0,184,148,.12);
+                color: #fff;
+            }
+
+            .top-profile-menu .menu-divider {
+                height: 1px;
+                margin: 5px 3px;
+                background: rgba(255,255,255,.08);
+            }
+
+            .top-profile-menu a.logout-item i {
+                color: #ff7b7b;
             }
 
 
@@ -456,7 +528,7 @@
                     ===================================================== */
 
             .content {
-                padding-top: 20px;
+                padding: 20px 22px 0;
             }
 
 
@@ -467,7 +539,7 @@
             .welcome-card {
                 min-height: 88px;
                 border-radius: 17px;
-                background: linear-gradient( 110deg, #111923, #182230 55%, #25161b );
+                background: linear-gradient( 110deg, #071A2B, #0D2B45 55%, #102A43 );
                 color: white;
                 padding: 17px 23px;
                 display: flex;
@@ -491,7 +563,7 @@
                 }
 
             .welcome-small {
-                color: #ef233c;
+                color: #00B894;
                 font-size: 10px;
                 font-weight: 800;
                 letter-spacing: 1px;
@@ -506,7 +578,7 @@
             }
 
                 .welcome-title span {
-                    color: #ef233c;
+                    color: #00B894;
                 }
 
             .welcome-subtitle {
@@ -530,7 +602,7 @@
             }
 
                 .welcome-icon i {
-                    color: #ef233c;
+                    color: #00B894;
                     font-size: 26px;
                 }
 
@@ -547,15 +619,16 @@
             }
 
             .stat-card {
-                background: rgba(255,255,255,0.92);
-                border: 1px solid rgba(0,0,0,0.06);
-                border-radius: 14px;
+                background: linear-gradient(145deg, rgba(248,252,255,0.97), rgba(218,232,242,0.94));
+                border: 1.5px solid rgba(11,31,51,0.42);
+                border-top: 3px solid #00B894;
+                border-radius: 16px;
                 min-height: 105px;
                 padding: 15px;
                 display: flex;
                 align-items: center;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.07);
-                transition: 0.2s ease;
+                box-shadow: 0 10px 28px rgba(6,21,34,0.13), inset 0 1px 0 rgba(255,255,255,0.85);
+                transition: 0.25s ease;
             }
 
                 .stat-card:hover {
@@ -567,8 +640,8 @@
                 width: 48px;
                 height: 48px;
                 border-radius: 13px;
-                background: #fff0f2;
-                color: #ef233c;
+                background: #E6F8F3;
+                color: #00B894;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -602,37 +675,49 @@
                     ===================================================== */
 
             .card {
-                background: rgba(255,255,255,0.94);
-                border: 1px solid rgba(0,0,0,0.055);
-                border-radius: 14px;
-                box-shadow: 0 7px 25px rgba(0,0,0,0.06);
+                position: relative;
+                background: linear-gradient(145deg, rgba(250,253,255,0.97), rgba(224,236,244,0.94));
+                border: 1.5px solid rgba(6,21,34,0.38);
+                border-top: 3px solid #0B2438;
+                border-radius: 16px;
+                box-shadow: 0 12px 32px rgba(6,21,34,0.14), inset 0 1px 0 rgba(255,255,255,0.9);
                 overflow: hidden;
+                transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+            }
+
+            .card:hover {
+                transform: translateY(-3px);
+                border-color: rgba(0,184,148,0.65);
+                box-shadow: 0 18px 38px rgba(6,21,34,0.18), 0 0 0 1px rgba(0,184,148,0.08);
             }
 
             .card-header {
-                height: 55px;
-                padding: 0 16px;
+                height: 58px;
+                padding: 0 17px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                border-bottom: 1px solid #eef0f2;
+                background: linear-gradient(180deg, rgba(235,244,249,0.96), rgba(216,231,240,0.78));
+                border-bottom: 1px solid rgba(11,31,51,0.18);
+                box-shadow: inset 0 -1px 0 rgba(255,255,255,0.55);
             }
 
             .card-title {
                 font-size: 14px;
-                font-weight: 750;
+                font-weight: 800;
+                color: #0B1F33;
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 9px;
             }
 
                 .card-title i {
-                    color: #ef233c;
+                    color: #00B894;
                     font-size: 14px;
                 }
 
             .view-all {
-                color: #ef233c;
+                color: #00B894;
                 font-size: 10px;
                 font-weight: 700;
                 text-decoration: none;
@@ -661,7 +746,7 @@
             }
 
                 .appointment-table th {
-                    background: #f6f7f8;
+                    background: #D8E8F1;
                     padding: 10px 12px;
                     text-align: left;
                     font-size: 10px;
@@ -671,7 +756,7 @@
 
                 .appointment-table td {
                     padding: 10px 12px;
-                    border-bottom: 1px solid #f0f1f2;
+                    border-bottom: 1px solid rgba(11,31,51,0.10);
                     font-size: 10px;
                     color: #30343a;
                 }
@@ -715,8 +800,8 @@
             }
 
             .view-btn {
-                border: 1px solid #ef233c;
-                color: #ef233c;
+                border: 1px solid #00B894;
+                color: #00B894;
                 background: white;
                 border-radius: 6px;
                 padding: 4px 9px;
@@ -725,7 +810,7 @@
             }
 
                 .view-btn:hover {
-                    background: #ef233c;
+                    background: #00B894;
                     color: white;
                 }
 
@@ -740,7 +825,7 @@
 
             .progress-item {
                 padding: 10px 0;
-                border-bottom: 1px solid #f0f1f2;
+                border-bottom: 1px solid rgba(11,31,51,0.10);
                 display: grid;
                 grid-template-columns: 145px 1fr 35px;
                 align-items: center;
@@ -781,14 +866,14 @@
 
             .progress-fill {
                 height: 100%;
-                background: linear-gradient( 90deg, #ef233c, #ff7180 );
+                background: linear-gradient( 90deg, #00B894, #5ADDBE );
                 border-radius: 20px;
             }
 
             .progress-percent {
-                color: #333;
+                color: #0B2438;
                 font-size: 9px;
-                font-weight: 700;
+                font-weight: 800;
                 text-align: right;
             }
 
@@ -815,11 +900,11 @@
                 align-items: center;
                 gap: 8px;
                 padding: 10px 15px;
-                border-bottom: 1px solid #f0f1f2;
+                border-bottom: 1px solid rgba(11,31,51,0.10);
             }
 
             .client-row-header {
-                background: #f6f7f8;
+                background: #D8E8F1;
                 font-size: 9px;
                 color: #777;
                 font-weight: 700;
@@ -862,7 +947,7 @@
 
             .mini-fill {
                 height: 100%;
-                background: #ef233c;
+                background: #00B894;
                 border-radius: 20px;
             }
 
@@ -917,7 +1002,7 @@
 
             .bar {
                 width: 100%;
-                background: linear-gradient( to top, #ef233c, #ff7885 );
+                background: linear-gradient( to top, #00B894, #45D6B1 );
                 border-radius: 5px 5px 2px 2px;
             }
 
@@ -941,7 +1026,7 @@
                 height: 7px;
                 display: inline-block;
                 border-radius: 50%;
-                background: #ef233c;
+                background: #00B894;
                 margin-right: 4px;
             }
 
@@ -959,7 +1044,7 @@
                 align-items: center;
                 gap: 8px;
                 padding: 10px 0;
-                border-bottom: 1px solid #f0f1f2;
+                border-bottom: 1px solid rgba(11,31,51,0.10);
             }
 
             .upcoming-avatar {
@@ -982,7 +1067,7 @@
             }
 
                 .upcoming-date i {
-                    color: #ef233c;
+                    color: #00B894;
                     margin-right: 3px;
                 }
 
@@ -1009,7 +1094,7 @@
                 align-items: center;
                 gap: 8px;
                 padding: 11px 15px;
-                border-bottom: 1px solid #f0f1f2;
+                border-bottom: 1px solid rgba(11,31,51,0.10);
             }
 
             .message-avatar {
@@ -1057,7 +1142,7 @@
                 width: 125px;
                 height: 125px;
                 border-radius: 50%;
-                background: conic-gradient( #ef233c 0 33%, #ff7785 33% 58%, #ffb3ba 58% 75%, #ffd4d8 75% 90%, #d9dde0 90% 100% );
+                background: conic-gradient( #00B894 0 33%, #45D6B1 33% 58%, #7DE0C5 58% 75%, #C8F0E5 75% 90%, #d9dde0 90% 100% );
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1069,7 +1154,7 @@
                     width: 78px;
                     height: 78px;
                     border-radius: 50%;
-                    background: white;
+                    background: #F4F9FC;
                     position: absolute;
                 }
 
@@ -1098,17 +1183,502 @@
             .legend-row {
                 display: flex;
                 align-items: center;
-                gap: 6px;
-                font-size: 8px;
-                color: #555;
+                gap: 7px;
+                font-size: 9px;
+                color: #34495A;
+                font-weight: 600;
             }
 
             .legend-color {
                 width: 8px;
                 height: 8px;
                 border-radius: 50%;
-                background: #ef233c;
+                background: #00B894;
             }
+
+
+
+            /* =====================================================
+                       WELCOME CHAT BUTTON
+                    ===================================================== */
+
+            .welcome-title-row {
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                flex-wrap: wrap;
+            }
+
+            .welcome-chat-btn {
+                position: relative;
+                z-index: 5;
+                height: 44px;
+                padding: 0 18px;
+                border: 1px solid rgba(117,230,194,0.48);
+                border-radius: 12px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 9px;
+                color: #052018;
+                background: linear-gradient(135deg, #22D3A5, #00B894);
+                box-shadow: 0 9px 22px rgba(0,184,148,0.28);
+                font-size: 12px;
+                font-weight: 800;
+                cursor: pointer;
+                transition: .2s ease;
+                white-space: nowrap;
+            }
+
+            .welcome-chat-btn i {
+                font-size: 13px;
+            }
+
+            .welcome-actions {
+                position: relative;
+                z-index: 3;
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                margin-left: auto;
+            }
+
+            .welcome-chat-btn:hover {
+                color: #02140F;
+                transform: translateY(-2px);
+                box-shadow: 0 10px 22px rgba(0,184,148,0.30);
+            }
+
+            @@media (max-width: 650px) {
+                .welcome-title-row {
+                    gap: 8px;
+                }
+
+                .welcome-chat-btn {
+                    height: 31px;
+                    padding: 0 10px;
+                }
+            }
+
+        /* =========================================================
+           PREMIUM CLIENT CHAT DRAWER
+           ========================================================= */
+        .chat-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 10, 20, .58);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transition: .25s ease;
+            z-index: 1900;
+        }
+
+        .chat-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .chat-drawer {
+            position: fixed;
+            top: 0;
+            right: -455px;
+            width: 440px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #0b2239 0%, #081a2d 100%);
+            border-left: 1px solid rgba(65, 108, 139, .55);
+            box-shadow: -18px 0 45px rgba(0,0,0,.35);
+            z-index: 2000;
+            transition: right .28s cubic-bezier(.22,.61,.36,1);
+        }
+
+        .chat-drawer.open {
+            right: 0;
+        }
+
+        .chat-drawer-header {
+            min-height: 78px;
+            padding: 14px 17px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            border-bottom: 1px solid #21425e;
+            background: linear-gradient(135deg, #102f4b, #0a2036);
+        }
+
+        .chat-header-avatar {
+            width: 43px;
+            height: 43px;
+            flex: 0 0 43px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(32,201,151,.65);
+            background: #173b57;
+        }
+
+        .chat-header-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-header-title {
+            color: #f4fbff;
+            font-size: 14px;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-header-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 3px;
+            color: #72dfbd;
+            font-size: 10px;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .chat-icon-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 9px;
+            border: 1px solid #315674;
+            background: #122f49;
+            color: #a8bfd1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: .18s ease;
+        }
+
+        .chat-icon-btn:hover {
+            color: #fff;
+            border-color: var(--emerald);
+            background: rgba(32,201,151,.10);
+        }
+
+        .chat-close-btn:hover {
+            color: #ff91a2;
+            border-color: rgba(255,107,129,.55);
+            background: rgba(255,107,129,.08);
+        }
+
+        .chat-client-list {
+            padding: 12px 12px 8px;
+            border-bottom: 1px solid #1d3d58;
+            background: #0a1e32;
+        }
+
+        .chat-list-search {
+            position: relative;
+            margin-bottom: 9px;
+        }
+
+        .chat-list-search i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #718ba2;
+            font-size: 12px;
+        }
+
+        .chat-list-search input {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px 0 35px;
+            border-radius: 9px;
+            border: 1px solid #2c506b;
+            outline: none;
+            background: #102b44;
+            color: #eef7ff;
+            font-size: 11px;
+        }
+
+        .chat-list-search input:focus {
+            border-color: rgba(32,201,151,.75);
+            box-shadow: 0 0 0 3px rgba(32,201,151,.08);
+        }
+
+        .chat-list {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .chat-client-chip {
+            flex: 0 0 auto;
+            min-width: 125px;
+            padding: 8px 9px;
+            border-radius: 10px;
+            border: 1px solid #254963;
+            background: #102b44;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: .18s;
+        }
+
+        .chat-client-chip:hover,
+        .chat-client-chip.active {
+            border-color: rgba(32,201,151,.65);
+            background: rgba(32,201,151,.08);
+        }
+
+        .chat-chip-avatar {
+            width: 29px;
+            height: 29px;
+            flex: 0 0 29px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #31536f;
+            border: 1px solid #456984;
+        }
+
+        .chat-chip-name {
+            max-width: 80px;
+            color: #dfeaf3;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-chip-status {
+            margin-top: 2px;
+            color: #718ba2;
+            font-size: 9px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px 15px;
+            background:
+                radial-gradient(circle at 20% 15%, rgba(32,201,151,.035), transparent 25%),
+                linear-gradient(180deg, #081b2e, #07192a);
+        }
+
+        .chat-date-label {
+            text-align: center;
+            margin: 0 auto 16px;
+            color: #67829a;
+            font-size: 9px;
+        }
+
+        .chat-message-row {
+            display: flex;
+            margin-bottom: 12px;
+        }
+
+        .chat-message-row.client {
+            justify-content: flex-start;
+        }
+
+        .chat-message-row.trainer {
+            justify-content: flex-end;
+        }
+
+        .chat-bubble {
+            max-width: 76%;
+            padding: 10px 12px;
+            border-radius: 13px;
+            font-size: 11px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .chat-message-row.client .chat-bubble {
+            background: #163550;
+            border: 1px solid #28516d;
+            color: #dbe8f2;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-message-row.trainer .chat-bubble {
+            background: linear-gradient(135deg, #169d79, #117f63);
+            border: 1px solid rgba(117,230,194,.25);
+            color: #effff9;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-time {
+            display: block;
+            margin-top: 5px;
+            opacity: .62;
+            font-size: 8px;
+            text-align: right;
+        }
+
+        .chat-composer {
+            padding: 11px 12px;
+            border-top: 1px solid #21415c;
+            background: #0a2035;
+        }
+
+        .chat-compose-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .chat-attach-btn,
+        .chat-send-btn {
+            width: 39px;
+            height: 39px;
+            flex: 0 0 39px;
+            border-radius: 10px;
+            border: 1px solid #315675;
+            background: #122f49;
+            color: #a7bed0;
+            cursor: pointer;
+        }
+
+        .chat-send-btn {
+            border-color: rgba(32,201,151,.45);
+            background: linear-gradient(135deg, #22cf9f, #159f7b);
+            color: #062018;
+        }
+
+        .chat-message-input {
+            flex: 1;
+            min-width: 0;
+            height: 39px;
+            border: 1px solid #315675;
+            border-radius: 10px;
+            background: #102d47;
+            color: #fff;
+            outline: none;
+            padding: 0 12px;
+            font-size: 11px;
+        }
+
+        .chat-message-input:focus {
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 3px rgba(32,201,151,.08);
+        }
+
+        .call-panel {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            display: none;
+            flex-direction: column;
+            background: #061522;
+        }
+
+        .call-panel.show {
+            display: flex;
+        }
+
+        .call-topbar {
+            height: 64px;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1f425c;
+            background: #0a2034;
+        }
+
+        .call-title {
+            color: #f2fbff;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .call-subtitle {
+            color: #7894aa;
+            font-size: 9px;
+            margin-top: 2px;
+        }
+
+        .call-stage {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at 50% 40%, rgba(32,201,151,.10), transparent 27%),
+                #05121f;
+        }
+
+        .call-avatar-large {
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(32,201,151,.72);
+            box-shadow: 0 0 0 12px rgba(32,201,151,.045), 0 18px 45px rgba(0,0,0,.45);
+            background: #173b57;
+        }
+
+        .call-name {
+            position: absolute;
+            bottom: 78px;
+            color: #eaf7ff;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .call-status {
+            position: absolute;
+            bottom: 58px;
+            color: #6ee4bd;
+            font-size: 10px;
+        }
+
+        .call-controls {
+            min-height: 78px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            background: #0a2034;
+            border-top: 1px solid #1e4059;
+        }
+
+        .call-control {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 1px solid #315675;
+            background: #132f48;
+            color: #c8d8e5;
+            cursor: pointer;
+        }
+
+        .call-control:hover {
+            border-color: var(--emerald);
+            color: #fff;
+        }
+
+        .call-control.end {
+            background: #d94b63;
+            border-color: #ee7185;
+            color: #fff;
+        }
+
+        .chat-no-clients {
+            padding: 18px;
+            color: #7992a8;
+            font-size: 10px;
+            text-align: center;
+        }
 
 
             /* =====================================================
@@ -1192,6 +1762,18 @@
                 }
             }
 
+
+        @@media (max-width: 500px) {
+            .chat-drawer {
+                width: 100%;
+                right: -100%;
+            }
+
+            .chat-drawer.open {
+                right: 0;
+            }
+        }
+
     </style>
 
 </head>
@@ -1225,12 +1807,17 @@
             <a href="@Url.Action("TrainerDashboard", "Home")" class="menu-item active">
                 <i class="fa-solid fa-chart-line"></i><span>Dashboard</span>
             </a>
-            <a href="#" class="menu-item"><i class="fa-solid fa-users"></i><span>My Clients</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
+            <a href="@Url.Action("MyClients", "Home")" class="menu-item"><i class="fa-solid fa-users"></i><span>My Clients</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
             <a href="#" class="menu-item"><i class="fa-regular fa-calendar-check"></i><span>Appointments</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
             <a href="#" class="menu-item"><i class="fa-solid fa-dumbbell"></i><span>Workout Plans</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
             <a href="#" class="menu-item"><i class="fa-solid fa-apple-whole"></i><span>Diet Plans</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
             <a href="#" class="menu-item"><i class="fa-solid fa-chart-simple"></i><span>Progress Reports</span><i class="fa-solid fa-chevron-right menu-arrow"></i></a>
-            <a href="#" class="menu-item"><i class="fa-solid fa-message"></i><span>Messages</span><span class="menu-arrow">@totalNotifications</span></a>
+            <a href="@Url.Action("TrainerMessages", "Home")"
+               class="menu-item">
+                <i class="fa-solid fa-message"></i>
+                <span>Messages</span>
+                <span class="menu-arrow">0</span>
+            </a>
             <a href="#" class="menu-item"><i class="fa-regular fa-bell"></i><span>Notifications</span></a>
         </nav>
 
@@ -1248,25 +1835,40 @@
             </div>
             <div class="topbar-spacer"></div>
             <div class="date-box"><i class="fa-regular fa-calendar"></i><span id="currentDate"></span></div>
-            <button class="report-btn" type="button" onclick="window.print()"><i class="fa-solid fa-file-arrow-down"></i>Generate Report</button>
             <div class="notification">
                 <i class="fa-regular fa-bell"></i>
                 @if (totalNotifications > 0) { <span class="notification-badge">@totalNotifications</span> }
             </div>
-            <div class="top-profile">
-                @if (!string.IsNullOrWhiteSpace(profilePath))
-                {
-                    <img src="@profilePath" alt="Trainer" />
-                }
-                else
-                {
-                    <div class="top-profile-fallback">@trainerInitial</div>
-                }
-                <div>
-                    <div class="top-profile-name">@trainerName</div>
-                    <div class="top-profile-role">Trainer</div>
+            <div class="top-profile-wrap">
+                <div class="top-profile" id="trainerProfileMenuButton" role="button" tabindex="0" aria-expanded="false">
+                    @if (!string.IsNullOrWhiteSpace(profilePath))
+                    {
+                        <img src="@profilePath" alt="Trainer" />
+                    }
+                    else
+                    {
+                        <div class="top-profile-fallback">@trainerInitial</div>
+                    }
+                    <div>
+                        <div class="top-profile-name">@trainerName</div>
+                        <div class="top-profile-role">Trainer</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down top-profile-chevron"></i>
                 </div>
-                <i class="fa-solid fa-chevron-down top-profile-chevron"></i>
+
+                <div class="top-profile-menu" id="trainerProfileMenu">
+                    <a href="@Url.Action("TrainerSettings", "Home")">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Settings</span>
+                    </a>
+
+                    <div class="menu-divider"></div>
+
+                    <a href="@Url.Action("Logout", "Home")" class="logout-item">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -1274,10 +1876,26 @@
             <div class="welcome-card">
                 <div>
                     <div class="welcome-small">Trainer Dashboard</div>
-                    <div class="welcome-title">Welcome back, <span>@trainerName</span></div>
+                    <div class="welcome-title-row">
+                        <div class="welcome-title">Welcome back, <span>@trainerName</span></div>
+                    </div>
                     <div class="welcome-subtitle">Manage your clients, appointments and fitness plans from one place.</div>
                 </div>
-                <div class="welcome-icon"><i class="fa-solid fa-person-running"></i></div>
+
+                <div class="welcome-actions">
+                    <button type="button"
+                            class="welcome-chat-btn"
+                            onclick="openDashboardChat()"
+                            title="Chat with your clients">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Chat with Client</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+
+                    <div class="welcome-icon">
+                        <i class="fa-solid fa-person-running"></i>
+                    </div>
+                </div>
             </div>
 
             <div class="stats-grid">
@@ -1307,7 +1925,7 @@
                                     var status = appointment.Status ?? "Pending";
                                     var statusClass = status.Equals("Completed", StringComparison.OrdinalIgnoreCase) ? "status-completed" : status.Equals("Confirmed", StringComparison.OrdinalIgnoreCase) ? "status-confirmed" : "status-pending";
                                     <tr class="search-row">
-                                        <td><div class="client-cell"><div class="client-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@initial</div>@clientName</div></td>
+                                        <td><div class="client-cell"><div class="client-avatar" style="display:flex;align-items:center;justify-content:center;background:#E2F8F1;color:#00B894;font-weight:700;">@initial</div>@clientName</div></td>
                                         <td>@appointment.AppointmentDate.ToString("dd MMM yyyy")</td>
                                         <td>@appointment.AppointmentTime.ToString("hh:mm tt")</td>
                                         <td><span class="status @statusClass">@status</span></td>
@@ -1333,7 +1951,7 @@
                             {
                                 var clientInitial = string.IsNullOrWhiteSpace(client.FullName) ? "C" : client.FullName.Substring(0,1).ToUpper();
                                 <div class="progress-item search-client-row">
-                                    <div class="progress-client"><div class="progress-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@clientInitial</div><div><div class="progress-name">@client.FullName</div><div class="progress-goal">Active client</div></div></div>
+                                    <div class="progress-client"><div class="progress-avatar" style="display:flex;align-items:center;justify-content:center;background:#E2F8F1;color:#00B894;font-weight:700;">@clientInitial</div><div><div class="progress-name">@client.FullName</div><div class="progress-goal">Active client</div></div></div>
                                     <div class="progress-track"><div class="progress-fill" style="width:100%;"></div></div>
                                     <div class="progress-percent">100%</div>
                                 </div>
@@ -1359,7 +1977,7 @@
                             var clientWorkoutCount = workoutPlans.Count(w => w.ClientId == client.UserId);
                             var clientDietCount = dietPlans.Count(d => d.ClientId == client.UserId);
                             <div class="client-row search-client-row">
-                                <div class="client-name-small"><div class="small-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;">@initial</div>@client.FullName</div>
+                                <div class="client-name-small"><div class="small-avatar" style="display:flex;align-items:center;justify-content:center;background:#E2F8F1;color:#00B894;">@initial</div>@client.FullName</div>
                                 <div class="goal-text">Fitness</div>
                                 <div class="mini-progress"><div class="mini-track"><div class="mini-fill" style="width:@(Math.Min(100, (clientWorkoutCount + clientDietCount) * 25))%;"></div></div><span class="mini-percent">@(clientWorkoutCount + clientDietCount)</span></div>
                                 <button class="view-btn" type="button">View</button>
@@ -1397,7 +2015,7 @@
                             {
                                 var name = appointment.Client?.FullName ?? "Client";
                                 var initial = string.IsNullOrWhiteSpace(name) ? "C" : name.Substring(0,1).ToUpper();
-                                <div class="upcoming-item"><div class="upcoming-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@initial</div><div><div class="upcoming-name">@name</div><div class="upcoming-date"><i class="fa-regular fa-calendar"></i>@appointment.AppointmentDate.ToString("dd MMM yyyy") &nbsp; <i class="fa-regular fa-clock"></i>@appointment.AppointmentTime.ToString("hh:mm tt")</div></div></div>
+                                <div class="upcoming-item"><div class="upcoming-avatar" style="display:flex;align-items:center;justify-content:center;background:#E2F8F1;color:#00B894;font-weight:700;">@initial</div><div><div class="upcoming-name">@name</div><div class="upcoming-date"><i class="fa-regular fa-calendar"></i>@appointment.AppointmentDate.ToString("dd MMM yyyy") &nbsp; <i class="fa-regular fa-clock"></i>@appointment.AppointmentTime.ToString("hh:mm tt")</div></div></div>
                             }
                         }
                     </div>
@@ -1407,11 +2025,11 @@
             <div class="bottom-grid">
                 <div class="card">
                     <div class="card-header"><div class="card-title"><i class="fa-solid fa-message"></i> Recent Messages</div><a href="#" class="view-all">Chat</a></div>
-                    <div class="message-item"><div class="message-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;"><i class="fa-solid fa-message"></i></div><div><div class="message-name">Private Chat</div><div class="message-text">Chat will be enabled for your assigned clients.</div></div><div class="message-time">Ready</div></div>
+                    <div class="message-item"><div class="message-avatar" style="display:flex;align-items:center;justify-content:center;background:#E2F8F1;color:#00B894;font-weight:700;"><i class="fa-solid fa-message"></i></div><div><div class="message-name">Private Chat</div><div class="message-text">Chat will be enabled for your assigned clients.</div></div><div class="message-time">Ready</div></div>
                     @foreach (var client in clients.Take(3))
                     {
                         var initial = string.IsNullOrWhiteSpace(client.FullName) ? "C" : client.FullName.Substring(0,1).ToUpper();
-                        <div class="message-item"><div class="message-avatar" style="display:flex;align-items:center;justify-content:center;background:#ffe7eb;color:#ef233c;font-weight:700;">@initial</div><div><div class="message-name">@client.FullName</div><div class="message-text">Open private conversation</div></div><div class="message-time"><i class="fa-regular fa-comment"></i></div></div>
+                        <div class="message-item"><div class="message-avatar" style="display:flex;align-items:center;justify-content:center;background:#E2F8F1;color:#00B894;font-weight:700;">@initial</div><div><div class="message-name">@client.FullName</div><div class="message-text">Open private conversation</div></div><div class="message-time"><i class="fa-regular fa-comment"></i></div></div>
                     }
                 </div>
 
@@ -1432,7 +2050,7 @@
                 <div class="card">
                     <div class="card-header"><div class="card-title"><i class="fa-solid fa-apple-whole"></i> Diet Plans</div><a href="#" class="view-all">View All</a></div>
                     <div class="donut-layout">
-                        <div class="donut" style="background:conic-gradient(#ef233c 0 60%, #ff7785 60% 80%, #ffb3ba 80% 92%, #d9dde0 92% 100%);"><div class="donut-center"><div class="donut-number">@totalDietPlans</div><div class="donut-label">Your Plans</div></div></div>
+                        <div class="donut" style="background:conic-gradient(#00B894 0 60%, #45D6B1 60% 80%, #7DE0C5 80% 92%, #d9dde0 92% 100%);"><div class="donut-center"><div class="donut-number">@totalDietPlans</div><div class="donut-label">Your Plans</div></div></div>
                         <div class="legend-list">
                             @foreach (var plan in dietPlans.Take(5))
                             {
@@ -1446,7 +2064,668 @@
         </section>
     </main>
 
+    <!-- PREMIUM CHAT DRAWER -->
+    <div id="chatOverlay" class="chat-overlay" onclick="closeChatDrawer()"></div>
+
+    <aside id="chatDrawer" class="chat-drawer" aria-label="Client Chat">
+
+        <div class="chat-drawer-header">
+            <div id="chatHeaderAvatarWrap">
+                <div class="chat-header-avatar d-flex align-items-center justify-content-center">
+                    <i class="fa-solid fa-user" style="color:#8da5bc;"></i>
+                </div>
+            </div>
+
+            <div class="chat-header-info">
+                <div id="chatHeaderName" class="chat-header-title">Client Chat</div>
+                <div class="chat-header-status">
+                    <span class="chat-status-dot"></span>
+                    <span id="chatHeaderStatus">Select a client</span>
+                </div>
+            </div>
+
+            <div class="chat-header-actions">
+                <button type="button"
+                        class="chat-icon-btn"
+                        title="Voice Call"
+                        onclick="startClientCall('voice')">
+                    <i class="fa-solid fa-phone"></i>
+                </button>
+
+                <button type="button"
+                        class="chat-icon-btn"
+                        title="Video Call"
+                        onclick="startClientCall('video')">
+                    <i class="fa-solid fa-video"></i>
+                </button>
+
+                <button type="button"
+                        class="chat-icon-btn chat-close-btn"
+                        title="Close"
+                        onclick="closeChatDrawer()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-client-list">
+
+            <div class="chat-list-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text"
+                       id="chatClientSearch"
+                       placeholder="Search clients..."
+                       autocomplete="off" />
+            </div>
+
+            <div id="chatClientList" class="chat-list">
+                @if (ViewBag.Clients != null && ViewBag.Clients.Count > 0)
+                {
+                    foreach (var chatClient in ViewBag.Clients)
+                    {
+                        var chatName = chatClient.FullName?.ToString() ?? "Client";
+                        var chatEmail = chatClient.Email?.ToString() ?? "";
+                        var chatImage = chatClient.ProfileImage?.ToString();
+                        var chatInitial = string.IsNullOrWhiteSpace(chatName)
+                            ? "C"
+                            : chatName.Substring(0, 1).ToUpper();
+
+                        <button type="button"
+                                class="chat-client-chip"
+                                data-client-id="@chatClient.UserId"
+                                data-client-name="@chatName"
+                                data-client-email="@chatEmail"
+                                data-client-image="@chatImage"
+                                onclick="selectChatClient(this)">
+
+                            @if (!string.IsNullOrWhiteSpace(chatImage))
+                            {
+                                <img src="@chatImage"
+                                     class="chat-chip-avatar"
+                                     alt="@chatName" />
+                            }
+                            else
+                            {
+                                <span class="chat-chip-avatar d-flex align-items-center justify-content-center"
+                                      style="font-weight:800;color:#75e6c2;">
+                                    @chatInitial
+                                </span>
+                            }
+
+                            <span>
+                                <span class="chat-chip-name">@chatName</span>
+                                <span class="chat-chip-status">Client</span>
+                            </span>
+
+                        </button>
+                    }
+                }
+                else
+                {
+                    <div class="chat-no-clients">No assigned clients available.</div>
+                }
+            </div>
+
+        </div>
+
+        <div id="chatMessages" class="chat-messages">
+
+            <div class="chat-date-label">HealthTrack Secure Chat</div>
+
+            <div id="chatEmptyState"
+                 class="empty-state"
+                 style="padding:70px 15px;">
+                <i class="fa-solid fa-comments"></i>
+                <h5>Select a Client</h5>
+                <div>Choose a client above to start a conversation.</div>
+            </div>
+
+            <div id="chatConversation" style="display:none;"></div>
+
+        </div>
+
+        <div class="chat-composer">
+
+            <div class="chat-compose-row">
+                <button type="button"
+                        class="chat-attach-btn"
+                        title="Attach">
+                    <i class="fa-solid fa-paperclip"></i>
+                </button>
+
+                <input type="text"
+                       id="chatMessageInput"
+                       class="chat-message-input"
+                       placeholder="Type a message..."
+                       autocomplete="off" />
+
+                <button type="button"
+                        class="chat-send-btn"
+                        title="Send"
+                        onclick="sendDrawerMessage()">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- CALL SCREEN -->
+        <div id="callPanel" class="call-panel">
+
+            <div class="call-topbar">
+                <div>
+                    <div id="callTitle" class="call-title">Client Call</div>
+                    <div id="callSubtitle" class="call-subtitle">Connecting...</div>
+                </div>
+
+                <button type="button"
+                        class="chat-icon-btn"
+                        onclick="endClientCall()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="call-stage">
+
+                <div id="callAvatarWrap">
+                    <div class="call-avatar-large d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-user" style="color:#8da5bc;font-size:35px;"></i>
+                    </div>
+                </div>
+
+                <div id="callName" class="call-name">Client</div>
+                <div id="callStatus" class="call-status">Calling...</div>
+
+            </div>
+
+            <div class="call-controls">
+
+                <button type="button"
+                        class="call-control"
+                        title="Mute"
+                        onclick="toggleCallMute(this)">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+
+                <button type="button"
+                        class="call-control"
+                        title="Camera"
+                        onclick="toggleCallCamera(this)">
+                    <i class="fa-solid fa-video"></i>
+                </button>
+
+                <button type="button"
+                        class="call-control end"
+                        title="End Call"
+                        onclick="endClientCall()">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+    <form id="chatAntiForgeryForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
     <script>
+
+        // =========================================================
+        // DASHBOARD CLIENT CHAT
+        // Opens the same premium chat drawer used on My Clients.
+        // =========================================================
+
+        function openDashboardChat() {
+            const firstClient = document.querySelector(".chat-client-chip");
+
+            if (firstClient) {
+                openChatDrawer(
+                    firstClient.dataset.clientId,
+                    firstClient.dataset.clientName,
+                    firstClient.dataset.clientEmail,
+                    firstClient.dataset.clientImage
+                );
+            } else {
+                openChatDrawer("", "Client", "", "");
+            }
+        }
+
+        let activeChatClient = null;
+
+        function openChatDrawer(clientId, clientName, clientEmail, clientImage) {
+            activeChatClient = {
+                id: clientId || "",
+                name: clientName || "Client",
+                email: clientEmail || "",
+                image: clientImage || ""
+            };
+
+            updateChatHeader();
+            showChatConversation();
+            loadChatHistory(activeChatClient.id);
+
+            document.getElementById("chatOverlay")?.classList.add("show");
+            document.getElementById("chatDrawer")?.classList.add("open");
+
+            const firstMatching = Array.from(
+                document.querySelectorAll(".chat-client-chip")
+            ).find(btn => btn.dataset.clientName === activeChatClient.name);
+
+            document.querySelectorAll(".chat-client-chip")
+                .forEach(btn => btn.classList.remove("active"));
+
+            firstMatching?.classList.add("active");
+        }
+
+        function selectChatClient(button) {
+            activeChatClient = {
+                id: button.dataset.clientId || "",
+                name: button.dataset.clientName || "Client",
+                email: button.dataset.clientEmail || "",
+                image: button.dataset.clientImage || ""
+            };
+
+            document.querySelectorAll(".chat-client-chip")
+                .forEach(btn => btn.classList.remove("active"));
+
+            button.classList.add("active");
+
+            updateChatHeader();
+            showChatConversation();
+            loadChatHistory(activeChatClient.id);
+        }
+
+        function updateChatHeader() {
+            if (!activeChatClient) return;
+
+            const name = document.getElementById("chatHeaderName");
+            const status = document.getElementById("chatHeaderStatus");
+            const wrap = document.getElementById("chatHeaderAvatarWrap");
+
+            if (name) name.textContent = activeChatClient.name;
+            if (status) status.textContent = "Ready to chat";
+
+            if (wrap) {
+                if (activeChatClient.image) {
+                    wrap.innerHTML =
+                        `<img src="${escapeHtmlAttribute(activeChatClient.image)}"
+                              class="chat-header-avatar"
+                              alt="${escapeHtmlAttribute(activeChatClient.name)}">`;
+                } else {
+                    const initial = (activeChatClient.name || "C").charAt(0).toUpperCase();
+                    wrap.innerHTML =
+                        `<div class="chat-header-avatar d-flex align-items-center justify-content-center"
+                              style="font-weight:800;color:#75e6c2;">
+                            ${escapeHtml(initial)}
+                         </div>`;
+                }
+            }
+        }
+
+        function showChatConversation() {
+            document.getElementById("chatEmptyState")?.style.setProperty("display", "none");
+            document.getElementById("chatConversation")?.style.setProperty("display", "block");
+        }
+
+        function closeChatDrawer() {
+            document.getElementById("chatOverlay")?.classList.remove("show");
+            document.getElementById("chatDrawer")?.classList.remove("open");
+            endClientCall(true);
+        }
+
+        function focusFirstChatClient(event) {
+            event?.preventDefault();
+
+            const tableFirstChat = document.querySelector(".client-chat-trigger");
+            if (tableFirstChat) {
+                tableFirstChat.click();
+                return;
+            }
+
+            const firstClient = document.querySelector(".chat-client-chip");
+            if (firstClient) {
+                openChatDrawer(
+                    firstClient.dataset.clientId,
+                    firstClient.dataset.clientName,
+                    firstClient.dataset.clientEmail,
+                    firstClient.dataset.clientImage
+                );
+            } else {
+                openChatDrawer("", "Client", "", "");
+            }
+        }
+
+        async function sendDrawerMessage() {
+            const input = document.getElementById("chatMessageInput");
+            const text = (input?.value || "").trim();
+
+            if (!text || !activeChatClient?.id) return;
+
+            const token = document.querySelector(
+                '#chatAntiForgeryForm input[name="__RequestVerificationToken"]'
+            )?.value;
+
+            if (!token) {
+                alert("Security token is missing. Please refresh the page.");
+                return;
+            }
+
+            const body = new URLSearchParams();
+            body.append("__RequestVerificationToken", token);
+            body.append("receiverId", activeChatClient.id);
+            body.append("message", text);
+
+            try {
+                input.disabled = true;
+
+                const response = await fetch(
+                    '@Url.Action("SendTrainerMessage", "Home")',
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                        },
+                        body: body.toString()
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Message could not be sent.");
+                }
+
+                input.value = "";
+                await loadChatHistory(activeChatClient.id);
+            }
+            catch (error) {
+                console.error(error);
+                alert("Message could not be sent. Please try again.");
+            }
+            finally {
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        async function loadChatHistory(clientId) {
+            const conversation = document.getElementById("chatConversation");
+            if (!conversation || !clientId) return;
+
+            conversation.innerHTML = `
+                <div style="padding:30px;text-align:center;color:#7f9bb2;font-size:11px;">
+                    Loading messages...
+                </div>`;
+
+            try {
+                const url =
+                    '@Url.Action("TrainerMessages", "Home")' +
+                    '?clientId=' + encodeURIComponent(clientId);
+
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Chat history could not be loaded.");
+                }
+
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                const source = doc.querySelector("#chatMessages");
+                const sourceRows = source
+                    ? source.querySelectorAll(".message-row")
+                    : [];
+
+                conversation.innerHTML = "";
+
+                if (!sourceRows.length) {
+                    conversation.innerHTML = `
+                        <div class="chat-empty" style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;">
+                            <div>
+                                <i class="fa-regular fa-comments" style="font-size:30px;color:#4d718d;margin-bottom:10px"></i>
+                                <div>Start a conversation with this client.</div>
+                            </div>
+                        </div>`;
+                    return;
+                }
+
+                sourceRows.forEach(sourceRow => {
+                    const sourceBubble = sourceRow.querySelector(".bubble");
+                    if (!sourceBubble) return;
+
+                    const isTrainer = sourceRow.classList.contains("trainer");
+                    const timeElement = sourceBubble.querySelector(".message-time");
+                    const timeText = timeElement?.textContent?.trim() || "";
+
+                    if (timeElement) timeElement.remove();
+                    const messageText = sourceBubble.textContent.trim();
+
+                    const row = document.createElement("div");
+                    row.className = "chat-message-row " + (isTrainer ? "trainer" : "client");
+
+                    const bubble = document.createElement("div");
+                    bubble.className = "chat-bubble";
+                    bubble.appendChild(document.createTextNode(messageText));
+
+                    if (timeText) {
+                        const time = document.createElement("span");
+                        time.className = "chat-time";
+                        time.textContent = timeText;
+                        bubble.appendChild(time);
+                    }
+
+                    row.appendChild(bubble);
+                    conversation.appendChild(row);
+                });
+
+                const messages = document.getElementById("chatMessages");
+                if (messages) messages.scrollTop = messages.scrollHeight;
+            }
+            catch (error) {
+                console.error(error);
+                conversation.innerHTML = `
+                    <div style="padding:30px;text-align:center;color:#d88;font-size:11px;">
+                        Unable to load chat history.
+                    </div>`;
+            }
+        }
+
+        function startClientCall(type) {
+            if (!activeChatClient) {
+                const firstClient = document.querySelector(".chat-client-chip");
+                if (!firstClient) return;
+
+                selectChatClient(firstClient);
+            }
+
+            const panel = document.getElementById("callPanel");
+            if (!panel) return;
+
+            const title = document.getElementById("callTitle");
+            const subtitle = document.getElementById("callSubtitle");
+            const callName = document.getElementById("callName");
+            const callStatus = document.getElementById("callStatus");
+            const avatarWrap = document.getElementById("callAvatarWrap");
+
+            const isVideo = type === "video";
+
+            if (title) {
+                title.textContent = isVideo ? "Video Call" : "Voice Call";
+            }
+
+            if (subtitle) {
+                subtitle.textContent = activeChatClient.name;
+            }
+
+            if (callName) {
+                callName.textContent = activeChatClient.name;
+            }
+
+            if (callStatus) {
+                callStatus.textContent = isVideo
+                    ? "Starting video call..."
+                    : "Starting voice call...";
+            }
+
+            if (avatarWrap) {
+                if (activeChatClient.image) {
+                    avatarWrap.innerHTML =
+                        `<img src="${escapeHtmlAttribute(activeChatClient.image)}"
+                              class="call-avatar-large"
+                              alt="${escapeHtmlAttribute(activeChatClient.name)}">`;
+                } else {
+                    const initial = (activeChatClient.name || "C").charAt(0).toUpperCase();
+                    avatarWrap.innerHTML =
+                        `<div class="call-avatar-large d-flex align-items-center justify-content-center"
+                              style="font-weight:800;color:#75e6c2;font-size:34px;">
+                            ${escapeHtml(initial)}
+                         </div>`;
+                }
+            }
+
+            panel.classList.add("show");
+
+            setTimeout(() => {
+                if (callStatus) {
+                    callStatus.textContent = isVideo
+                        ? "Waiting for client..."
+                        : "Calling client...";
+                }
+            }, 700);
+        }
+
+        function endClientCall(silent = false) {
+            const panel = document.getElementById("callPanel");
+            panel?.classList.remove("show");
+
+            if (!silent) {
+                const status = document.getElementById("chatHeaderStatus");
+                if (status && activeChatClient) {
+                    status.textContent = "Ready to chat";
+                }
+            }
+        }
+
+        function toggleCallMute(button) {
+            button.classList.toggle("active");
+            const icon = button.querySelector("i");
+            if (icon) {
+                icon.className = button.classList.contains("active")
+                    ? "fa-solid fa-microphone-slash"
+                    : "fa-solid fa-microphone";
+            }
+        }
+
+        function toggleCallCamera(button) {
+            button.classList.toggle("active");
+            const icon = button.querySelector("i");
+            if (icon) {
+                icon.className = button.classList.contains("active")
+                    ? "fa-solid fa-video-slash"
+                    : "fa-solid fa-video";
+            }
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement("div");
+            div.textContent = value ?? "";
+            return div.innerHTML;
+        }
+
+        function escapeHtmlAttribute(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/"/g, "&quot;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        document.getElementById("chatClientSearch")?.addEventListener("input", function () {
+            const query = (this.value || "").toLowerCase().trim();
+
+            document.querySelectorAll(".chat-client-chip").forEach(button => {
+                const name = (button.dataset.clientName || "").toLowerCase();
+                const email = (button.dataset.clientEmail || "").toLowerCase();
+
+                button.style.display =
+                    !query || name.includes(query) || email.includes(query)
+                        ? ""
+                        : "none";
+            });
+        });
+
+        document.getElementById("chatMessageInput")?.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendDrawerMessage();
+            }
+        });
+
+        // =========================================================
+        // TRAINER PROFILE DROPDOWN
+        // Settings + Logout
+        // =========================================================
+
+        const trainerProfileButton =
+            document.getElementById("trainerProfileMenuButton");
+
+        const trainerProfileMenu =
+            document.getElementById("trainerProfileMenu");
+
+        if (trainerProfileButton && trainerProfileMenu) {
+
+            function toggleTrainerProfileMenu() {
+                const isOpen =
+                    trainerProfileMenu.classList.toggle("show");
+
+                trainerProfileButton.setAttribute(
+                    "aria-expanded",
+                    isOpen ? "true" : "false"
+                );
+            }
+
+            trainerProfileButton.addEventListener(
+                "click",
+                function (event) {
+                    event.stopPropagation();
+                    toggleTrainerProfileMenu();
+                }
+            );
+
+            trainerProfileButton.addEventListener(
+                "keydown",
+                function (event) {
+                    if (event.key === "Enter" ||
+                        event.key === " ") {
+                        event.preventDefault();
+                        toggleTrainerProfileMenu();
+                    }
+                }
+            );
+
+            trainerProfileMenu.addEventListener(
+                "click",
+                function (event) {
+                    event.stopPropagation();
+                }
+            );
+
+            document.addEventListener(
+                "click",
+                function () {
+                    trainerProfileMenu.classList.remove("show");
+                    trainerProfileButton.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+                }
+            );
+        }
+
+
         const now = new Date();
         document.getElementById('currentDate').textContent = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 

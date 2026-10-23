@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace HealthTrack.Models;
 
@@ -31,14 +30,33 @@ public partial class DietPlan
     [Column(TypeName = "datetime")]
     public DateTime? CreatedAt { get; set; }
 
+
+    // =========================================================
+    // EXISTING RELATIONSHIPS
+    // =========================================================
+
     [ForeignKey("ClientId")]
     [InverseProperty("DietPlanClients")]
     public virtual User Client { get; set; } = null!;
 
     [InverseProperty("DietPlan")]
-    public virtual ICollection<MealLog> MealLogs { get; set; } = new List<MealLog>();
+    public virtual ICollection<MealLog> MealLogs { get; set; }
+        = new List<MealLog>();
 
     [ForeignKey("TrainerId")]
     [InverseProperty("DietPlanTrainers")]
     public virtual User Trainer { get; set; } = null!;
+
+
+    // =========================================================
+    // NEW DETAILED DIET PLAN
+    // DietPlan
+    //      ↓
+    // DietPlanDays
+    //      ↓
+    // DietMeals
+    // =========================================================
+
+    public virtual ICollection<DietPlanDay> DietPlanDays { get; set; }
+        = new List<DietPlanDay>();
 }

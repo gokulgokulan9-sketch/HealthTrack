@@ -1,0 +1,2434 @@
+@using System
+@using HealthTrack.Models
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Messages";
+
+    var clientName = ViewBag.ClientName as string;
+    if (string.IsNullOrWhiteSpace(clientName)) clientName = User?.Identity?.Name;
+    if (string.IsNullOrWhiteSpace(clientName)) clientName = "Client";
+    if (clientName.Contains("@")) clientName = clientName.Split('@')[0];
+
+    var clientInitial = !string.IsNullOrWhiteSpace(clientName)
+        ? clientName.Substring(0, 1).ToUpper()
+        : "C";
+
+    var profileImage = ViewBag.ProfileImage as string;
+    if (string.IsNullOrWhiteSpace(profileImage))
+        profileImage = "/images/default-user.png";
+    else if (!profileImage.StartsWith("/images/", StringComparison.OrdinalIgnoreCase))
+        profileImage = "/images/" + profileImage.TrimStart('/');
+
+    var trainerName = ViewBag.TrainerName as string ?? "Trainer";
+    var trainerImage = ViewBag.TrainerImage as string ?? "/images/default-trainer.jpg";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Messages - HealthTrack</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<style>
+
+    /* ============================================================
+           GLOBAL
+           ============================================================ */
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100%;
+        min-height: 100%;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: radial-gradient(circle at 85% 10%, rgba(22,138,74,0.08), transparent 30%), #090b0e;
+        color: #ffffff;
+    }
+
+    body > * {
+        margin-top: 0 !important;
+    }
+
+    main {
+        margin-top: 0 !important;
+    }
+
+    a {
+        text-decoration: none;
+    }
+
+    /* ============================================================
+           MAIN CLIENT LAYOUT
+           ============================================================ */
+
+    .client-layout {
+        min-height: 100vh;
+        width: 100%;
+        background: linear-gradient( 135deg, #080a0d 0%, #0d1014 45%, #080a0d 100% );
+    }
+
+    /* ============================================================
+           SIDEBAR
+           ============================================================ */
+
+    .client-sidebar {
+        width: 245px;
+        min-width: 245px;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient( 180deg, #08090c 0%, #101216 55%, #08090b 100% );
+        border-right: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 5px 0 30px rgba(0,0,0,0.35);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+        .client-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .client-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .client-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(22,138,74,0.55);
+            border-radius: 10px;
+        }
+
+    /* ============================================================
+           EXACT HEALTH TRACK LOGO
+           ============================================================ */
+
+    .healthtrack-logo {
+        height: 82px;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .healthtrack-logo-symbol {
+        width: 45px;
+        height: 45px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #168A4A;
+        color: #ffffff;
+        font-size: 23px;
+        box-shadow: 0 5px 18px rgba(22,138,74,0.32);
+    }
+
+    .healthtrack-logo-text {
+        margin-left: 10px;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.7px;
+        color: #ffffff;
+    }
+
+        .healthtrack-logo-text span {
+            color: #168A4A;
+        }
+
+    /* ============================================================
+           PROFILE
+           ============================================================ */
+
+    .client-profile {
+        margin: 18px 12px 16px;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        border-radius: 13px;
+        background: linear-gradient( 135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025) );
+        border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .client-profile-image {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #168A4A;
+        background: #222;
+    }
+
+    .client-profile-info {
+        margin-left: 11px;
+        min-width: 0;
+    }
+
+    .client-profile-name {
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .client-profile-role {
+        margin-top: 3px;
+        color: #a7a7a7;
+        font-size: 11px;
+    }
+
+    /* ============================================================
+           MENU TITLE
+           ============================================================ */
+
+    .menu-title {
+        padding: 0 22px;
+        margin: 2px 0 8px;
+        color: #777b83;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+    }
+
+    /* ============================================================
+           SIDEBAR MENU
+           ============================================================ */
+
+    .client-menu {
+        padding: 0 10px;
+    }
+
+    .client-menu-item {
+        height: 45px;
+        margin-bottom: 4px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        border-radius: 10px;
+        color: #d7d7d7;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+        .client-menu-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 15px;
+            color: #d9d9d9;
+        }
+
+        .client-menu-item:hover {
+            color: #ffffff;
+            background: rgba(255,255,255,0.08);
+            transform: translateX(2px);
+        }
+
+            .client-menu-item:hover i {
+                color: #168A4A;
+            }
+
+        .client-menu-item.active {
+            color: #ffffff;
+            background: linear-gradient( 90deg, #168A4A, #0B6335 );
+            box-shadow: 0 7px 20px rgba(22,138,74,0.28);
+        }
+
+            .client-menu-item.active i {
+                color: #ffffff;
+            }
+
+    .notification-count {
+        margin-left: auto;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #168A4A;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    /* ============================================================
+           SIDEBAR BOTTOM BRAND AREA
+           ============================================================ */
+
+    .sidebar-bottom {
+        margin-top: auto;
+        min-height: 145px;
+        padding: 22px 20px;
+        position: relative;
+        overflow: hidden;
+        background: radial-gradient( circle at 15% 100%, rgba(22,138,74,0.34), transparent 55% );
+    }
+
+        .sidebar-bottom::before {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            left: -70px;
+            bottom: -115px;
+            border-radius: 50%;
+            border: 1px solid rgba(22,138,74,0.45);
+            box-shadow: 0 0 35px rgba(22,138,74,0.18);
+        }
+
+    .sidebar-bottom-title {
+        position: relative;
+        z-index: 2;
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.4;
+        color: #ffffff;
+    }
+
+        .sidebar-bottom-title span {
+            display: block;
+            color: #168A4A;
+        }
+
+    .sidebar-line {
+        width: 48px;
+        height: 3px;
+        margin-top: 12px;
+        border-radius: 5px;
+        background: #168A4A;
+    }
+
+    /* ============================================================
+       PAGE / BODY RESET
+       ============================================================ */
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100%;
+        min-height: 100%;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+
+    /* ============================================================
+       CLIENT MAIN CONTENT
+       ============================================================ */
+
+    .client-main {
+        margin-left: 245px !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        min-height: 100vh;
+        background: radial-gradient(circle at 92% 8%, rgba(239,35,60,0.13), transparent 22%), radial-gradient(circle at 15% 15%, rgba(24,169,87,0.12), transparent 28%), #10231D;
+        position: relative;
+        top: 0 !important;
+    }
+
+
+    /* ============================================================
+       TOPBAR
+       ============================================================ */
+
+    .client-topbar {
+        height: 68px;
+        margin: 0 !important;
+        padding: 0 25px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        background: linear-gradient( 90deg, #090a0d, #101216 );
+        position: sticky;
+        top: 0 !important;
+        z-index: 900;
+    }
+
+    .mobile-menu-btn {
+        width: 40px;
+        height: 40px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: rgba(255,255,255,0.06);
+        color: #ffffff;
+        font-size: 17px;
+    }
+
+    .search-box {
+        width: 365px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        border-radius: 9px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.07);
+        color: #8f949c;
+    }
+
+        .search-box i {
+            font-size: 14px;
+        }
+
+        .search-box input {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #ffffff;
+            padding-left: 10px;
+            font-size: 12px;
+        }
+
+            .search-box input::placeholder {
+                color: #858991;
+            }
+
+    .topbar-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+    }
+
+    .notification-icon {
+        position: relative;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #d7d7d7;
+        font-size: 17px;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        min-width: 17px;
+        height: 17px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border-radius: 50%;
+        background: #18A957;
+        color: #ffffff;
+        font-size: 9px;
+        font-weight: 700;
+        border: 2px solid #132A22;
+    }
+
+    .top-profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .top-profile-image {
+        width: 39px;
+        height: 39px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.15);
+    }
+
+    .top-profile-text {
+        line-height: 1.25;
+    }
+
+    .top-profile-name {
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .top-profile-role {
+        color: #888d96;
+        font-size: 10px;
+    }
+
+    .top-profile i {
+        color: #858991;
+        font-size: 11px;
+        margin-left: 4px;
+    }
+
+    /* ============================================================
+           DASHBOARD CONTENT
+           ============================================================ */
+
+    .dashboard-content {
+        padding: 24px 26px 35px;
+    }
+
+    /* ============================================================
+           WELCOME HEADER
+           ============================================================ */
+
+    .welcome-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 18px;
+    }
+
+    .welcome-title {
+        margin: 0;
+        color: #ffffff;
+        font-size: 27px;
+        font-weight: 800;
+        letter-spacing: -0.7px;
+    }
+
+        .welcome-title span {
+            color: #18A957;
+        }
+
+    .welcome-subtitle {
+        margin: 6px 0 0;
+        color: #90959d;
+        font-size: 13px;
+    }
+
+    .today-card {
+        min-width: 220px;
+        padding: 11px 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-radius: 11px;
+        background: linear-gradient( 135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025) );
+        border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .today-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: rgba(24,169,87,0.12);
+        color: #18A957;
+        font-size: 18px;
+    }
+
+    .today-label {
+        color: #8d929a;
+        font-size: 10px;
+    }
+
+    .today-date {
+        margin-top: 2px;
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /* ============================================================
+           STAT CARDS
+           ============================================================ */
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 15px;
+    }
+
+    .stat-card {
+        min-height: 92px;
+        display: flex;
+        align-items: center;
+        padding: 14px;
+        border-radius: 12px;
+        background: linear-gradient( 145deg, #172B24, #13251F );
+        border: 1px solid rgba(255,255,255,0.10);
+        box-shadow: 0 10px 25px rgba(0,40,25,0.24);
+        transition: 0.2s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(24,169,87,0.35);
+        }
+
+    .stat-icon {
+        width: 57px;
+        height: 57px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 22px;
+    }
+
+        .stat-icon.red {
+            color: #ffffff;
+            background: #EF233C;
+            box-shadow: 0 8px 20px rgba(24,169,87,0.22);
+        }
+
+        .stat-icon.green {
+            color: #ffffff;
+            background: #20B85A;
+        }
+
+        .stat-icon.purple {
+            color: #ffffff;
+            background: #198754;
+        }
+
+        .stat-icon.orange {
+            color: #ffffff;
+            background: #2DB56B;
+        }
+
+    .stat-info {
+        margin-left: 13px;
+    }
+
+    .stat-number {
+        color: #ffffff;
+        font-size: 25px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .stat-label {
+        margin-top: 5px;
+        color: #989da5;
+        font-size: 11px;
+    }
+
+    /* ============================================================
+           HERO BANNER
+           ============================================================ */
+
+    .hero-banner {
+        min-height: 160px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        padding: 28px 42px;
+        margin-bottom: 15px;
+        border-radius: 13px;
+        border: 1px solid rgba(255,255,255,0.09);
+        background: linear-gradient( 90deg, rgba(5,35,25,0.92) 0%, rgba(8,52,36,0.72) 42%, rgba(8,35,26,0.22) 100% ), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1600&q=85") center/cover no-repeat;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 500px;
+    }
+
+    .hero-title {
+        margin: 0;
+        color: #ffffff;
+        font-size: 27px;
+        font-weight: 800;
+        line-height: 1.08;
+    }
+
+        .hero-title span {
+            display: block;
+            color: #18A957;
+        }
+
+    .hero-text {
+        margin: 10px 0 0;
+        color: #dedede;
+        font-size: 13px;
+    }
+
+    .hero-line {
+        width: 48px;
+        height: 3px;
+        margin-top: 14px;
+        border-radius: 5px;
+        background: #18A957;
+    }
+
+    /* ============================================================
+           CONTENT GRID
+           ============================================================ */
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .dashboard-card {
+        min-width: 0;
+        padding: 17px;
+        border-radius: 12px;
+        background: linear-gradient( 145deg, #172B24, #152922 );
+        border: 1px solid rgba(255,255,255,0.09);
+        box-shadow: 0 10px 25px rgba(0,40,25,0.22);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+        .card-title i {
+            color: #18A957;
+            font-size: 16px;
+        }
+
+    .view-link {
+        color: #18A957;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+        .view-link:hover {
+            color: #35C978;
+        }
+
+    /* ============================================================
+           TRAINER CARD
+           ============================================================ */
+
+    .trainer-box {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .trainer-image {
+        width: 91px;
+        height: 91px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(24,169,87,0.55);
+        background: #222;
+    }
+
+    .trainer-details {
+        min-width: 0;
+    }
+
+    .trainer-name {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .trainer-role {
+        margin-top: 4px;
+        color: #92979f;
+        font-size: 11px;
+    }
+
+    .message-btn {
+        margin-top: 12px;
+        height: 35px;
+        padding: 0 15px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border-radius: 8px;
+        color: #ffffff;
+        background: #18A957;
+        font-size: 11px;
+        font-weight: 600;
+        box-shadow: 0 6px 15px rgba(24,169,87,0.22);
+    }
+
+        .message-btn:hover {
+            color: #ffffff;
+            background: #C91F35;
+        }
+
+    /* ============================================================
+           APPOINTMENT
+           ============================================================ */
+
+    .appointment-box {
+        display: flex;
+        gap: 13px;
+        padding: 11px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.035);
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .appointment-date {
+        width: 56px;
+        flex-shrink: 0;
+        overflow: hidden;
+        border-radius: 8px;
+        text-align: center;
+        background: #1B3028;
+    }
+
+    .appointment-month {
+        padding: 6px 0;
+        background: #18A957;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .appointment-day {
+        padding: 7px 0;
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .appointment-info {
+        min-width: 0;
+    }
+
+    .appointment-title {
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .appointment-trainer,
+    .appointment-time,
+    .appointment-location {
+        margin-top: 6px;
+        color: #92979f;
+        font-size: 10px;
+    }
+
+        .appointment-time i,
+        .appointment-location i {
+            width: 15px;
+            color: #18A957;
+        }
+
+    .status-badge {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 5px 9px;
+        border-radius: 20px;
+        background: rgba(32,184,90,0.15);
+        color: #4AD982;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    /* ============================================================
+           PROGRESS
+           ============================================================ */
+
+    .progress-row {
+        margin-bottom: 13px;
+    }
+
+    .progress-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+    }
+
+    .progress-name {
+        color: #d6d8dc;
+        font-size: 11px;
+    }
+
+    .progress-value {
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .progress-track {
+        height: 7px;
+        overflow: hidden;
+        border-radius: 20px;
+        background: #294038;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 20px;
+        background: #EF233C;
+    }
+
+        .progress-fill.green {
+            background: #20B85A;
+        }
+
+        .progress-fill.purple {
+            background: #25A65F;
+        }
+
+        .progress-fill.orange {
+            background: #39C978;
+        }
+
+    /* ============================================================
+           PLANS
+           ============================================================ */
+
+    .plan-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .plan-item {
+        min-height: 55px;
+        display: flex;
+        align-items: center;
+        padding: 9px 10px;
+        border-radius: 9px;
+        background: rgba(255,255,255,0.035);
+        border: 1px solid rgba(255,255,255,0.045);
+    }
+
+    .plan-icon {
+        width: 37px;
+        height: 37px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: #18A957;
+        background: rgba(24,169,87,0.10);
+        font-size: 16px;
+    }
+
+        .plan-icon.green {
+            color: #46D17A;
+            background: rgba(70,209,122,0.10);
+        }
+
+    .plan-info {
+        margin-left: 10px;
+        min-width: 0;
+    }
+
+    .plan-name {
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .plan-date {
+        margin-top: 3px;
+        color: #858a92;
+        font-size: 9px;
+    }
+
+    .active-badge {
+        margin-left: auto;
+        padding: 5px 9px;
+        border-radius: 15px;
+        background: rgba(26,180,104,0.14);
+        color: #28d57e;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    /* ============================================================
+           MESSAGES
+           ============================================================ */
+
+    .message-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .message-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+        .message-item:last-child {
+            border-bottom: none;
+        }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .message-info {
+        margin-left: 9px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .message-name {
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .message-preview {
+        margin-top: 3px;
+        color: #838890;
+        font-size: 9px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .message-time {
+        color: #8a8f97;
+        font-size: 9px;
+    }
+
+    .message-unread {
+        width: 17px;
+        height: 17px;
+        margin-left: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #18A957;
+        color: #ffffff;
+        font-size: 8px;
+        font-weight: 700;
+    }
+
+    /* ============================================================
+           RECENT ACTIVITY
+           ============================================================ */
+
+    .activity-card {
+        margin-bottom: 0;
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .activity-item {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .activity-icon {
+        width: 31px;
+        height: 31px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 7px;
+        color: #ffffff;
+        background: #18A957;
+        font-size: 12px;
+    }
+
+        .activity-icon.green {
+            background: #20a968;
+        }
+
+        .activity-icon.purple {
+            background: #7a43dd;
+        }
+
+        .activity-icon.orange {
+            background: #f28c1b;
+        }
+
+    .activity-name {
+        width: 25%;
+        margin-left: 11px;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .activity-detail {
+        flex: 1;
+        color: #8d929a;
+        font-size: 10px;
+    }
+
+    .activity-time {
+        color: #8d929a;
+        font-size: 10px;
+    }
+
+    /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+
+    @@media (max-width: 1200px) {
+
+        .stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .dashboard-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+            .dashboard-grid .dashboard-card:last-child {
+                grid-column: span 2;
+            }
+    }
+
+    @@media (max-width: 900px) {
+
+        .client-sidebar {
+            transform: translateX(-100%);
+            transition: 0.25s ease;
+        }
+
+            .client-sidebar.open {
+                transform: translateX(0);
+            }
+
+        .client-main {
+            margin-left: 0;
+        }
+
+        .mobile-menu-btn {
+            display: flex;
+            margin-right: 12px;
+        }
+
+        .search-box {
+            width: 250px;
+        }
+    }
+
+    @@media (max-width: 700px) {
+
+        .dashboard-content {
+            padding: 18px 15px 25px;
+        }
+
+        .welcome-row {
+            flex-direction: column;
+        }
+
+        .today-card {
+            width: 100%;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+            .dashboard-grid .dashboard-card:last-child {
+                grid-column: span 1;
+            }
+
+        .top-profile-text {
+            display: none;
+        }
+
+        .search-box {
+            flex: 1;
+            width: auto;
+        }
+
+        .hero-banner {
+            padding: 25px;
+        }
+
+        .hero-title {
+            font-size: 22px;
+        }
+
+        .activity-name {
+            width: 32%;
+        }
+    }
+
+    @@media (max-width: 480px) {
+
+        .client-topbar {
+            padding: 0 12px;
+        }
+
+        .topbar-right {
+            gap: 8px;
+        }
+
+        .search-box {
+            display: none;
+        }
+
+        .welcome-title {
+            font-size: 23px;
+        }
+
+        .trainer-box {
+            align-items: flex-start;
+        }
+
+        .trainer-image {
+            width: 70px;
+            height: 70px;
+        }
+
+        .activity-detail {
+            display: none;
+        }
+
+        .activity-name {
+            flex: 1;
+            width: auto;
+        }
+    }
+
+</style>
+<style>
+/* ============================================================
+   CLIENT MESSAGES - DASHBOARD CHAT
+   ============================================================ */
+.messages-content {
+    padding: 22px 24px 24px;
+    min-height: calc(100vh - 76px);
+}
+
+.messages-title-row {
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:18px;
+}
+.messages-page-title { font-size:22px; font-weight:800; color:#fff; margin:0; }
+.messages-page-subtitle { margin:5px 0 0; color:#8d9790; font-size:11px; }
+
+.client-chat-layout {
+    height: calc(100vh - 155px);
+    min-height: 520px;
+    display:grid;
+    grid-template-columns:290px minmax(0,1fr);
+    background:#101419;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 16px 45px rgba(0,0,0,.28);
+}
+
+.chat-trainer-list {
+    background:linear-gradient(180deg,#0c1014,#11161a);
+    border-right:1px solid rgba(255,255,255,.08);
+}
+.chat-list-head { padding:18px; border-bottom:1px solid rgba(255,255,255,.07); }
+.chat-list-title { color:#fff; font-size:14px; font-weight:800; }
+.chat-list-subtitle { color:#7e8983; font-size:10px; margin-top:4px; }
+.chat-trainer-card {
+    margin:14px; padding:14px; display:flex; align-items:center; gap:11px;
+    border:1px solid rgba(24,169,87,.28); background:rgba(24,169,87,.07);
+    border-radius:12px;
+}
+.chat-trainer-avatar,.chat-header-avatar {
+    width:44px;height:44px;border-radius:50%;object-fit:cover;
+    border:2px solid #18a957; flex:0 0 44px;
+}
+.chat-trainer-initial,.chat-header-initial {
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(24,169,87,.12);color:#4ee08a;font-weight:800;
+}
+.chat-trainer-name { color:#fff;font-size:12px;font-weight:800; }
+.chat-trainer-role { color:#7e8983;font-size:9px;margin-top:3px; }
+
+.chat-main { min-width:0; min-height:0; display:flex; flex-direction:column; background:#f4f7f5; }
+.chat-main-header {
+    height:70px; flex:0 0 70px; display:flex;align-items:center;gap:11px;
+    padding:0 17px;background:linear-gradient(90deg,#063b2a,#0b8f5a);color:#fff;
+}
+.chat-main-header-info { min-width:0; }
+.chat-header-name { font-size:14px;font-weight:800; }
+.chat-header-status { margin-top:3px;font-size:9px;opacity:.78; }
+.chat-header-actions { margin-left:auto;display:flex;gap:7px; }
+.chat-tool-btn {
+    width:35px;height:35px;border:1px solid rgba(255,255,255,.2);border-radius:10px;
+    background:rgba(255,255,255,.1);color:#fff;cursor:pointer;
+}
+.chat-tool-btn:hover { background:rgba(255,255,255,.18); }
+
+.client-messages-box { flex:1;min-height:0;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:9px;background:#f4f7f5; }
+.client-message-row { width:100%;display:flex; }
+.client-message-row.mine { justify-content:flex-end; }
+.client-message-row.theirs { justify-content:flex-start; }
+.client-message-bubble {
+    max-width:68%;padding:9px 12px;border-radius:14px;font-size:12px;line-height:1.45;
+    word-break:break-word;box-shadow:0 2px 8px rgba(0,0,0,.04);
+}
+.client-message-row.mine .client-message-bubble { color:#fff;background:#0b8f5a;border-bottom-right-radius:4px; }
+.client-message-row.theirs .client-message-bubble { color:#26332d;background:#fff;border:1px solid #dfe8e3;border-bottom-left-radius:4px; }
+.client-message-time { display:block;margin-top:4px;font-size:8px;opacity:.65;text-align:right; }
+.attachment-card{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;background:#eef3ef;border:1px solid #d5e1da;color:#26332d;text-decoration:none;min-width:150px;max-width:260px}
+.attachment-card i{font-size:18px;color:#0b8f5a}.attachment-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700}
+.chat-empty { margin:auto;text-align:center;color:#84918c;font-size:12px; }
+.chat-error { margin:auto;text-align:center;color:#d94b4b;font-size:12px; }
+
+.client-chat-composer { padding:11px;border-top:1px solid #dfe8e3;background:#fff; }
+.client-chat-form-row { display:flex;gap:7px;align-items:center; }
+.chat-attach-btn,.chat-call-btn,.chat-send-btn {
+    width:42px;height:42px;border:0;border-radius:11px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;flex:0 0 42px;
+}
+.chat-attach-btn { background:#eef3ef;color:#496057; }
+.chat-call-btn { background:#eef3ef;color:#0b8f5a; }
+.chat-send-btn { background:#0b8f5a;color:#fff; }
+.chat-attach-btn:hover,.chat-call-btn:hover { background:#e0ebe4; }
+.chat-send-btn:disabled { opacity:.5;cursor:not-allowed; }
+.client-chat-input { flex:1;min-width:0;height:42px;border:1px solid #d5e1da;border-radius:11px;outline:none;padding:0 12px;font-size:12px; }
+.client-chat-input:focus { border-color:#0b8f5a;box-shadow:0 0 0 3px rgba(11,143,90,.08); }
+
+.call-panel {
+    position:absolute;inset:0;z-index:30;display:none;flex-direction:column;
+    background:linear-gradient(180deg,#07140e,#0c2118);color:#fff;
+}
+.chat-main { position:relative; }
+.call-panel.show { display:flex; }
+.call-panel-head { height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.08); }
+.call-panel-title { font-size:14px;font-weight:800; }
+.call-panel-subtitle { font-size:9px;color:#9db2a7;margin-top:3px; }
+.call-close { width:35px;height:35px;border:0;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer; }
+.call-remote-video { display:none;width:100%;height:100%;object-fit:contain;background:#06140d; }
+.call-local-video { display:none;position:absolute;right:18px;top:18px;width:150px;height:105px;object-fit:cover;border:2px solid #18a957;border-radius:10px;background:#06140d;z-index:2; }
+.call-stage { position:relative;overflow:hidden; }
+.call-avatar { width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid #18a957;background:#13251c; }
+.call-name { margin-top:16px;font-size:18px;font-weight:800; }
+.call-status { margin-top:5px;color:#93a79c;font-size:11px; }
+.call-controls { display:flex;justify-content:center;gap:13px;padding:22px; }
+.call-control { width:48px;height:48px;border:0;border-radius:50%;background:#23342c;color:#fff;cursor:pointer; }
+.call-control.active { background:#18a957; }
+.call-control.end { background:#c93d3d; }
+
+@@media(max-width:1050px) { .client-chat-layout { grid-template-columns:240px minmax(0,1fr); } }
+@@media(max-width:800px) {
+    .messages-content { padding:14px; }
+    .client-chat-layout { height:calc(100vh - 125px);min-height:450px;grid-template-columns:1fr; }
+    .chat-trainer-list { display:none; }
+    .client-messages-box { padding:14px; }
+    .client-message-bubble { max-width:82%; }
+    .chat-header-actions .chat-tool-btn { display:none; }
+}
+</style>
+
+</head>
+<body>
+<div class="client-layout">
+<aside class="client-sidebar" id="clientSidebar">
+
+        <!-- EXACT HEALTH TRACK BRAND -->
+        <div class="healthtrack-logo">
+
+            <div class="healthtrack-logo-symbol">
+                <i class="fa-solid fa-dumbbell"></i>
+            </div>
+
+            <div class="healthtrack-logo-text">
+                Health<span>Track</span>
+            </div>
+
+        </div>
+
+        <!-- PROFILE -->
+        <div class="client-profile">
+
+            <img src="@profileImage"
+                 class="client-profile-image"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+
+            <div style="
+                display:none;
+                width:45px;
+                height:45px;
+                border-radius:50%;
+                background:#18A957;
+                color:#fff;
+                align-items:center;
+                justify-content:center;
+                font-weight:800;">
+                @clientInitial
+            </div>
+
+            <div class="client-profile-info">
+
+                <div class="client-profile-name">
+                    @clientName
+                </div>
+
+                <div class="client-profile-role">
+                    Client
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="menu-title">
+            MAIN MENU
+        </div>
+
+        <!-- MENU -->
+        <nav class="client-menu">
+
+            <a href="@Url.Action("ClientDashboard", "Home")"
+               class="client-menu-item">
+
+                <i class="fa-solid fa-house"></i>
+
+                <span>Dashboard</span>
+
+            </a>
+
+
+            <a href="@Url.Action("ClientAppointments", "Home")"
+               class="client-menu-item">
+
+                <i class="fa-regular fa-calendar"></i>
+
+                <span>Appointments</span>
+
+            </a>
+
+            <a href="@Url.Action("ClientWorkoutPlans", "Home")"
+               class="client-menu-item">
+
+                <i class="fa-solid fa-dumbbell"></i>
+
+                <span>Workout Plan</span>
+
+            </a>
+
+            <a href="@Url.Action("ClientDietPlans", "Home")"
+               class="client-menu-item">
+
+                <i class="fa-solid fa-utensils"></i>
+
+                <span>Diet Plan</span>
+
+            </a>
+
+            <a href="@Url.Action("ClientProgress", "Home")"
+               class="client-menu-item">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+                <span>Progress</span>
+
+            </a>
+
+            <a href="@Url.Action("Messages", "Home")"
+               class="client-menu-item active">
+
+                <i class="fa-regular fa-comment"></i>
+
+                <span>Messages</span>
+
+            </a>
+
+            <a href="@Url.Action("ClientNotifications", "Home")"
+               class="client-menu-item">
+
+                <i class="fa-regular fa-bell"></i>
+
+                <span>Notifications</span>
+
+                <span class="notification-count">
+                    @(ViewBag.UnreadNotifications ?? 0)
+                </span>
+
+            </a>
+
+            <a href="@Url.Action("Logout", "Home")"
+               class="client-menu-item">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                <span>Logout</span>
+
+            </a>
+
+        </nav>
+
+        <!-- SIDEBAR BOTTOM -->
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-bottom-title">
+
+                STRONGER PEOPLE
+
+                <span>
+                    HEALTHIER TOMORROW
+                </span>
+
+            </div>
+
+            <div class="sidebar-line"></div>
+
+        </div>
+
+    </aside><main class="client-main">
+
+    <!-- SAME CLIENT DASHBOARD TOP BAR -->
+    <header class="client-topbar">
+
+            <button class="mobile-menu-btn"
+                    type="button"
+                    onclick="toggleClientSidebar()">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+            <div class="search-box">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input type="text"
+                       placeholder="Search here..." />
+
+            </div>
+
+            <div class="topbar-right">
+
+                <a href="@Url.Action("ClientNotifications", "Home")"
+                   class="notification-icon">
+
+                    <i class="fa-regular fa-bell"></i>
+
+                    <span class="notification-badge">
+                        @(ViewBag.UnreadNotifications ?? 0)
+                    </span>
+
+                </a>
+
+                <div class="top-profile">
+
+                    <img src="@profileImage"
+                         class="top-profile-image"
+                         onerror="this.src='/images/default-user.png';" />
+
+                    <div class="top-profile-text">
+
+                        <div class="top-profile-name">
+                            @clientName
+                        </div>
+
+                        <div class="top-profile-role">
+                            Client
+                        </div>
+
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </div>
+
+            </div>
+
+        </header>
+
+    <section class="messages-content">
+
+        <div class="messages-title-row">
+            <div>
+                <h1 class="messages-page-title">Messages</h1>
+                <p class="messages-page-subtitle">Secure communication with your trainer</p>
+            </div>
+        </div>
+
+        <div class="client-chat-layout">
+
+            <aside class="chat-trainer-list">
+                <div class="chat-list-head">
+                    <div class="chat-list-title">My Trainer</div>
+                    <div class="chat-list-subtitle">Your assigned fitness trainer</div>
+                </div>
+
+                <div class="chat-trainer-card">
+                    <img id="trainerSideImage" class="chat-trainer-avatar"
+                         src="@trainerImage" alt="Trainer"
+                         onerror="this.src='/images/default-trainer.jpg';" />
+                    <div>
+                        <div id="trainerSideName" class="chat-trainer-name">@trainerName</div>
+                        <div class="chat-trainer-role">Fitness Trainer</div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="chat-main">
+
+                <div class="chat-main-header">
+                    <div id="chatTrainerAvatar" class="chat-header-avatar chat-header-initial">T</div>
+                    <div class="chat-main-header-info">
+                        <div id="chatTrainerName" class="chat-header-name">@trainerName</div>
+                        <div id="chatHeaderStatus" class="chat-header-status">Secure Trainer Chat</div>
+                    </div>
+
+                    <div class="chat-header-actions">
+                        <button type="button" class="chat-tool-btn" title="Voice Call" onclick="startTrainerCall('voice')">
+                            <i class="fa-solid fa-phone"></i>
+                        </button>
+                        <button type="button" class="chat-tool-btn" title="Video Call" onclick="startTrainerCall('video')">
+                            <i class="fa-solid fa-video"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="chatMessages" class="client-messages-box">
+                    <div class="chat-empty">Loading conversation...</div>
+                </div>
+
+                <div class="client-chat-composer">
+                    <form id="clientChatForm" class="client-chat-form-row">
+                        @Html.AntiForgeryToken()
+                        <input type="file" id="chatAttachment" hidden />
+                        <button type="button" class="chat-attach-btn" title="Attach" onclick="document.getElementById('chatAttachment').click()">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+                        <input id="messageInput" class="client-chat-input" type="text" maxlength="2000" placeholder="Type a message..." autocomplete="off" />
+                        <button id="sendBtn" type="submit" class="chat-send-btn" title="Send">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- CALL UI -->
+                <div id="callPanel" class="call-panel">
+                    <div class="call-panel-head">
+                        <div>
+                            <div id="callTitle" class="call-panel-title">Voice Call</div>
+                            <div id="callSubtitle" class="call-panel-subtitle">Connecting...</div>
+                        </div>
+                        <button type="button" class="call-close" onclick="endTrainerCall()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="call-stage">
+                        <img id="callTrainerImage" class="call-avatar" src="@trainerImage" alt="Trainer" onerror="this.src='/images/default-trainer.jpg';" />
+                        <video id="callRemoteVideo" class="call-remote-video" autoplay playsinline></video>
+                        <video id="callLocalVideo" class="call-local-video" autoplay muted playsinline></video>
+                        <audio id="callRemoteAudio" autoplay></audio>
+                        <div id="callName" class="call-name">@trainerName</div>
+                        <div id="callStatus" class="call-status">Calling...</div>
+                    </div>
+
+                    <div class="call-controls">
+                        <button type="button" class="call-control" id="muteCallBtn" title="Mute" onclick="toggleCallMute(this)">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
+                        <button type="button" class="call-control" id="cameraCallBtn" title="Camera" onclick="toggleCallCamera(this)">
+                            <i class="fa-solid fa-video"></i>
+                        </button>
+                        <button type="button" class="call-control end" title="End Call" onclick="endTrainerCall()">
+                            <i class="fa-solid fa-phone-slash"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </section>
+</main>
+
+</div>
+<script>
+function toggleClientSidebar() {
+    const sidebar = document.getElementById("clientSidebar");
+    if (sidebar) sidebar.classList.toggle("open");
+}
+
+let trainerId = 0;
+let currentTrainerName = "Trainer";
+let currentTrainerImage = "/images/default-trainer.jpg";
+
+function escapeHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value == null ? "" : String(value);
+    return div.innerHTML;
+}
+
+async function loadChat() {
+    const box = document.getElementById("chatMessages");
+    if (!box) return;
+
+    box.innerHTML = '<div class="chat-empty">Loading conversation...</div>';
+
+    try {
+        const response = await fetch('@Url.Action("ClientChatHistory", "Home")', {
+            method: "GET",
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '@Url.Action("Login", "Account")';
+            return;
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        const raw = await response.text();
+
+        if (!contentType.includes("application/json")) {
+            console.error("Client chat history server response:", raw);
+            box.innerHTML = '<div class="chat-error">Unable to load messages. Please refresh the page.</div>';
+            return;
+        }
+
+        const data = JSON.parse(raw);
+
+        if (!response.ok || data.success === false) {
+            box.innerHTML =
+                '<div class="chat-error">' +
+                escapeHtml(data.message || "Unable to load messages.") +
+                '</div>';
+            return;
+        }
+
+        if (data.hasTrainer === false || !data.trainerId) {
+            box.innerHTML = '<div class="chat-empty">No trainer is currently assigned to you.</div>';
+            return;
+        }
+
+        trainerId = Number(data.trainerId || 0);
+        currentTrainerName = data.trainerName || "Trainer";
+        currentTrainerImage = data.trainerImage || "/images/default-trainer.jpg";
+
+        document.getElementById("chatTrainerName").textContent = currentTrainerName;
+        document.getElementById("trainerSideName").textContent = currentTrainerName;
+        document.getElementById("trainerSideImage").src = currentTrainerImage;
+        document.getElementById("callTrainerImage").src = currentTrainerImage;
+        document.getElementById("callName").textContent = currentTrainerName;
+
+        const avatar = document.getElementById("chatTrainerAvatar");
+        const initial = currentTrainerName.trim().charAt(0).toUpperCase() || "T";
+        if (currentTrainerImage) {
+            avatar.outerHTML = '<img id="chatTrainerAvatar" class="chat-header-avatar" src="' + escapeHtml(currentTrainerImage) + '" alt="Trainer" onerror="this.src=\'/images/default-trainer.jpg\';" />';
+        } else {
+            avatar.textContent = initial;
+        }
+
+        renderMessages(data.messages || []);
+    } catch (error) {
+        console.error(error);
+        box.innerHTML = '<div class="chat-error">Unable to load messages.</div>';
+    }
+}
+
+function renderMessages(messages) {
+    const box = document.getElementById("chatMessages");
+    if (!box) return;
+
+    if (!messages || messages.length === 0) {
+        box.innerHTML = '<div class="chat-empty">No messages yet. Start the conversation.</div>';
+        return;
+    }
+
+    box.innerHTML = "";
+
+    messages.forEach(function (item) {
+        const mine = item.isClient !== undefined ? item.isClient : item.isMine;
+        const textValue = item.messageText !== undefined ? item.messageText : item.message;
+        const timeValue = item.sentAt || "";
+
+        const row = document.createElement("div");
+        row.className = "client-message-row " + (mine ? "mine" : "theirs");
+
+        const bubble = document.createElement("div");
+        bubble.className = "client-message-bubble";
+
+        if (String(textValue || "").startsWith("__HT_ATTACHMENT__|")) {
+            const parts = String(textValue).split("|");
+            const name = parts[1] || "Attachment";
+            const url = parts[2] || "#";
+            const type = parts[3] || "";
+
+            const attachment = document.createElement("a");
+            attachment.className = "attachment-card";
+            attachment.href = url;
+            attachment.target = "_blank";
+            attachment.rel = "noopener";
+
+            let icon = "fa-file";
+            if (type.startsWith("image/")) icon = "fa-image";
+            else if (type.startsWith("video/")) icon = "fa-video";
+            else if (type.startsWith("audio/")) icon = "fa-file-audio";
+            else if (type.includes("pdf")) icon = "fa-file-pdf";
+
+            attachment.innerHTML =
+                '<i class="fa-solid ' + icon + '"></i>' +
+                '<span class="attachment-name"></span>';
+
+            attachment.querySelector(".attachment-name").textContent = name;
+            bubble.appendChild(attachment);
+        } else {
+            const text = document.createElement("div");
+            text.textContent = textValue || "";
+            bubble.appendChild(text);
+        }
+
+        const time = document.createElement("span");
+        time.className = "client-message-time";
+        time.textContent = timeValue;
+
+        bubble.appendChild(time);
+        row.appendChild(bubble);
+        box.appendChild(row);
+    });
+
+    box.scrollTop = box.scrollHeight;
+}
+
+async function sendMessage(event) {
+    if (event) event.preventDefault();
+
+    const input = document.getElementById("messageInput");
+    const send = document.getElementById("sendBtn");
+    if (!input || !send) return;
+
+    const message = input.value.trim();
+    if (!message) return;
+
+    if (!trainerId) {
+        await loadChat();
+        if (!trainerId) return;
+    }
+
+    const form = document.getElementById("clientChatForm");
+
+    if (!form) {
+        alert("Chat form is not available. Please refresh the page.");
+        return;
+    }
+
+    send.disabled = true;
+
+    try {
+        const body = new URLSearchParams(new FormData(form));
+
+        body.set("receiverId", String(trainerId));
+        body.set("message", message);
+
+        const response = await fetch('@Url.Action("SendClientMessage", "Home")', {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: body.toString()
+        });
+
+        if (response.status === 401) {
+            window.location.href = '@Url.Action("Login", "Account")';
+            return;
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        const raw = await response.text();
+
+        if (!contentType.includes("application/json")) {
+            console.error("Send message server response:", raw);
+            alert("Server rejected the message request. Please refresh the page and try again.");
+            return;
+        }
+
+        const data = JSON.parse(raw);
+
+        if (!response.ok || !data.success) {
+            alert(data.message || "Message could not be sent.");
+            return;
+        }
+
+        input.value = "";
+
+        // Render the newly sent message immediately.
+        await loadChat();
+
+        input.focus();
+
+    } catch (error) {
+        console.error("Client chat send error:", error);
+        alert(error.message || "Unable to send the message.");
+    } finally {
+        send.disabled = false;
+    }
+}
+
+let callState = {
+    active: false,
+    isCaller: false,
+    peerId: 0,
+    roomId: "",
+    type: "",
+    pc: null,
+    localStream: null,
+    remoteStream: null,
+    pendingCandidates: [],
+    pollTimer: null
+};
+
+async function sendCallSignal(signalType, payload) {
+    if (!callState.peerId || !callState.roomId) return;
+
+    const form = document.getElementById("clientChatForm");
+    const token = form?.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
+
+    const body = new URLSearchParams();
+    body.set("__RequestVerificationToken", token);
+    body.set("receiverId", String(callState.peerId));
+    body.set("roomId", callState.roomId);
+    body.set("callType", callState.type);
+    body.set("signalType", signalType);
+    body.set("payload", JSON.stringify(payload || {}));
+
+    try {
+        await fetch('@Url.Action("SendCallSignal", "Home")', {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: body.toString()
+        });
+    } catch (error) {
+        console.error("Call signal error:", error);
+    }
+}
+
+function showCallPanel(type) {
+    const panel = document.getElementById("callPanel");
+    if (!panel) return;
+
+    document.getElementById("callTitle").textContent =
+        type === "video" ? "Video Call" : "Voice Call";
+
+    document.getElementById("callSubtitle").textContent = currentTrainerName;
+    document.getElementById("callName").textContent = currentTrainerName;
+    document.getElementById("callStatus").textContent =
+        callState.isCaller ? "Calling trainer..." : "Incoming call...";
+
+    document.getElementById("callTrainerImage").src =
+        currentTrainerImage || "/images/default-trainer.jpg";
+
+    const remoteVideo = document.getElementById("callRemoteVideo");
+    const localVideo = document.getElementById("callLocalVideo");
+    const avatar = document.getElementById("callTrainerImage");
+
+    remoteVideo.style.display = type === "video" ? "block" : "none";
+    localVideo.style.display = type === "video" ? "block" : "none";
+    avatar.style.display = type === "video" ? "none" : "block";
+
+    panel.classList.add("show");
+}
+
+async function getLocalCallMedia(type) {
+    if (callState.localStream) return;
+
+    callState.localStream =
+        await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: type === "video"
+        });
+
+    const localVideo = document.getElementById("callLocalVideo");
+
+    if (type === "video") {
+        localVideo.srcObject = callState.localStream;
+        localVideo.play().catch(() => {});
+    }
+}
+
+async function createCallPeerConnection() {
+    if (callState.pc) return callState.pc;
+
+    callState.remoteStream = new MediaStream();
+
+    const pc = new RTCPeerConnection({
+        iceServers: [
+            { urls: "stun:stun.l.google.com:19302" }
+        ]
+    });
+
+    callState.pc = pc;
+
+    callState.localStream?.getTracks().forEach(track => {
+        pc.addTrack(track, callState.localStream);
+    });
+
+    pc.onicecandidate = function (event) {
+        if (event.candidate) {
+            sendCallSignal("ice", event.candidate.toJSON());
+        }
+    };
+
+    pc.ontrack = function (event) {
+        event.streams[0]?.getTracks().forEach(track => {
+            callState.remoteStream.addTrack(track);
+        });
+
+        const remoteVideo = document.getElementById("callRemoteVideo");
+        const remoteAudio = document.getElementById("callRemoteAudio");
+
+        remoteVideo.srcObject = callState.remoteStream;
+        remoteAudio.srcObject = callState.remoteStream;
+
+        remoteVideo.play().catch(() => {});
+        remoteAudio.play().catch(() => {});
+
+        document.getElementById("callStatus").textContent = "Connected";
+    };
+
+    pc.onconnectionstatechange = function () {
+        if (pc.connectionState === "failed") {
+            document.getElementById("callStatus").textContent =
+                "Call connection failed";
+        }
+    };
+
+    return pc;
+}
+
+async function startTrainerCall(type) {
+    if (!trainerId || callState.active) return;
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+        alert("Camera and microphone are not available in this browser.");
+        return;
+    }
+
+    callState = {
+        active: true,
+        isCaller: true,
+        peerId: Number(trainerId),
+        roomId:
+            "ht-" +
+            Date.now() +
+            "-" +
+            Math.random().toString(36).slice(2, 9),
+        type: type,
+        pc: null,
+        localStream: null,
+        remoteStream: null,
+        pendingCandidates: [],
+        pollTimer: callState.pollTimer
+    };
+
+    try {
+        showCallPanel(type);
+
+        await getLocalCallMedia(type);
+
+        const pc = await createCallPeerConnection();
+
+        const offer = await pc.createOffer();
+
+        await pc.setLocalDescription(offer);
+
+        await sendCallSignal("offer", {
+            sdp: offer.sdp,
+            type: offer.type
+        });
+
+        document.getElementById("callStatus").textContent =
+            "Calling trainer...";
+    } catch (error) {
+        console.error(error);
+        alert(
+            "Unable to start the call. Please allow camera/microphone access."
+        );
+        await endTrainerCall(false);
+    }
+}
+
+async function handleCallSignal(signal) {
+    if (!signal) return;
+
+    if (signal.signalType === "offer") {
+        if (callState.active) return;
+
+        if (Number(signal.senderId) !== Number(trainerId)) {
+            return;
+        }
+
+        let offer;
+
+        try {
+            offer = JSON.parse(signal.payload || "{}");
+        } catch {
+            return;
+        }
+
+        callState = {
+            active: true,
+            isCaller: false,
+            peerId: Number(signal.senderId),
+            roomId: signal.roomId,
+            type: signal.callType === "video" ? "video" : "voice",
+            pc: null,
+            localStream: null,
+            remoteStream: null,
+            pendingCandidates: [],
+            pollTimer: callState.pollTimer
+        };
+
+        try {
+            showCallPanel(callState.type);
+
+            await getLocalCallMedia(callState.type);
+
+            const pc = await createCallPeerConnection();
+
+            await pc.setRemoteDescription(
+                new RTCSessionDescription(offer)
+            );
+
+            const answer = await pc.createAnswer();
+
+            await pc.setLocalDescription(answer);
+
+            await sendCallSignal("answer", {
+                sdp: answer.sdp,
+                type: answer.type
+            });
+
+            document.getElementById("callStatus").textContent =
+                "Connecting...";
+        } catch (error) {
+            console.error(error);
+            alert(
+                "Unable to answer the call. Please allow camera/microphone access."
+            );
+            await endTrainerCall(false);
+        }
+
+        return;
+    }
+
+    if (
+        !callState.active ||
+        Number(signal.senderId) !== Number(callState.peerId) ||
+        signal.roomId !== callState.roomId
+    ) {
+        return;
+    }
+
+    if (signal.signalType === "answer") {
+        let answer;
+
+        try {
+            answer = JSON.parse(signal.payload || "{}");
+        } catch {
+            return;
+        }
+
+        if (
+            callState.pc &&
+            !callState.pc.remoteDescription
+        ) {
+            await callState.pc.setRemoteDescription(
+                new RTCSessionDescription(answer)
+            );
+
+            for (const candidate of callState.pendingCandidates) {
+                await callState.pc
+                    .addIceCandidate(candidate)
+                    .catch(() => {});
+            }
+
+            callState.pendingCandidates = [];
+        }
+    }
+
+    if (signal.signalType === "ice") {
+        let candidate;
+
+        try {
+            candidate = JSON.parse(signal.payload || "{}");
+        } catch {
+            return;
+        }
+
+        if (
+            callState.pc &&
+            callState.pc.remoteDescription
+        ) {
+            await callState.pc
+                .addIceCandidate(candidate)
+                .catch(() => {});
+        } else {
+            callState.pendingCandidates.push(candidate);
+        }
+    }
+
+    if (signal.signalType === "hangup") {
+        await endTrainerCall(false);
+    }
+}
+
+async function pollCallSignals() {
+    try {
+        const response = await fetch(
+            '@Url.Action("GetCallSignals", "Home")',
+            {
+                credentials: "same-origin",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            }
+        );
+
+        if (response.ok) {
+            const data = await response.json();
+
+            for (const signal of data.signals || []) {
+                await handleCallSignal(signal);
+            }
+        }
+    } catch (error) {
+        console.error("Call polling error:", error);
+    }
+
+    callState.pollTimer =
+        setTimeout(pollCallSignals, 700);
+}
+
+async function endTrainerCall(sendHangup = true) {
+    if (
+        sendHangup &&
+        callState.active &&
+        callState.peerId
+    ) {
+        await sendCallSignal("hangup", {});
+    }
+
+    callState.pc?.close();
+
+    callState.localStream?.getTracks().forEach(track => {
+        track.stop();
+    });
+
+    ["callRemoteVideo", "callLocalVideo", "callRemoteAudio"]
+        .forEach(id => {
+            const element = document.getElementById(id);
+
+            if (element) {
+                element.srcObject = null;
+            }
+        });
+
+    document
+        .getElementById("callPanel")
+        ?.classList.remove("show");
+
+    callState.active = false;
+    callState.isCaller = false;
+    callState.peerId = 0;
+    callState.roomId = "";
+    callState.type = "";
+    callState.pc = null;
+    callState.localStream = null;
+    callState.remoteStream = null;
+    callState.pendingCandidates = [];
+}
+
+function toggleCallMute(button) {
+    if (callState.localStream) {
+        callState.localStream
+            .getAudioTracks()
+            .forEach(track => {
+                track.enabled = !track.enabled;
+            });
+
+        const muted =
+            callState.localStream
+                .getAudioTracks()
+                .some(track => !track.enabled);
+
+        button.classList.toggle("active", muted);
+
+        const icon = button.querySelector("i");
+
+        if (icon) {
+            icon.className = muted
+                ? "fa-solid fa-microphone-slash"
+                : "fa-solid fa-microphone";
+        }
+
+        return;
+    }
+
+    button.classList.toggle("active");
+}
+
+function toggleCallCamera(button) {
+    if (callState.localStream) {
+        callState.localStream
+            .getVideoTracks()
+            .forEach(track => {
+                track.enabled = !track.enabled;
+            });
+
+        const off =
+            callState.localStream
+                .getVideoTracks()
+                .some(track => !track.enabled);
+
+        button.classList.toggle("active", off);
+
+        const icon = button.querySelector("i");
+
+        if (icon) {
+            icon.className = off
+                ? "fa-solid fa-video-slash"
+                : "fa-solid fa-video";
+        }
+
+        return;
+    }
+
+    button.classList.toggle("active");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("clientChatForm");
+    if (form) form.addEventListener("submit", sendMessage);
+
+    const input = document.getElementById("messageInput");
+    if (input) {
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                if (form) form.requestSubmit();
+            }
+        });
+    }
+
+    const attachment = document.getElementById("chatAttachment");
+
+    if (attachment) {
+        attachment.addEventListener("change", async function () {
+            if (!this.files || !this.files.length || !trainerId) return;
+
+            const form = document.getElementById("clientChatForm");
+            const token =
+                form?.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )?.value || "";
+
+            const formData = new FormData();
+
+            formData.append(
+                "__RequestVerificationToken",
+                token
+            );
+
+            formData.append(
+                "receiverId",
+                String(trainerId)
+            );
+
+            formData.append(
+                "file",
+                this.files[0]
+            );
+
+            try {
+                const response = await fetch(
+                    '@Url.Action("UploadChatAttachment", "Home")',
+                    {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                        body: formData
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    alert(
+                        data.message ||
+                        "Unable to upload the attachment."
+                    );
+
+                    return;
+                }
+
+                await loadChat();
+            } catch (error) {
+                console.error(error);
+
+                alert(
+                    "Unable to upload the attachment."
+                );
+            } finally {
+                this.value = "";
+            }
+        });
+    }
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") endTrainerCall();
+    });
+
+    loadChat();
+    pollCallSignals();
+});
+</script>
+
+</body>
+</html>

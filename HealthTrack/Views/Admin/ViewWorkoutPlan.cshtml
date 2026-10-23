@@ -1,0 +1,1554 @@
+@using System
+@using System.Collections
+@using System.Reflection
+@using System.Text.RegularExpressions
+@{
+    Layout = null;
+
+    var plan = ViewBag.WorkoutPlan;
+    var days = ViewBag.WorkoutPlanDays as IEnumerable;
+
+    string adminName = Convert.ToString(ViewBag.AdminName) ?? "Admin";
+    string adminRole = Convert.ToString(ViewBag.AdminRole) ?? "ADMIN";
+    string adminImage = Convert.ToString(ViewBag.AdminProfileImage ?? ViewBag.ProfileImage) ?? "/images/default-user.png";
+
+    string status = S(plan, "Status", "Active");
+    string statusClass = status.Equals("Active", StringComparison.OrdinalIgnoreCase)
+        ? "active"
+        : status.Equals("Completed", StringComparison.OrdinalIgnoreCase)
+            ? "completed"
+            : "other";
+
+    var dayList = days?.Cast<object>()
+        .OrderBy(x => I(x, "DayNumber"))
+        .ToList() ?? new List<object>();
+}
+
+@functions {
+    object V(object o, string n)
+    {
+        if (o == null) return null;
+        var p = o.GetType().GetProperty(
+            n,
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase
+        );
+        try { return p?.GetValue(o); } catch { return null; }
+    }
+
+    string S(object o, string n, string f = "")
+    {
+        var x = V(o, n);
+        var s = Convert.ToString(x);
+        return string.IsNullOrWhiteSpace(s) ? f : s;
+    }
+
+    IEnumerable E(object o, string n)
+    {
+        return V(o, n) as IEnumerable;
+    }
+
+    int I(object o, string n, int f = 0)
+    {
+        int.TryParse(Convert.ToString(V(o, n)), out var x);
+        return x == 0 ? f : x;
+    }
+
+    string D(object o, string n)
+    {
+        var s = S(o, n, "");
+        if (DateTime.TryParse(s, out var d))
+            return d.ToString("dd MMM yyyy");
+        return string.IsNullOrWhiteSpace(s) ? "Not set" : s;
+    }
+
+    string ExerciseImage(object exercise)
+    {
+        var name = S(exercise, "ExerciseName", "");
+        var key = Regex.Replace((name ?? "").Trim().ToLowerInvariant(), @"[^a-z0-9]+", " ").Trim();
+
+        var workoutImages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["incline push up"] = "/images/workouts/01_incline-push-up.jpg",
+            ["dumbbell row"] = "/images/workouts/02_dumbbell-row.jpg",
+            ["shoulder press"] = "/images/workouts/03_shoulder-press.jpg",
+            ["jumping jack"] = "/images/workouts/04_jumping-jack.jpg",
+            ["bodyweight squat"] = "/images/workouts/05_bodyweight-squat.jpg",
+            ["reverse lunge"] = "/images/workouts/06_reverse-lunge.jpg",
+            ["glute bridge"] = "/images/workouts/07_glute-bridge.jpg",
+            ["calf raise"] = "/images/workouts/08_calf-raise.jpg",
+            ["treadmill walk"] = "/images/workouts/09_treadmill-walk.jpg",
+            ["mountain climber"] = "/images/workouts/10_mountain-climber.jpg",
+            ["plank"] = "/images/workouts/11_plank.jpg",
+            ["bicycle crunch"] = "/images/workouts/12_bicycle-crunch.jpg",
+            ["kettlebell swing"] = "/images/workouts/13_kettlebell-swing.jpg",
+            ["step up"] = "/images/workouts/14_step-up.jpg",
+            ["push up"] = "/images/workouts/15_push-up.jpg",
+            ["high knees"] = "/images/workouts/16_high-knees.jpg",
+            ["goblet squat"] = "/images/workouts/17_goblet-squat.jpg",
+            ["dumbbell deadlift"] = "/images/workouts/18_dumbbell-deadlift.jpg",
+            ["jump rope"] = "/images/workouts/19_jump-rope.jpg",
+            ["brisk walking"] = "/images/workouts/20_brisk-walking.jpg",
+            ["walking"] = "/images/workouts/21_walking.jpg",
+            ["stretching"] = "/images/workouts/22_stretching.jpg",
+            ["deep breathing"] = "/images/workouts/23_deep-breathing.jpg",
+            ["march in place"] = "/images/workouts/24_march-in-place.jpg",
+            ["dumbbell shoulder press"] = "/images/workouts/25_dumbbell-shoulder-press.jpg",
+            ["seated cable row"] = "/images/workouts/26_seated-cable-row.jpg",
+            ["bicep curl"] = "/images/workouts/27_bicep-curl.jpg",
+            ["triceps pushdown"] = "/images/workouts/28_triceps-pushdown.jpg",
+            ["leg press"] = "/images/workouts/29_leg-press.jpg",
+            ["chest press"] = "/images/workouts/30_chest-press.jpg",
+            ["lat pulldown"] = "/images/workouts/31_lat-pulldown.jpg",
+            ["stationary bike"] = "/images/workouts/32_stationary-bike.jpg",
+            ["wall push up"] = "/images/workouts/33_wall-push-up.jpg",
+            ["chair squat"] = "/images/workouts/34_chair-squat.jpg",
+            ["bird dog"] = "/images/workouts/35_bird-dog.jpg",
+            ["child pose"] = "/images/workouts/36_child-pose.jpg",
+            ["barbell bench press"] = "/images/workouts/37_barbell-bench-press.jpg",
+            ["incline dumbbell press"] = "/images/workouts/38_incline-dumbbell-press.jpg",
+            ["cable fly"] = "/images/workouts/39_cable-fly.jpg",
+            ["barbell row"] = "/images/workouts/40_barbell-row.jpg",
+            ["barbell curl"] = "/images/workouts/41_barbell-curl.jpg",
+            ["back squat"] = "/images/workouts/42_back-squat.jpg",
+            ["romanian deadlift"] = "/images/workouts/43_romanian-deadlift.jpg",
+            ["overhead press"] = "/images/workouts/44_overhead-press.jpg",
+            ["lateral raise"] = "/images/workouts/45_lateral-raise.jpg",
+            ["face pull"] = "/images/workouts/46_face-pull.jpg",
+            ["ab wheel rollout"] = "/images/workouts/47_ab-wheel-rollout.jpg",
+            ["deadlift"] = "/images/workouts/48_deadlift.jpg",
+            ["front squat"] = "/images/workouts/49_front-squat.jpg",
+            ["hanging leg raise"] = "/images/workouts/50_hanging-leg-raise.jpg",
+            ["incline bench press"] = "/images/workouts/51_incline-bench-press.jpg",
+            ["chest supported row"] = "/images/workouts/52_chest-supported-row.jpg",
+            ["cable triceps extension"] = "/images/workouts/53_cable-triceps-extension.jpg",
+            ["leg curl"] = "/images/workouts/54_leg-curl.jpg",
+            ["hack squat"] = "/images/workouts/55_hack-squat.jpg",
+            ["dumbbell curl"] = "/images/workouts/56_dumbbell-curl.jpg",
+            ["cable row"] = "/images/workouts/57_cable-row.jpg",
+            ["treadmill run"] = "/images/workouts/58_treadmill-run.jpg",
+            ["walking lunge"] = "/images/workouts/59_walking-lunge.jpg",
+            ["russian twist"] = "/images/workouts/60_russian-twist.jpg",
+            ["burpee"] = "/images/workouts/61_burpee.jpg",
+            ["rowing machine"] = "/images/workouts/62_rowing-machine.jpg",
+            ["weighted dips"] = "/images/workouts/63_weighted-dips.jpg",
+            ["close grip bench press"] = "/images/workouts/64_close-grip-bench-press.jpg",
+            ["pull up"] = "/images/workouts/65_pull-up.jpg",
+            ["trap bar deadlift"] = "/images/workouts/66_trap-bar-deadlift.jpg",
+            ["push press"] = "/images/workouts/67_push-press.jpg",
+            ["farmer carry"] = "/images/workouts/68_farmer-carry.jpg",
+            ["cat cow stretch"] = "/images/workouts/69_cat-cow-stretch.jpg",
+            ["hip flexor stretch"] = "/images/workouts/70_hip-flexor-stretch.jpg",
+            ["resistance band row"] = "/images/workouts/71_resistance-band-row.jpg",
+            ["hip thrust"] = "/images/workouts/72_hip-thrust.jpg",
+            ["box jump"] = "/images/workouts/73_box-jump.jpg",
+            ["medicine ball slam"] = "/images/workouts/74_medicine-ball-slam.jpg",
+            ["bulgarian split squat"] = "/images/workouts/75_bulgarian-split-squat.jpg",
+            ["weighted pull up"] = "/images/workouts/76_weighted-pull-up.jpg"
+        };
+
+        if (workoutImages.TryGetValue(key, out var imagePath))
+            return imagePath;
+
+        // Unknown workout name: keep a stable local fallback instead of using a random web image.
+        return "/images/workouts/01_incline-push-up.jpg";
+    }
+    string ExerciseDuration(object exercise)
+    {
+        var duration = V(exercise, "Duration");
+        return duration == null || string.IsNullOrWhiteSpace(Convert.ToString(duration))
+            ? ""
+            : Convert.ToString(duration) + " min";
+    }
+
+    string ExerciseRest(object exercise)
+    {
+        var rest = V(exercise, "RestSeconds");
+        return rest == null || string.IsNullOrWhiteSpace(Convert.ToString(rest))
+            ? ""
+            : Convert.ToString(rest) + " sec";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>View Workout Plan - HealthTrack</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --sidebar: 250px;
+            --topbar: 72px;
+            --bg: #080d11;
+            --panel: #10171c;
+            --panel2: #141d23;
+            --panel3: #182229;
+            --border: #29343c;
+            --muted: #89959d;
+            --text: #f2f5f7;
+            --red: #ff1235;
+            --red2: #e90029;
+            --green: #41e88e;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(circle at 78% 5%, rgba(255, 18, 53, .09), transparent 28%),
+                radial-gradient(circle at 20% 40%, rgba(255, 18, 53, .04), transparent 25%),
+                var(--bg);
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        a { color: inherit; }
+
+        /* =========================================================
+           SIDEBAR
+           ========================================================= */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar);
+            height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(180deg, #0d1419 0%, #080d11 100%);
+            border-right: 1px solid #26323a;
+            z-index: 1000;
+        }
+
+        .brand {
+            height: var(--topbar);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #202b32;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ff1538, #dc0028);
+            box-shadow: 0 0 24px rgba(255, 18, 53, .24);
+            font-size: 21px;
+        }
+
+        .brand-text {
+            font-size: 22px;
+            font-weight: 850;
+            letter-spacing: -.5px;
+        }
+
+        .profile-card {
+            margin: 18px 14px 13px;
+            padding: 12px;
+            border-radius: 14px;
+            background: #121a20;
+            border: 1px solid #27333a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-card img {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ff4059;
+        }
+
+        .profile-name { font-size: 13px; font-weight: 800; }
+        .profile-role { margin-top: 3px; color: #7e8a92; font-size: 10px; }
+
+        .menu-label {
+            padding: 13px 21px 8px;
+            color: #64717a;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+        }
+
+        .menu { padding: 0 11px; }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 45px;
+            margin: 3px 0;
+            padding: 0 14px;
+            border-radius: 11px;
+            color: #aab5bb;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 650;
+            transition: .2s ease;
+        }
+
+        .menu a i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu a:hover {
+            background: #172027;
+            color: #fff;
+        }
+
+        .menu a.active {
+            background: linear-gradient(135deg, #ff1538, #ed002d);
+            color: #fff;
+            box-shadow: 0 12px 28px rgba(255, 18, 53, .24);
+        }
+
+        .menu a.active::after {
+            content: "›";
+            margin-left: auto;
+            font-size: 21px;
+        }
+
+        /* =========================================================
+           TOPBAR
+           ========================================================= */
+
+        .topbar {
+            position: fixed;
+            left: var(--sidebar);
+            right: 0;
+            top: 0;
+            height: var(--topbar);
+            z-index: 900;
+            background: rgba(12, 18, 23, .96);
+            border-bottom: 1px solid #253139;
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 27px;
+        }
+
+        .top-left,
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .crumb {
+            color: #f1f4f5;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .crumb-muted {
+            color: #78858d;
+            font-size: 12px;
+        }
+
+        .top-back {
+            text-decoration: none;
+            width: 39px;
+            height: 39px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            color: #b9c2c7;
+            background: #192228;
+            border: 1px solid #2c3941;
+        }
+
+        .top-back:hover { color: #fff; border-color: #ff3150; }
+
+        .notification {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c7d0d4;
+            background: #172027;
+            border: 1px solid #2a363e;
+            text-decoration: none;
+        }
+
+        .notification .count {
+            position: absolute;
+            right: -5px;
+            top: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 99px;
+            background: #ff1738;
+            color: #fff;
+            border: 2px solid #0d1419;
+            font-size: 9px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .top-user {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .top-user img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #37434b;
+        }
+
+        .top-user-name { font-size: 12px; font-weight: 800; }
+        .top-user-role { color: #78858d; font-size: 10px; margin-top: 2px; }
+
+        /* =========================================================
+           MAIN
+           ========================================================= */
+
+        .main {
+            margin-left: var(--sidebar);
+            padding-top: var(--topbar);
+            min-height: 100vh;
+        }
+
+        .content {
+            width: min(1500px, calc(100% - 44px));
+            margin: 0 auto;
+            padding: 28px 0 45px;
+        }
+
+        /* =========================================================
+           HERO
+           ========================================================= */
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #3a242b;
+            border-radius: 18px;
+            background:
+                linear-gradient(90deg, rgba(15, 20, 25, .98) 0%, rgba(15, 20, 25, .92) 52%, rgba(15, 20, 25, .45) 100%),
+                linear-gradient(135deg, #211217, #10171c 60%);
+            box-shadow: 0 18px 50px rgba(0,0,0,.3);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 380px;
+            height: 380px;
+            right: -120px;
+            top: -190px;
+            background: radial-gradient(circle, rgba(255, 18, 53, .20), transparent 68%);
+            pointer-events: none;
+        }
+
+        .hero-main {
+            position: relative;
+            z-index: 2;
+            padding: 25px 25px 18px;
+        }
+
+        .hero-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .plan-icon {
+            width: 61px;
+            height: 61px;
+            flex: 0 0 61px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff1639, #d80028);
+            box-shadow: 0 0 35px rgba(255, 18, 53, .28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 27px;
+        }
+
+        .eyebrow {
+            color: #ff4b64;
+            text-transform: uppercase;
+            font-size: 9px;
+            font-weight: 850;
+            letter-spacing: 1.6px;
+            margin-bottom: 4px;
+        }
+
+        .title {
+            margin: 0;
+            font-size: clamp(24px, 3vw, 34px);
+            line-height: 1.08;
+            font-weight: 900;
+            letter-spacing: -.8px;
+        }
+
+        .description {
+            color: #9ca8ae;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-top: 7px;
+            max-width: 700px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 11px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 850;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .status.active { background: #103824; color: #55ec9a; border: 1px solid #236d46; }
+        .status.completed { background: #142c47; color: #84bcff; border: 1px solid #2b5884; }
+        .status.other { background: #382b18; color: #f2bf65; border: 1px solid #6b4d20; }
+
+        .hero-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            min-height: 38px;
+            border-radius: 9px;
+            border: 1px solid transparent;
+            padding: 0 13px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            font-size: 11px;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            transition: .18s ease;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: #ff1235; color: #fff; box-shadow: 0 9px 22px rgba(255,18,53,.18); }
+        .btn-secondary { background: #1b252c; color: #dbe2e5; border-color: #34414a; }
+        .btn-success { background: #133725; color: #5aeca0; border-color: #2a6848; }
+        .btn-danger { background: #37151d; color: #ff8290; border-color: #6c2835; }
+
+        .meta-grid {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0;
+            margin: 0 15px 15px;
+            background: rgba(8, 14, 18, .78);
+            border: 1px solid #26333a;
+            border-radius: 13px;
+            overflow: hidden;
+        }
+
+        .meta-item {
+            min-height: 86px;
+            padding: 15px 16px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            border-right: 1px solid #26333a;
+        }
+
+        .meta-item:last-child { border-right: 0; }
+
+        .meta-icon {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1b242b;
+            color: #ff2344;
+            border: 1px solid #303d45;
+        }
+
+        .meta-label {
+            color: #7e8a92;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .meta-value { font-size: 12px; font-weight: 800; color: #f0f3f4; }
+        .meta-sub { color: #758189; font-size: 9px; margin-top: 3px; }
+        .meta-value.green { color: #4bea96; }
+
+        /* =========================================================
+           TABS
+           ========================================================= */
+
+        .tabs {
+            display: flex;
+            gap: 2px;
+            margin: 16px 0 12px;
+            padding: 4px;
+            border: 1px solid #27343c;
+            border-radius: 11px;
+            background: #0f171c;
+        }
+
+        .tab {
+            flex: 0 0 auto;
+            padding: 11px 17px;
+            border-radius: 8px;
+            color: #89969e;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #ff1235;
+            color: #fff;
+            box-shadow: 0 7px 18px rgba(255,18,53,.18);
+        }
+
+        /* =========================================================
+           WORKOUT DAYS
+           ========================================================= */
+
+        .day-section {
+            margin-top: 14px;
+            border: 1px solid #2c3840;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #0e151a;
+            box-shadow: 0 12px 30px rgba(0,0,0,.18);
+        }
+
+        .day-header {
+            position: relative;
+            min-height: 75px;
+            padding: 13px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            background: linear-gradient(90deg, #8f001d, #4d101b 58%, #21161a);
+            border-bottom: 1px solid #702033;
+        }
+
+        .day-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .day-icon {
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.13);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .day-title { font-size: 17px; font-weight: 900; }
+        .day-note { color: #e1c7cc; font-size: 10px; margin-top: 3px; }
+
+        .day-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .duration-badge {
+            min-height: 35px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 9px;
+            color: #fff;
+            background: rgba(12,15,18,.28);
+            border: 1px solid rgba(255,255,255,.16);
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .day-body { padding: 12px; }
+
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .exercise-card {
+            min-width: 0;
+            background: linear-gradient(180deg, #141d23, #0f171c);
+            border: 1px solid #2a3740;
+            border-radius: 13px;
+            overflow: hidden;
+            transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+
+        .exercise-card:hover {
+            transform: translateY(-3px);
+            border-color: #ff304e;
+            box-shadow: 0 14px 28px rgba(0,0,0,.3), 0 0 0 1px rgba(255,18,53,.10);
+        }
+
+        .exercise-image-wrap {
+            position: relative;
+            height: 145px;
+            overflow: hidden;
+            background: #1b242a;
+        }
+
+        .exercise-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform .35s ease;
+        }
+
+        .exercise-card:hover .exercise-image { transform: scale(1.04); }
+
+        .exercise-image-wrap::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 50%, rgba(5,9,12,.72));
+            pointer-events: none;
+        }
+
+        .exercise-number {
+            position: absolute;
+            left: 9px;
+            top: 9px;
+            z-index: 2;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ff1235;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: 0 5px 16px rgba(255,18,53,.35);
+        }
+
+        .exercise-content { padding: 12px; }
+
+        .exercise-name {
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1.25;
+            margin-bottom: 10px;
+            min-height: 35px;
+        }
+
+        .exercise-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #e2e7e9;
+            font-size: 10px;
+            font-weight: 750;
+        }
+
+        .stat-item i { color: #ff1f42; width: 15px; text-align: center; }
+
+        .exercise-note {
+            margin-top: 10px;
+            padding-top: 9px;
+            border-top: 1px solid #2b363d;
+            color: #8c989f;
+            font-size: 9px;
+            line-height: 1.5;
+            min-height: 38px;
+        }
+
+        .exercise-actions {
+            margin-top: 9px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .mini-btn {
+            flex: 1;
+            height: 30px;
+            border-radius: 7px;
+            border: 1px solid #2e3a42;
+            background: #192228;
+            color: #adb8bd;
+            font-size: 9px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .mini-btn:hover { border-color: #ff304e; color: #fff; }
+
+        .empty {
+            padding: 28px;
+            text-align: center;
+            color: #7d8990;
+            font-size: 12px;
+            background: #10171c;
+            border: 1px dashed #344149;
+            border-radius: 11px;
+        }
+
+        /* =========================================================
+           PLAN DETAILS
+           ========================================================= */
+
+        .info-panel {
+            display: none;
+            padding: 17px;
+            border: 1px solid #29363e;
+            border-radius: 14px;
+            background: #10171c;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .info-box {
+            padding: 13px;
+            border-radius: 10px;
+            background: #151e24;
+            border: 1px solid #28353d;
+        }
+
+        .info-box label {
+            display: block;
+            color: #77858d;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .info-box b { font-size: 12px; }
+
+        /* =========================================================
+           MODAL
+           ========================================================= */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(0,0,0,.78);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.show { display: flex; }
+
+        .modal-box {
+            width: min(760px, 100%);
+            max-height: 92vh;
+            overflow: auto;
+            border: 1px solid #39464e;
+            border-radius: 15px;
+            background: #121a20;
+            box-shadow: 0 30px 80px rgba(0,0,0,.55);
+        }
+
+        .modal-head {
+            padding: 15px 17px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #29363e;
+        }
+
+        .modal-head b { font-size: 15px; }
+
+        .close-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid #344149;
+            background: #1a2329;
+            color: #b8c2c7;
+            cursor: pointer;
+        }
+
+        .modal-body { padding: 17px; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .field.full { grid-column: 1 / -1; }
+
+        .field label {
+            display: block;
+            color: #aeb8bd;
+            font-size: 10px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            background: #0c1216;
+            border: 1px solid #303d45;
+            color: #f0f4f5;
+            border-radius: 8px;
+            padding: 10px;
+            outline: none;
+            font-size: 12px;
+        }
+
+        .field input:focus,
+        .field textarea:focus { border-color: #ff2344; box-shadow: 0 0 0 2px rgba(255,18,53,.08); }
+        .field textarea { min-height: 82px; resize: vertical; }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        /* =========================================================
+           RESPONSIVE
+           ========================================================= */
+
+        @@media (max-width: 1200px) {
+            .meta-grid { grid-template-columns: repeat(3, 1fr); }
+            .meta-item:nth-child(3) { border-right: 0; }
+            .exercise-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @@media (max-width: 900px) {
+            :root { --sidebar: 0px; }
+            .sidebar { display: none; }
+            .topbar { left: 0; }
+            .content { width: calc(100% - 24px); }
+            .meta-grid { grid-template-columns: 1fr 1fr; }
+            .meta-item:nth-child(2) { border-right: 0; }
+            .hero-top { flex-direction: column; }
+            .hero-actions { justify-content: flex-start; }
+        }
+
+        @@media (max-width: 600px) {
+            .topbar { padding: 0 12px; }
+            .crumb, .crumb-muted, .top-user-name, .top-user-role { display: none; }
+            .content { width: calc(100% - 16px); padding-top: 16px; }
+            .hero-main { padding: 18px 15px 14px; }
+            .title-row { align-items: flex-start; }
+            .plan-icon { width: 48px; height: 48px; flex-basis: 48px; font-size: 20px; }
+            .meta-grid { grid-template-columns: 1fr; margin: 0 10px 10px; }
+            .meta-item { border-right: 0; border-bottom: 1px solid #26333a; }
+            .meta-item:last-child { border-bottom: 0; }
+            .tabs { overflow-x: auto; }
+            .day-header { align-items: flex-start; }
+            .day-right { display: none; }
+            .exercise-grid { grid-template-columns: 1fr; }
+            .exercise-image-wrap { height: 190px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .field.full { grid-column: auto; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================================
+         SIDEBAR
+         ========================================================= -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+            <div class="brand-text">HealthTrack</div>
+        </div>
+
+        <div class="profile-card">
+            <img src="@adminImage" alt="Admin" />
+            <div>
+                <div class="profile-name">@adminName</div>
+                <div class="profile-role">@adminRole</div>
+            </div>
+        </div>
+
+        <div class="menu-label">Main Menu</div>
+
+        <nav class="menu">
+            <a href="/Home/Dashboard"><i class="fa-solid fa-house"></i>Dashboard</a>
+            <a href="/Home/Clients"><i class="fa-solid fa-users"></i>Clients</a>
+            <a href="/Home/Trainers"><i class="fa-solid fa-user-tie"></i>Trainers</a>
+            <a href="/Home/Appointments"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
+            <a class="active" href="/Home/WorkoutPlans"><i class="fa-solid fa-dumbbell"></i>Workout Plans</a>
+            <a href="/Home/DietPlans"><i class="fa-solid fa-utensils"></i>Diet Plans</a>
+            <a href="/Home/HealthMetrics"><i class="fa-solid fa-chart-line"></i>Health Metrics</a>
+            <a href="/Home/Reports"><i class="fa-solid fa-chart-pie"></i>Reports</a>
+            <a href="/Home/Notifications"><i class="fa-solid fa-bell"></i>Notifications</a>
+        </nav>
+    </aside>
+
+    <!-- =========================================================
+         TOPBAR
+         ========================================================= -->
+    <header class="topbar">
+        <div class="top-left">
+            <a class="top-back" href="@ViewBag.BackUrl" title="Back to Workout Plans">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <span class="crumb">Admin</span>
+            <span class="crumb-muted">/ Workout Plans / View Plan</span>
+        </div>
+
+        <div class="top-right">
+            <a class="notification" href="/Home/Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="count">@(ViewBag.TotalNotifications ?? 0)</span>
+            </a>
+
+            <div class="top-user">
+                <img src="@adminImage" alt="Admin" />
+                <div>
+                    <div class="top-user-name">@adminName</div>
+                    <div class="top-user-role">@adminRole</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =========================================================
+         MAIN CONTENT
+         ========================================================= -->
+    <main class="main">
+        <div class="content">
+
+            <!-- =================================================
+                 PLAN HERO
+                 ================================================= -->
+            <section class="hero">
+                <div class="hero-main">
+                    <div class="hero-top">
+
+                        <div class="title-row">
+                            <div class="plan-icon">
+                                <i class="fa-solid fa-dumbbell"></i>
+                            </div>
+
+                            <div>
+                                <div class="eyebrow">HealthTrack Admin</div>
+                                <h1 class="title">
+                                    @S(plan, "PlanName", "Unnamed Workout Plan")
+                                </h1>
+
+                                <div class="description">
+                                    @S(plan, "Description", "Professional workout plan designed to support the client's fitness goals.")
+                                </div>
+
+                                <div style="margin-top:8px;">
+                                    <span class="status @statusClass">
+                                        <i class="fa-solid fa-circle" style="font-size:7px;"></i>
+                                        @status
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hero-actions">
+                            <a class="btn btn-primary" href="@ViewBag.BackUrl">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                Back to Plans
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLAN META -->
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <div class="meta-icon"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <div class="meta-label">Client</div>
+                            <div class="meta-value">@S(V(plan, "Client"), "FullName", "Unknown Client")</div>
+                            <div class="meta-sub">Assigned client</div>
+                        </div>
+                    </div>
+
+                    <div class="meta-item">
+                        <div class="meta-icon"><i class="fa-solid fa-user-tie"></i></div>
+                        <div>
+                            <div class="meta-label">Trainer</div>
+                            <div class="meta-value">@S(V(plan, "Trainer"), "FullName", "Unknown Trainer")</div>
+                            <div class="meta-sub">Assigned trainer</div>
+                        </div>
+                    </div>
+
+                    <div class="meta-item">
+                        <div class="meta-icon"><i class="fa-solid fa-bullseye"></i></div>
+                        <div>
+                            <div class="meta-label">Goal</div>
+                            <div class="meta-value">@S(plan, "Goal", "Fitness")</div>
+                            <div class="meta-sub">Workout objective</div>
+                        </div>
+                    </div>
+
+                    <div class="meta-item">
+                        <div class="meta-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                        <div>
+                            <div class="meta-label">Plan Period</div>
+                            <div class="meta-value">@D(plan, "StartDate") – @D(plan, "EndDate")</div>
+                            <div class="meta-sub">Workout schedule</div>
+                        </div>
+                    </div>
+
+                    <div class="meta-item">
+                        <div class="meta-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div>
+                            <div class="meta-label">Status</div>
+                            <div class="meta-value green">@status</div>
+                            <div class="meta-sub">Current plan status</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =================================================
+                 TABS
+                 ================================================= -->
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('workoutTab', this)">
+                    <i class="fa-solid fa-list-check"></i>&nbsp; Workout Plan
+                </div>
+                <div class="tab" onclick="showTab('detailsTab', this)">
+                    <i class="fa-solid fa-circle-info"></i>&nbsp; Plan Details
+                </div>
+            </div>
+
+            <!-- =================================================
+                 WORKOUT TAB
+                 ================================================= -->
+            <div id="workoutTab">
+
+                @if (dayList.Count == 0)
+                {
+                    <div class="empty">
+                        <i class="fa-regular fa-calendar-xmark" style="font-size:28px;color:#ff304e;margin-bottom:10px;"></i>
+                        <div style="font-weight:800;color:#c8d0d4;margin-bottom:5px;">No workout days available</div>
+                        <div>No workout days have been added to this plan yet.</div>
+                    </div>
+                }
+
+                @foreach (var d in dayList)
+                {
+                    var exercises = E(d, "WorkoutExercises")?.Cast<object>()
+                        .OrderBy(x => I(x, "SortOrder"))
+                        .ToList() ?? new List<object>();
+
+                    var totalMinutes = exercises
+                        .Select(x =>
+                        {
+                            int.TryParse(Convert.ToString(V(x, "Duration")), out var minutes);
+                            return minutes;
+                        })
+                        .Sum();
+
+                    <section class="day-section">
+                        <div class="day-header">
+                            <div class="day-header-left">
+                                <div class="day-icon">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                </div>
+                                <div>
+                                    <div class="day-title">
+                                        Day @I(d, "DayNumber") — @S(d, "DayName", "Workout Day")
+                                    </div>
+                                    <div class="day-note">
+                                        @S(d, "Notes", "Follow the exercises with proper form and controlled movement.")
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="day-right">
+                                @if (totalMinutes > 0)
+                                {
+                                    <span class="duration-badge">
+                                        <i class="fa-regular fa-clock"></i>
+                                        ~ @totalMinutes min
+                                    </span>
+                                }
+
+                                <button type="button"
+                                        class="btn btn-success"
+                                        onclick="addExercise(@I(d, "WorkoutPlanDayId"))">
+                                    <i class="fa-solid fa-plus"></i>
+                                    Add Exercise
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="day-body">
+                            @if (exercises.Count == 0)
+                            {
+                                <div class="empty">
+                                    No exercises added for this day.
+                                    Use <b>Add Exercise</b> to create the workout structure.
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="exercise-grid">
+                                    @for (int index = 0; index < exercises.Count; index++)
+                                    {
+                                        var x = exercises[index];
+                                        var image = ExerciseImage(x);
+                                        var sets = S(x, "Sets", "—");
+                                        var reps = S(x, "Reps", "—");
+                                        var duration = ExerciseDuration(x);
+                                        var rest = ExerciseRest(x);
+                                        var note = S(x, "Notes", "Maintain proper form and controlled movement.");
+
+                                        <article class="exercise-card">
+                                            <div class="exercise-image-wrap">
+                                                <img class="exercise-image"
+                                                     src="@image"
+                                                     alt="@S(x, "ExerciseName", "Exercise")"
+                                                     loading="lazy"
+                                                     onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=80';" />
+                                                <span class="exercise-number">@(index + 1)</span>
+                                            </div>
+
+                                            <div class="exercise-content">
+                                                <div class="exercise-name">
+                                                    @S(x, "ExerciseName", "Exercise")
+                                                </div>
+
+                                                <div class="exercise-stats">
+                                                    @if (V(x, "Sets") != null)
+                                                    {
+                                                        <div class="stat-item">
+                                                            <i class="fa-solid fa-dumbbell"></i>
+                                                            <span>@sets Sets</span>
+                                                        </div>
+                                                    }
+
+                                                    @if (V(x, "Reps") != null)
+                                                    {
+                                                        <div class="stat-item">
+                                                            <i class="fa-solid fa-rotate"></i>
+                                                            <span>@reps Reps</span>
+                                                        </div>
+                                                    }
+
+                                                    @if (!string.IsNullOrWhiteSpace(duration))
+                                                    {
+                                                        <div class="stat-item">
+                                                            <i class="fa-regular fa-clock"></i>
+                                                            <span>@duration</span>
+                                                        </div>
+                                                    }
+
+                                                    @if (!string.IsNullOrWhiteSpace(rest))
+                                                    {
+                                                        <div class="stat-item">
+                                                            <i class="fa-solid fa-stopwatch"></i>
+                                                            <span>Rest: @rest</span>
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                <div class="exercise-note">
+                                                    <i class="fa-regular fa-note-sticky" style="color:#d9e0e4;margin-right:5px;"></i>
+                                                    @note
+                                                </div>
+
+                                                <div class="exercise-actions">
+                                                    <button type="button"
+                                                            class="mini-btn"
+                                                            onclick="editExercise(@I(x, "WorkoutExerciseId"), '@Html.Raw(S(x, "ExerciseName", "").Replace("'", "\\'"))', '@S(x, "Sets", "")', '@S(x, "Reps", "")', '@S(x, "Duration", "")', '@S(x, "RestSeconds", "")', '@Html.Raw(S(x, "Notes", "").Replace("'", "\\'"))', '@I(x, "SortOrder")')">
+                                                        <i class="fa-solid fa-pen"></i> Edit
+                                                    </button>
+
+                                                    <form method="post"
+                                                          action="/Home/DeleteWorkoutExercise"
+                                                          onsubmit="return confirm('Delete this exercise?');"
+                                                          style="flex:1;margin:0;">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@I(x, "WorkoutExerciseId")" />
+                                                        <button type="submit" class="mini-btn" style="width:100%;color:#ff7c89;">
+                                                            <i class="fa-solid fa-trash"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <!-- =================================================
+                 PLAN DETAILS TAB
+                 ================================================= -->
+            <div id="detailsTab" class="info-panel">
+                <div style="font-size:17px;font-weight:900;margin-bottom:14px;">
+                    <i class="fa-solid fa-circle-info" style="color:#ff2344;"></i>
+                    Plan Information
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-box">
+                        <label>Plan Name</label>
+                        <b>@S(plan, "PlanName", "Unnamed Plan")</b>
+                    </div>
+                    <div class="info-box">
+                        <label>Goal</label>
+                        <b>@S(plan, "Goal", "Not specified")</b>
+                    </div>
+                    <div class="info-box">
+                        <label>Difficulty</label>
+                        <b>@S(plan, "Difficulty", "Not specified")</b>
+                    </div>
+                    <div class="info-box">
+                        <label>Duration</label>
+                        <b>@S(plan, "Duration", "Not specified")</b>
+                    </div>
+                    <div class="info-box">
+                        <label>Days Per Week</label>
+                        <b>@S(plan, "DaysPerWeek", "Not specified")</b>
+                    </div>
+                    <div class="info-box">
+                        <label>Status</label>
+                        <b>@status</b>
+                    </div>
+                    <div class="info-box">
+                        <label>Start Date</label>
+                        <b>@D(plan, "StartDate")</b>
+                    </div>
+                    <div class="info-box">
+                        <label>End Date</label>
+                        <b>@D(plan, "EndDate")</b>
+                    </div>
+                    <div class="info-box">
+                        <label>Created On</label>
+                        <b>@D(plan, "CreatedAt")</b>
+                    </div>
+                </div>
+
+                <div class="info-box" style="margin-top:10px;">
+                    <label>Description</label>
+                    <div style="color:#b9c3c8;font-size:12px;line-height:1.7;">
+                        @S(plan, "Description", "No description provided.")
+                    </div>
+                </div>
+
+                <div class="info-box" style="margin-top:10px;">
+                    <label>Notes</label>
+                    <div style="color:#b9c3c8;font-size:12px;line-height:1.7;">
+                        @S(plan, "Notes", "No additional notes.")
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- =========================================================
+         ADD / EDIT EXERCISE MODAL
+         ========================================================= -->
+    <div class="modal" id="exerciseModal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <b id="exerciseTitle">Add Exercise</b>
+                <button type="button" class="close-btn" onclick="closeExerciseModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post" action="/Home/AddWorkoutExercise" id="exerciseForm">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="workoutPlanDayId" id="exerciseDayId" />
+                    <input type="hidden" name="workoutExerciseId" id="exerciseId" />
+
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label>Exercise Name *</label>
+                            <input id="exerciseName"
+                                   name="exerciseName"
+                                   required
+                                   placeholder="e.g. Squats" />
+                        </div>
+
+                        <div class="field">
+                            <label>Sets</label>
+                            <input id="sets" type="number" min="0" name="sets" />
+                        </div>
+
+                        <div class="field">
+                            <label>Reps</label>
+                            <input id="reps" type="number" min="0" name="reps" />
+                        </div>
+
+                        <div class="field">
+                            <label>Duration (minutes)</label>
+                            <input id="duration" type="number" min="0" name="duration" />
+                        </div>
+
+                        <div class="field">
+                            <label>Rest (seconds)</label>
+                            <input id="restSeconds" type="number" min="0" name="restSeconds" />
+                        </div>
+
+                        <div class="field">
+                            <label>Sort Order</label>
+                            <input id="sortOrder" type="number" min="0" name="sortOrder" value="0" />
+                        </div>
+
+                        <div class="field full">
+                            <label>Notes</label>
+                            <textarea id="exerciseNotes" name="notes" placeholder="Exercise instructions or form notes..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeExerciseModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Save Exercise
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(id, el) {
+            document.getElementById('workoutTab').style.display = 'none';
+            document.getElementById('detailsTab').style.display = 'none';
+
+            document.querySelectorAll('.tab').forEach(function (tab) {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(id).style.display = id === 'detailsTab' ? 'block' : 'block';
+            el.classList.add('active');
+        }
+
+        function addExercise(dayId) {
+            document.getElementById('exerciseForm').action = '/Home/AddWorkoutExercise';
+            document.getElementById('exerciseTitle').textContent = 'Add Exercise';
+            document.getElementById('exerciseDayId').value = dayId;
+            document.getElementById('exerciseId').value = '';
+            document.getElementById('exerciseName').value = '';
+            document.getElementById('sets').value = '';
+            document.getElementById('reps').value = '';
+            document.getElementById('duration').value = '';
+            document.getElementById('restSeconds').value = '';
+            document.getElementById('sortOrder').value = '0';
+            document.getElementById('exerciseNotes').value = '';
+            document.getElementById('exerciseModal').classList.add('show');
+        }
+
+        function editExercise(id, name, sets, reps, duration, rest, notes, sortOrder) {
+            document.getElementById('exerciseForm').action = '/Home/EditWorkoutExercise';
+            document.getElementById('exerciseTitle').textContent = 'Edit Exercise';
+            document.getElementById('exerciseDayId').value = '';
+            document.getElementById('exerciseId').value = id || '';
+            document.getElementById('exerciseName').value = name || '';
+            document.getElementById('sets').value = sets || '';
+            document.getElementById('reps').value = reps || '';
+            document.getElementById('duration').value = duration || '';
+            document.getElementById('restSeconds').value = rest || '';
+            document.getElementById('sortOrder').value = sortOrder || '0';
+            document.getElementById('exerciseNotes').value = notes || '';
+            document.getElementById('exerciseModal').classList.add('show');
+        }
+
+        function closeExerciseModal() {
+            document.getElementById('exerciseModal').classList.remove('show');
+        }
+
+        document.getElementById('exerciseModal').addEventListener('click', function (event) {
+            if (event.target === this) {
+                closeExerciseModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeExerciseModal();
+            }
+        });
+    </script>
+
+</body>
+</html>

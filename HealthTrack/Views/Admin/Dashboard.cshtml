@@ -534,6 +534,19 @@
                 color: #222;
             }
 
+            .notification-link {
+                text-decoration: none;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .notification-link:hover {
+                color: inherit;
+                text-decoration: none;
+            }
+
             .notification-btn i {
                 font-size: 17px;
             }
@@ -2044,7 +2057,7 @@
                 </a>
 
 
-                <a href="#" class="menu-item">
+                <a href="/Home/WorkoutPlans" class="menu-item">
 
                     <i class="fa-solid fa-dumbbell"></i>
 
@@ -2055,7 +2068,7 @@
                 </a>
 
 
-                <a href="#" class="menu-item">
+                <a href="/Home/DietPlans" class="menu-item">
 
                     <i class="fa-solid fa-utensils"></i>
 
@@ -2161,18 +2174,25 @@
                 </button>
 
 
-                <button class="notification-btn">
+                <a href="@Url.Action("Notifications", "Home")"
+                   class="notification-btn notification-link"
+                   title="Notifications">
 
                     <i class="fa-regular fa-bell"></i>
 
-                    @if (totalNotifications > 0)
+                    @{
+                        var notificationCount =
+                            Convert.ToInt32(ViewBag.UnreadNotifications ?? ViewBag.TotalNotifications ?? 0);
+                    }
+
+                    @if (notificationCount > 0)
                     {
                         <span class="notification-count">
-                            @(totalNotifications > 9 ? "9+" : totalNotifications.ToString())
+                            @(notificationCount > 99 ? "99+" : notificationCount.ToString())
                         </span>
                     }
 
-                </button>
+                </a>
 
 
                 <div class="top-profile">

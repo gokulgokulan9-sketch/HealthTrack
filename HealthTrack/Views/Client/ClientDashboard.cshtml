@@ -1,4 +1,6 @@
 @using System
+@using System.Linq
+@using HealthTrack.Models
 
 @{
     Layout = null;
@@ -60,7 +62,7 @@
 
     if (string.IsNullOrWhiteSpace(trainerName))
     {
-        trainerName = "Nimal Perera";
+        trainerName = "No Trainer Assigned";
     }
 
     var trainerImage = ViewBag.TrainerImage as string;
@@ -71,13 +73,27 @@
     }
 
     // ============================================================
-    // DASHBOARD COUNTS
+    // DATABASE-BACKED DASHBOARD DATA
     // ============================================================
 
-    var activeWorkoutPlans = ViewBag.ActiveWorkoutPlans ?? 2;
-    var activeDietPlans = ViewBag.ActiveDietPlans ?? 2;
-    var upcomingAppointments = ViewBag.UpcomingAppointments ?? 1;
-    var overallProgress = ViewBag.OverallProgress ?? 68;
+    var activeWorkoutPlans = ViewBag.ActiveWorkoutPlans ?? 0;
+    var activeDietPlans = ViewBag.ActiveDietPlans ?? 0;
+    var upcomingAppointments = ViewBag.UpcomingAppointments ?? 0;
+    var overallProgress = ViewBag.OverallProgress ?? 0;
+
+    var upcomingAppointment =
+        ViewBag.UpcomingAppointment as Appointment;
+
+    var workoutPlans =
+        ViewBag.WorkoutPlans as IEnumerable<WorkoutPlan>
+        ?? Enumerable.Empty<WorkoutPlan>();
+
+    var dietPlans =
+        ViewBag.DietPlans as IEnumerable<DietPlan>
+        ?? Enumerable.Empty<DietPlan>();
+
+    var latestHealthMetric =
+        ViewBag.LatestHealthMetric as HealthMetric;
 
     // ============================================================
     // DATE
@@ -105,7 +121,7 @@
         width: 100%;
         min-height: 100%;
         font-family: "Segoe UI", Arial, sans-serif;
-        background: radial-gradient(circle at 85% 10%, rgba(239,35,60,0.08), transparent 30%), #090b0e;
+        background: radial-gradient(circle at 85% 10%, rgba(22,138,74,0.08), transparent 30%), #090b0e;
         color: #ffffff;
     }
 
@@ -161,7 +177,7 @@
         }
 
         .client-sidebar::-webkit-scrollbar-thumb {
-            background: rgba(239,35,60,0.55);
+            background: rgba(22,138,74,0.55);
             border-radius: 10px;
         }
 
@@ -184,10 +200,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #ef233c;
+        background: #168A4A;
         color: #ffffff;
         font-size: 23px;
-        box-shadow: 0 5px 18px rgba(239,35,60,0.32);
+        box-shadow: 0 5px 18px rgba(22,138,74,0.32);
     }
 
     .healthtrack-logo-text {
@@ -199,7 +215,7 @@
     }
 
         .healthtrack-logo-text span {
-            color: #ef233c;
+            color: #168A4A;
         }
 
     /* ============================================================
@@ -221,7 +237,7 @@
         height: 45px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid #ef233c;
+        border: 2px solid #168A4A;
         background: #222;
     }
 
@@ -294,13 +310,13 @@
         }
 
             .client-menu-item:hover i {
-                color: #ef233c;
+                color: #168A4A;
             }
 
         .client-menu-item.active {
             color: #ffffff;
-            background: linear-gradient( 90deg, #ef233c, #c9162d );
-            box-shadow: 0 7px 20px rgba(239,35,60,0.28);
+            background: linear-gradient( 90deg, #168A4A, #0B6335 );
+            box-shadow: 0 7px 20px rgba(22,138,74,0.28);
         }
 
             .client-menu-item.active i {
@@ -316,7 +332,7 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background: #ef233c;
+        background: #168A4A;
         color: #ffffff;
         font-size: 10px;
         font-weight: 700;
@@ -332,7 +348,7 @@
         padding: 22px 20px;
         position: relative;
         overflow: hidden;
-        background: radial-gradient( circle at 15% 100%, rgba(239,35,60,0.34), transparent 55% );
+        background: radial-gradient( circle at 15% 100%, rgba(22,138,74,0.34), transparent 55% );
     }
 
         .sidebar-bottom::before {
@@ -343,8 +359,8 @@
             left: -70px;
             bottom: -115px;
             border-radius: 50%;
-            border: 1px solid rgba(239,35,60,0.45);
-            box-shadow: 0 0 35px rgba(239,35,60,0.18);
+            border: 1px solid rgba(22,138,74,0.45);
+            box-shadow: 0 0 35px rgba(22,138,74,0.18);
         }
 
     .sidebar-bottom-title {
@@ -358,7 +374,7 @@
 
         .sidebar-bottom-title span {
             display: block;
-            color: #ef233c;
+            color: #168A4A;
         }
 
     .sidebar-line {
@@ -366,7 +382,7 @@
         height: 3px;
         margin-top: 12px;
         border-radius: 5px;
-        background: #ef233c;
+        background: #168A4A;
     }
 
     /* ============================================================
@@ -395,7 +411,7 @@
         margin-top: 0 !important;
         padding-top: 0 !important;
         min-height: 100vh;
-        background: radial-gradient( circle at 80% 0%, rgba(239, 35, 60, 0.09), transparent 30% ), #0a0c0f;
+        background: radial-gradient(circle at 92% 8%, rgba(239,35,60,0.13), transparent 22%), radial-gradient(circle at 15% 15%, rgba(24,169,87,0.12), transparent 28%), #10231D;
         position: relative;
         top: 0 !important;
     }
@@ -489,11 +505,11 @@
         justify-content: center;
         padding: 0 4px;
         border-radius: 50%;
-        background: #ef233c;
+        background: #18A957;
         color: #ffffff;
         font-size: 9px;
         font-weight: 700;
-        border: 2px solid #0d1014;
+        border: 2px solid #132A22;
     }
 
     .top-profile {
@@ -560,7 +576,7 @@
     }
 
         .welcome-title span {
-            color: #ef233c;
+            color: #18A957;
         }
 
     .welcome-subtitle {
@@ -587,8 +603,8 @@
         align-items: center;
         justify-content: center;
         border-radius: 9px;
-        background: rgba(239,35,60,0.12);
-        color: #ef233c;
+        background: rgba(24,169,87,0.12);
+        color: #18A957;
         font-size: 18px;
     }
 
@@ -621,15 +637,15 @@
         align-items: center;
         padding: 14px;
         border-radius: 12px;
-        background: linear-gradient( 145deg, #121519, #0c0f12 );
+        background: linear-gradient( 145deg, #172B24, #13251F );
         border: 1px solid rgba(255,255,255,0.10);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+        box-shadow: 0 10px 25px rgba(0,40,25,0.24);
         transition: 0.2s ease;
     }
 
         .stat-card:hover {
             transform: translateY(-2px);
-            border-color: rgba(239,35,60,0.35);
+            border-color: rgba(24,169,87,0.35);
         }
 
     .stat-icon {
@@ -645,23 +661,23 @@
 
         .stat-icon.red {
             color: #ffffff;
-            background: #ef233c;
-            box-shadow: 0 8px 20px rgba(239,35,60,0.22);
+            background: #EF233C;
+            box-shadow: 0 8px 20px rgba(24,169,87,0.22);
         }
 
         .stat-icon.green {
             color: #ffffff;
-            background: #20a65a;
+            background: #20B85A;
         }
 
         .stat-icon.purple {
             color: #ffffff;
-            background: #7037df;
+            background: #198754;
         }
 
         .stat-icon.orange {
             color: #ffffff;
-            background: #f7941d;
+            background: #2DB56B;
         }
 
     .stat-info {
@@ -695,7 +711,7 @@
         margin-bottom: 15px;
         border-radius: 13px;
         border: 1px solid rgba(255,255,255,0.09);
-        background: linear-gradient( 90deg, rgba(0,0,0,0.93) 0%, rgba(0,0,0,0.72) 42%, rgba(0,0,0,0.25) 100% ), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1600&q=85") center/cover no-repeat;
+        background: linear-gradient( 90deg, rgba(5,35,25,0.92) 0%, rgba(8,52,36,0.72) 42%, rgba(8,35,26,0.22) 100% ), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1600&q=85") center/cover no-repeat;
     }
 
     .hero-content {
@@ -714,7 +730,7 @@
 
         .hero-title span {
             display: block;
-            color: #ef233c;
+            color: #18A957;
         }
 
     .hero-text {
@@ -728,7 +744,7 @@
         height: 3px;
         margin-top: 14px;
         border-radius: 5px;
-        background: #ef233c;
+        background: #18A957;
     }
 
     /* ============================================================
@@ -746,9 +762,9 @@
         min-width: 0;
         padding: 17px;
         border-radius: 12px;
-        background: linear-gradient( 145deg, #121519, #0d1013 );
+        background: linear-gradient( 145deg, #172B24, #152922 );
         border: 1px solid rgba(255,255,255,0.09);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        box-shadow: 0 10px 25px rgba(0,40,25,0.22);
     }
 
     .card-header {
@@ -768,18 +784,18 @@
     }
 
         .card-title i {
-            color: #ef233c;
+            color: #18A957;
             font-size: 16px;
         }
 
     .view-link {
-        color: #ef233c;
+        color: #18A957;
         font-size: 11px;
         font-weight: 600;
     }
 
         .view-link:hover {
-            color: #ff4a60;
+            color: #35C978;
         }
 
     /* ============================================================
@@ -798,7 +814,7 @@
         flex-shrink: 0;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid rgba(239,35,60,0.55);
+        border: 3px solid rgba(24,169,87,0.55);
         background: #222;
     }
 
@@ -827,15 +843,15 @@
         gap: 7px;
         border-radius: 8px;
         color: #ffffff;
-        background: #ef233c;
+        background: #18A957;
         font-size: 11px;
         font-weight: 600;
-        box-shadow: 0 6px 15px rgba(239,35,60,0.22);
+        box-shadow: 0 6px 15px rgba(24,169,87,0.22);
     }
 
         .message-btn:hover {
             color: #ffffff;
-            background: #d91f36;
+            background: #C91F35;
         }
 
     /* ============================================================
@@ -857,12 +873,12 @@
         overflow: hidden;
         border-radius: 8px;
         text-align: center;
-        background: #15181c;
+        background: #1B3028;
     }
 
     .appointment-month {
         padding: 6px 0;
-        background: #ef233c;
+        background: #18A957;
         color: #ffffff;
         font-size: 10px;
         font-weight: 700;
@@ -896,7 +912,7 @@
         .appointment-time i,
         .appointment-location i {
             width: 15px;
-            color: #ef233c;
+            color: #18A957;
         }
 
     .status-badge {
@@ -904,8 +920,8 @@
         margin-top: 8px;
         padding: 5px 9px;
         border-radius: 20px;
-        background: rgba(20,170,95,0.15);
-        color: #2dd47d;
+        background: rgba(32,184,90,0.15);
+        color: #4AD982;
         font-size: 9px;
         font-weight: 700;
     }
@@ -940,25 +956,25 @@
         height: 7px;
         overflow: hidden;
         border-radius: 20px;
-        background: #252a30;
+        background: #294038;
     }
 
     .progress-fill {
         height: 100%;
         border-radius: 20px;
-        background: #ef233c;
+        background: #EF233C;
     }
 
         .progress-fill.green {
-            background: #19a86a;
+            background: #20B85A;
         }
 
         .progress-fill.purple {
-            background: #8051df;
+            background: #25A65F;
         }
 
         .progress-fill.orange {
-            background: #f79a24;
+            background: #39C978;
         }
 
     /* ============================================================
@@ -988,14 +1004,14 @@
         align-items: center;
         justify-content: center;
         border-radius: 8px;
-        color: #ef233c;
-        background: rgba(239,35,60,0.10);
+        color: #18A957;
+        background: rgba(24,169,87,0.10);
         font-size: 16px;
     }
 
         .plan-icon.green {
-            color: #25c777;
-            background: rgba(37,199,119,0.10);
+            color: #46D17A;
+            background: rgba(70,209,122,0.10);
         }
 
     .plan-info {
@@ -1088,7 +1104,7 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background: #ef233c;
+        background: #18A957;
         color: #ffffff;
         font-size: 8px;
         font-weight: 700;
@@ -1123,7 +1139,7 @@
         justify-content: center;
         border-radius: 7px;
         color: #ffffff;
-        background: #ef233c;
+        background: #18A957;
         font-size: 12px;
     }
 
@@ -1329,7 +1345,7 @@
                 width:45px;
                 height:45px;
                 border-radius:50%;
-                background:#ef233c;
+                background:#18A957;
                 color:#fff;
                 align-items:center;
                 justify-content:center;
@@ -1367,16 +1383,8 @@
 
             </a>
 
-            <a href="@Url.Action("Profile", "Client")"
-               class="client-menu-item">
 
-                <i class="fa-regular fa-user"></i>
-
-                <span>My Profile</span>
-
-            </a>
-
-            <a href="@Url.Action("Appointments", "Client")"
+            <a href="@Url.Action("ClientAppointments", "Home")"
                class="client-menu-item">
 
                 <i class="fa-regular fa-calendar"></i>
@@ -1385,7 +1393,7 @@
 
             </a>
 
-            <a href="@Url.Action("WorkoutPlans", "Client")"
+            <a href="@Url.Action("ClientWorkoutPlans", "Home")"
                class="client-menu-item">
 
                 <i class="fa-solid fa-dumbbell"></i>
@@ -1394,7 +1402,7 @@
 
             </a>
 
-            <a href="@Url.Action("DietPlans", "Client")"
+            <a href="@Url.Action("ClientDietPlans", "Home")"
                class="client-menu-item">
 
                 <i class="fa-solid fa-utensils"></i>
@@ -1403,7 +1411,7 @@
 
             </a>
 
-            <a href="@Url.Action("Progress", "Client")"
+            <a href="@Url.Action("ClientProgress", "Home")"
                class="client-menu-item">
 
                 <i class="fa-solid fa-chart-line"></i>
@@ -1412,7 +1420,7 @@
 
             </a>
 
-            <a href="@Url.Action("Messages", "Client")"
+            <a href="@Url.Action("Messages", "Home")"
                class="client-menu-item">
 
                 <i class="fa-regular fa-comment"></i>
@@ -1421,7 +1429,7 @@
 
             </a>
 
-            <a href="@Url.Action("Notifications", "Client")"
+            <a href="@Url.Action("ClientNotifications", "Home")"
                class="client-menu-item">
 
                 <i class="fa-regular fa-bell"></i>
@@ -1429,7 +1437,7 @@
                 <span>Notifications</span>
 
                 <span class="notification-count">
-                    3
+                    @(ViewBag.UnreadNotifications ?? 0)
                 </span>
 
             </a>
@@ -1494,13 +1502,13 @@
 
             <div class="topbar-right">
 
-                <a href="@Url.Action("Notifications", "Client")"
+                <a href="@Url.Action("ClientNotifications", "Home")"
                    class="notification-icon">
 
                     <i class="fa-regular fa-bell"></i>
 
                     <span class="notification-badge">
-                        3
+                        @(ViewBag.UnreadNotifications ?? 0)
                     </span>
 
                 </a>
@@ -1739,8 +1747,9 @@
                                 Fitness Trainer
                             </div>
 
-                            <a href="@Url.Action("Messages", "Client")"
-                               class="message-btn">
+                            <a href="#"
+                               class="message-btn"
+                               onclick="openClientChat(); return false;">
 
                                 <i class="fa-regular fa-comment"></i>
 
@@ -1769,7 +1778,7 @@
 
                         </div>
 
-                        <a href="@Url.Action("Appointments", "Client")"
+                        <a href="@Url.Action("ClientAppointments", "Home")"
                            class="view-link">
                             View All
                         </a>
@@ -1778,43 +1787,60 @@
 
                     <div class="appointment-box">
 
-                        <div class="appointment-date">
+                        @if (upcomingAppointment != null)
+                        {
+                            <div class="appointment-date">
 
-                            <div class="appointment-month">
-                                @today.ToString("MMM").ToUpper()
+                                <div class="appointment-month">
+                                    @upcomingAppointment.AppointmentDate.ToString("MMM").ToUpper()
+                                </div>
+
+                                <div class="appointment-day">
+                                    @upcomingAppointment.AppointmentDate.Day
+                                </div>
+
                             </div>
 
-                            <div class="appointment-day">
-                                @today.Day
+                            <div class="appointment-info">
+
+                                <div class="appointment-title">
+                                    @(string.IsNullOrWhiteSpace(upcomingAppointment.Reason)
+                                        ? "Appointment"
+                                        : upcomingAppointment.Reason)
+                                </div>
+
+                                <div class="appointment-trainer">
+                                    With @(upcomingAppointment.Trainer != null
+                                        ? upcomingAppointment.Trainer.FullName
+                                        : trainerName)
+                                </div>
+
+                                <div class="appointment-time">
+                                    <i class="fa-regular fa-clock"></i>
+                                    @upcomingAppointment.AppointmentTime.ToString("hh:mm tt")
+                                </div>
+
+                                <div class="appointment-location">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    @(string.IsNullOrWhiteSpace(upcomingAppointment.Notes)
+                                        ? "Scheduled Appointment"
+                                        : upcomingAppointment.Notes)
+                                </div>
+
+                                <span class="status-badge">
+                                    @(string.IsNullOrWhiteSpace(upcomingAppointment.Status)
+                                        ? "Scheduled"
+                                        : upcomingAppointment.Status)
+                                </span>
+
                             </div>
-
-                        </div>
-
-                        <div class="appointment-info">
-
-                            <div class="appointment-title">
-                                General Check-up
+                        }
+                        else
+                        {
+                            <div style="padding:18px 5px;color:#92979f;font-size:12px;">
+                                No upcoming appointment.
                             </div>
-
-                            <div class="appointment-trainer">
-                                With @trainerName
-                            </div>
-
-                            <div class="appointment-time">
-                                <i class="fa-regular fa-clock"></i>
-                                10:30 AM
-                            </div>
-
-                            <div class="appointment-location">
-                                <i class="fa-solid fa-location-dot"></i>
-                                Online Consultation
-                            </div>
-
-                            <span class="status-badge">
-                                Scheduled
-                            </span>
-
-                        </div>
+                        }
 
                     </div>
 
@@ -1835,7 +1861,7 @@
 
                         </div>
 
-                        <a href="@Url.Action("Progress", "Client")"
+                        <a href="@Url.Action("ClientProgress", "Home")"
                            class="view-link">
                             View All
                         </a>
@@ -1860,7 +1886,7 @@
                         <div class="progress-track">
 
                             <div class="progress-fill"
-                                 style="width:68%;">
+                                 style="width:@overallProgress%;">
                             </div>
 
                         </div>
@@ -1967,7 +1993,7 @@
 
                         </div>
 
-                        <a href="@Url.Action("WorkoutPlans", "Client")"
+                        <a href="@Url.Action("ClientWorkoutPlans", "Home")"
                            class="view-link">
                             View All
                         </a>
@@ -1976,58 +2002,50 @@
 
                     <div class="plan-list">
 
-                        <div class="plan-item">
+                        @foreach (var plan in workoutPlans
+                            .Where(p => string.Equals(p.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                            .Take(2))
+                        {
+                            <div class="plan-item">
 
-                            <div class="plan-icon">
-
-                                <i class="fa-solid fa-dumbbell"></i>
-
-                            </div>
-
-                            <div class="plan-info">
-
-                                <div class="plan-name">
-                                    Muscle Gain Program
+                                <div class="plan-icon">
+                                    <i class="fa-solid fa-dumbbell"></i>
                                 </div>
 
-                                <div class="plan-date">
-                                    Jan 01, 2025 - Mar 31, 2025
+                                <div class="plan-info">
+
+                                    <div class="plan-name">
+                                        @plan.PlanName
+                                    </div>
+
+                                    <div class="plan-date">
+
+                                        @plan.StartDate.ToString("MMM dd, yyyy")
+
+                                        -
+
+                                        @(plan.EndDate.HasValue
+                                            ? plan.EndDate.Value.ToString("MMM dd, yyyy")
+                                            : "No end date")
+
+                                    </div>
+
                                 </div>
 
-                            </div>
-
-                            <span class="active-badge">
-                                Active
-                            </span>
-
-                        </div>
-
-
-                        <div class="plan-item">
-
-                            <div class="plan-icon">
-
-                                <i class="fa-solid fa-dumbbell"></i>
+                                <span class="active-badge">
+                                    @plan.Status
+                                </span>
 
                             </div>
+                        }
 
-                            <div class="plan-info">
-
-                                <div class="plan-name">
-                                    Home Workout Routine
-                                </div>
-
-                                <div class="plan-date">
-                                    Jan 01, 2025 - Feb 28, 2025
-                                </div>
-
+                        @if (!workoutPlans.Any(p =>
+                            string.Equals(p.Status, "Active", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            <div style="padding:14px;color:#92979f;font-size:12px;">
+                                No active workout plan.
                             </div>
-
-                            <span class="active-badge">
-                                Active
-                            </span>
-
-                        </div>
+                        }
 
                     </div>
 
@@ -2043,13 +2061,13 @@
                         <div class="card-title">
 
                             <i class="fa-solid fa-utensils"
-                               style="color:#25c777;"></i>
+                               style="color:#46D17A;"></i>
 
                             Current Diet Plan
 
                         </div>
 
-                        <a href="@Url.Action("DietPlans", "Client")"
+                        <a href="@Url.Action("ClientDietPlans", "Home")"
                            class="view-link">
                             View All
                         </a>
@@ -2058,58 +2076,46 @@
 
                     <div class="plan-list">
 
-                        <div class="plan-item">
+                        @foreach (var plan in dietPlans
+                            .Where(p => string.Equals(p.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                            .Take(2))
+                        {
+                            <div class="plan-item">
 
-                            <div class="plan-icon green">
-
-                                <i class="fa-solid fa-utensils"></i>
-
-                            </div>
-
-                            <div class="plan-info">
-
-                                <div class="plan-name">
-                                    Weight Loss Diet
+                                <div class="plan-icon green">
+                                    <i class="fa-solid fa-utensils"></i>
                                 </div>
 
-                                <div class="plan-date">
-                                    Jan 01, 2025 - Mar 31, 2025
+                                <div class="plan-info">
+
+                                    <div class="plan-name">
+                                        @plan.PlanName
+                                    </div>
+
+                                    <div class="plan-date">
+                                        @(plan.StartDate.ToString("MMM dd, yyyy"))
+                                        -
+                                        @(plan.EndDate.HasValue
+                                            ? plan.EndDate.Value.ToString("MMM dd, yyyy")
+                                            : "No end date")
+                                    </div>
+
                                 </div>
 
-                            </div>
-
-                            <span class="active-badge">
-                                Active
-                            </span>
-
-                        </div>
-
-
-                        <div class="plan-item">
-
-                            <div class="plan-icon green">
-
-                                <i class="fa-solid fa-utensils"></i>
+                                <span class="active-badge">
+                                    @plan.Status
+                                </span>
 
                             </div>
+                        }
 
-                            <div class="plan-info">
-
-                                <div class="plan-name">
-                                    High Protein Plan
-                                </div>
-
-                                <div class="plan-date">
-                                    Jan 01, 2025 - Feb 28, 2025
-                                </div>
-
+                        @if (!dietPlans.Any(p =>
+                            string.Equals(p.Status, "Active", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            <div style="padding:14px;color:#92979f;font-size:12px;">
+                                No active diet plan.
                             </div>
-
-                            <span class="active-badge">
-                                Active
-                            </span>
-
-                        </div>
+                        }
 
                     </div>
 
@@ -2130,7 +2136,7 @@
 
                         </div>
 
-                        <a href="@Url.Action("Messages", "Client")"
+                        <a href="@Url.Action("Messages", "Home")"
                            class="view-link">
                             View All
                         </a>
@@ -2253,7 +2259,7 @@
 
                     </div>
 
-                    <a href="@Url.Action("Progress", "Client")"
+                    <a href="@Url.Action("ClientProgress", "Home")"
                        class="view-link">
                         View All
                     </a>
@@ -2365,7 +2371,534 @@
 </div>
 
 
+
+<!-- ============================================================
+     CLIENT - TRAINER CHAT POPUP
+     Added only for chat functionality.
+     Existing dashboard design/content is unchanged.
+     ============================================================ -->
+
+<style>
+    .client-chat-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.58);
+        z-index: 9998;
+        display: none;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 20px;
+    }
+
+    .client-chat-overlay.show {
+        display: flex;
+    }
+
+    .client-chat-box {
+        width: min(430px, 100%);
+        height: min(680px, calc(100vh - 40px));
+        background: #ffffff;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 25px 70px rgba(0,0,0,.35);
+        display: flex;
+        flex-direction: column;
+        color: #17212b;
+    }
+
+    .client-chat-header {
+        background: linear-gradient(135deg, #0b8f5a, #16b86a);
+        color: #fff;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .client-chat-header img {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255,255,255,.75);
+        background: #fff;
+    }
+
+    .client-chat-header-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .client-chat-header-name {
+        font-size: 15px;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .client-chat-header-status {
+        font-size: 11px;
+        opacity: .88;
+        margin-top: 2px;
+    }
+
+    .client-chat-close {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255,255,255,.16);
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .client-chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px 14px;
+        background: #f5f8f7;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .client-chat-empty {
+        margin: auto;
+        text-align: center;
+        color: #84918c;
+        font-size: 13px;
+        padding: 25px;
+    }
+
+    .client-chat-row {
+        display: flex;
+        width: 100%;
+    }
+
+    .client-chat-row.mine {
+        justify-content: flex-end;
+    }
+
+    .client-chat-row.theirs {
+        justify-content: flex-start;
+    }
+
+    .client-chat-bubble {
+        max-width: 78%;
+        padding: 9px 12px;
+        border-radius: 14px;
+        font-size: 13px;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+
+    .client-chat-row.mine .client-chat-bubble {
+        background: #0b8f5a;
+        color: #fff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .client-chat-row.theirs .client-chat-bubble {
+        background: #fff;
+        color: #26332d;
+        border: 1px solid #e0e8e4;
+        border-bottom-left-radius: 4px;
+    }
+
+    .client-chat-time {
+        display: block;
+        font-size: 9px;
+        margin-top: 4px;
+        opacity: .68;
+    }
+
+    .client-chat-compose {
+        border-top: 1px solid #e3e9e6;
+        padding: 12px;
+        background: #fff;
+    }
+
+    .client-chat-form {
+        display: flex;
+        gap: 8px;
+    }
+
+    .client-chat-input {
+        flex: 1;
+        min-width: 0;
+        resize: none;
+        height: 42px;
+        border: 1px solid #d7e1dc;
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
+        font-family: inherit;
+        font-size: 13px;
+    }
+
+    .client-chat-input:focus {
+        border-color: #0b8f5a;
+        box-shadow: 0 0 0 3px rgba(11,143,90,.08);
+    }
+
+    .client-chat-send {
+        width: 44px;
+        border: 0;
+        border-radius: 12px;
+        background: #0b8f5a;
+        color: #fff;
+        cursor: pointer;
+        font-size: 15px;
+    }
+
+    .client-chat-send:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+
+    .client-chat-error {
+        color: #c62828;
+        text-align: center;
+        font-size: 12px;
+        padding: 12px;
+    }
+
+    @@media (max-width: 600px) {
+        .client-chat-overlay {
+            padding: 0;
+        }
+
+        .client-chat-box {
+            width: 100%;
+            height: 100vh;
+            border-radius: 0;
+        }
+    }
+</style>
+
+<div id="clientChatOverlay" class="client-chat-overlay" onclick="clientChatOverlayClick(event)">
+    <div class="client-chat-box" onclick="event.stopPropagation();">
+
+        <div class="client-chat-header">
+            <img id="clientChatTrainerImage"
+                 src="@trainerImage"
+                 alt="Trainer"
+                 onerror="this.src='/images/default-trainer.jpg';" />
+
+            <div class="client-chat-header-info">
+                <div id="clientChatTrainerName" class="client-chat-header-name">
+                    @trainerName
+                </div>
+                <div class="client-chat-header-status">
+                    Fitness Trainer
+                </div>
+            </div>
+
+            <button type="button"
+                    class="client-chat-close"
+                    onclick="closeClientChat()"
+                    aria-label="Close">
+                &times;
+            </button>
+        </div>
+
+        <div id="clientChatMessages" class="client-chat-messages">
+            <div class="client-chat-empty">
+                Loading conversation...
+            </div>
+        </div>
+
+        <div class="client-chat-compose">
+            <form id="clientChatForm" class="client-chat-form">
+                @Html.AntiForgeryToken()
+                <textarea id="clientChatInput"
+                          class="client-chat-input"
+                          placeholder="Type a message..."
+                          maxlength="2000"
+                          rows="1"></textarea>
+
+                <button id="clientChatSend"
+                        type="submit"
+                        class="client-chat-send"
+                        title="Send">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
 <script>
+/* ============================================================
+   CLIENT - TRAINER CHAT
+   ============================================================ */
+
+let clientChatTrainerId = 0;
+let clientChatLoading = false;
+
+function openClientChat() {
+    const overlay = document.getElementById("clientChatOverlay");
+    if (!overlay) return;
+
+    overlay.classList.add("show");
+    document.body.style.overflow = "hidden";
+
+    loadClientChat();
+}
+
+function closeClientChat() {
+    const overlay = document.getElementById("clientChatOverlay");
+    if (overlay) {
+        overlay.classList.remove("show");
+    }
+
+    document.body.style.overflow = "";
+}
+
+function clientChatOverlayClick(event) {
+    if (event.target && event.target.id === "clientChatOverlay") {
+        closeClientChat();
+    }
+}
+
+async function loadClientChat() {
+    if (clientChatLoading) return;
+
+    const container = document.getElementById("clientChatMessages");
+    if (!container) return;
+
+    clientChatLoading = true;
+    container.innerHTML =
+        '<div class="client-chat-empty">Loading conversation...</div>';
+
+    try {
+        const response = await fetch('@Url.Action("ClientChatHistory", "Home")', {
+            method: "GET",
+            credentials: "same-origin",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
+
+        if (response.status === 401) {
+            window.location.href = '@Url.Action("Login", "Account")';
+            return;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            container.innerHTML =
+                '<div class="client-chat-error">' +
+                escapeClientChatHtml(data.message || "Unable to load chat.") +
+                '</div>';
+            return;
+        }
+
+        if (!data.hasTrainer || !data.trainerId) {
+            clientChatTrainerId = 0;
+            container.innerHTML =
+                '<div class="client-chat-empty">' +
+                'No trainer is currently assigned to you.' +
+                '</div>';
+            return;
+        }
+
+        clientChatTrainerId = Number(data.trainerId);
+
+        const nameElement = document.getElementById("clientChatTrainerName");
+        const imageElement = document.getElementById("clientChatTrainerImage");
+
+        if (nameElement) {
+            nameElement.textContent = data.trainerName || "Trainer";
+        }
+
+        if (imageElement) {
+            imageElement.src =
+                data.trainerImage || "/images/default-trainer.jpg";
+        }
+
+        renderClientChatMessages(data.messages || []);
+
+    } catch (error) {
+        console.error("Client chat load error:", error);
+
+        container.innerHTML =
+            '<div class="client-chat-error">' +
+            'Unable to connect to the chat.' +
+            '</div>';
+    } finally {
+        clientChatLoading = false;
+    }
+}
+
+function renderClientChatMessages(messages) {
+    const container = document.getElementById("clientChatMessages");
+    if (!container) return;
+
+    if (!messages || messages.length === 0) {
+        container.innerHTML =
+            '<div class="client-chat-empty">' +
+            'No messages yet. Start the conversation.' +
+            '</div>';
+        return;
+    }
+
+    container.innerHTML = "";
+
+    messages.forEach(function (item) {
+    const row = document.createElement("div");
+
+    row.className =
+        "client-chat-row " +
+        (item.isClient ? "mine" : "theirs");
+
+    const bubble = document.createElement("div");
+    bubble.className = "client-chat-bubble";
+
+    const messageText = document.createElement("div");
+
+    messageText.textContent =
+        item.messageText || "";
+
+    const time = document.createElement("span");
+
+    time.className = "client-chat-time";
+
+    time.textContent =
+        item.sentAt || "";
+
+    bubble.appendChild(messageText);
+    bubble.appendChild(time);
+
+    row.appendChild(bubble);
+
+    container.appendChild(row);
+});
+
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendClientChatMessage(event) {
+    event.preventDefault();
+
+    const input = document.getElementById("clientChatInput");
+    const sendButton = document.getElementById("clientChatSend");
+
+    if (!input || !sendButton) return;
+
+    const message = input.value.trim();
+
+    if (!message) {
+        input.focus();
+        return;
+    }
+
+    if (!clientChatTrainerId) {
+        await loadClientChat();
+        return;
+    }
+
+    const form = document.getElementById("clientChatForm");
+
+    if (!form) {
+        alert("Chat form is not available. Please refresh the page.");
+        return;
+    }
+
+    sendButton.disabled = true;
+
+    try {
+        const body = new URLSearchParams(new FormData(form));
+
+        body.set("receiverId", String(clientChatTrainerId));
+        body.set("message", message);
+
+        const response = await fetch(
+            '@Url.Action("SendClientMessage", "Home")',
+            {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded; charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: body.toString()
+            }
+        );
+
+        if (response.status === 401) {
+            window.location.href = '@Url.Action("Login", "Account")';
+            return;
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        const raw = await response.text();
+
+        if (!contentType.includes("application/json")) {
+            console.error("Send message server response:", raw);
+            alert("Server rejected the message request. Please refresh the page and try again.");
+            return;
+        }
+
+        const data = JSON.parse(raw);
+
+        if (!response.ok || !data.success) {
+            alert(data.message || "Message could not be sent.");
+            return;
+        }
+
+        input.value = "";
+        await loadClientChat();
+        input.focus();
+
+    } catch (error) {
+        console.error("Client chat send error:", error);
+        alert(error.message || "Unable to send the message.");
+    } finally {
+        sendButton.disabled = false;
+    }
+}
+
+function escapeClientChatHtml(value) {
+    const div = document.createElement("div");
+    div.textContent = value == null ? "" : String(value);
+    return div.innerHTML;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("clientChatForm");
+
+    if (form) {
+        form.addEventListener("submit", sendClientChatMessage);
+    }
+
+    const input = document.getElementById("clientChatInput");
+
+    if (input) {
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+
+                if (form) {
+                    form.requestSubmit();
+                }
+            }
+        });
+    }
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeClientChat();
+        }
+    });
+});
+
+
 
     function toggleClientSidebar() {
 
@@ -2376,63 +2909,5 @@
             sidebar.classList.toggle("open");
         }
 
-    }
-    /* ============================================================
-    FIX TOP WHITE SPACE / LAYOUT OFFSET
-    ============================================================ */
-
-    /* Remove any default spacing from the page */
-    html,
-        body {
-        margin: 0!important;
-        padding: 0!important;
-    }
-
-    /* Force the HealthTrack dashboard to start from the very top */
-    .client - layout {
-        margin: 0!important;
-        padding: 0!important;
-        position: relative!important;
-        top: 0!important;
-    }
-
-    /* Override any global main element spacing */
-    main.client - main {
-        margin - top: 0!important;
-        padding - top: 0!important;
-        position: relative!important;
-        top: 0!important;
-    }
-
-    /* Top bar must touch the top of dashboard */
-    .client - topbar {
-        margin - top: 0!important;
-        padding - top: 0!important;
-    }
-
-    /* Dashboard content */
-    .dashboard - content {
-        margin - top: 0!important;
-        padding - top: 20px!important;
-    }
-
-    /* Sidebar remains fixed at the very top */
-    .client - sidebar {
-        top: 0!important;
-        margin - top: 0!important;
-    }
-
-    /* Remove spacing from common global layout wrappers */
-    main,
-    .main,
-    .content,
-    .content - wrapper,
-    .page - content {
-        margin - top: 0!important;
-    }
-
-    /* Prevent an empty top area from pushing the dashboard down */
-    .client - main > : first - child {
-        margin - top: 0!important;
     }
 </script>

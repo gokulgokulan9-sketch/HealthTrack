@@ -1,0 +1,2505 @@
+@using System
+@using System.Collections
+@using System.Collections.Generic
+@using System.Linq
+@using System.Reflection
+@{
+    Layout = null;
+
+    var plan = ViewBag.DietPlan;
+    var days = ViewBag.DietPlanDays as IEnumerable;
+
+    string adminName = Convert.ToString(ViewBag.AdminName) ?? "Admin";
+    string adminRole = Convert.ToString(ViewBag.AdminRole) ?? "ADMIN";
+    string adminImage = Convert.ToString(
+        ViewBag.AdminProfileImage ?? ViewBag.ProfileImage
+    ) ?? "/images/default-user.png";
+}
+
+@functions {
+
+    object V(object o, string n)
+    {
+        if (o == null) return null;
+
+        var p = o.GetType().GetProperty(
+            n,
+            BindingFlags.Public |
+            BindingFlags.Instance |
+            BindingFlags.IgnoreCase
+        );
+
+        try
+        {
+            return p?.GetValue(o);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    string S(object o, string n, string fallback = "")
+    {
+        var value = Convert.ToString(V(o, n));
+        return string.IsNullOrWhiteSpace(value)
+            ? fallback
+            : value;
+    }
+
+    int I(object o, string n, int fallback = 0)
+    {
+        return int.TryParse(
+            Convert.ToString(V(o, n)),
+            out var value
+        ) ? value : fallback;
+    }
+
+    IEnumerable E(object o, string n)
+    {
+        return V(o, n) as IEnumerable;
+    }
+
+    string D(object o, string n)
+    {
+        var value = S(o, n, "");
+
+        if (DateTime.TryParse(value, out var date))
+            return date.ToString("dd MMM yyyy");
+
+        return value;
+    }
+
+    string J(object o, string n)
+    {
+        return System.Text.Json.JsonSerializer.Serialize(
+            S(o, n, "")
+        );
+    }
+
+    string MealClass(string mealType)
+    {
+        var value = (mealType ?? "").ToLowerInvariant();
+
+        if (value.Contains("breakfast"))
+            return "breakfast";
+
+        if (value.Contains("mid") ||
+            value.Contains("snack") ||
+            value.Contains("morning"))
+            return "snack";
+
+        if (value.Contains("lunch"))
+            return "lunch";
+
+        if (value.Contains("evening"))
+            return "evening";
+
+        if (value.Contains("dinner"))
+            return "dinner";
+
+        return "meal";
+    }
+
+    string MealIcon(string mealType)
+    {
+        var value = (mealType ?? "").ToLowerInvariant();
+
+        if (value.Contains("breakfast"))
+            return "fa-sun";
+
+        if (value.Contains("mid") ||
+            value.Contains("snack") ||
+            value.Contains("morning"))
+            return "fa-apple-whole";
+
+        if (value.Contains("lunch"))
+            return "fa-bowl-food";
+
+        if (value.Contains("evening"))
+            return "fa-mug-hot";
+
+        if (value.Contains("dinner"))
+            return "fa-moon";
+
+        return "fa-utensils";
+    }
+
+
+    string NormalizeFood(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "";
+
+        var chars = value.Trim().ToLowerInvariant()
+            .Select(c => char.IsLetterOrDigit(c) ? c : ' ')
+            .ToArray();
+
+        return new string(chars)
+            .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+            .Aggregate("", (a, b) => string.IsNullOrEmpty(a) ? b : a + " " + b);
+    }
+
+    string DietFoodImage(string foodName)
+    {
+        var key = NormalizeFood(foodName);
+
+        // =========================================================
+        // HealthTrack - 65 local food images
+        // Extract the Part-1 ZIP into:
+        // wwwroot/images/diet-foods/
+        //
+        // Exact food names use their matching image.
+        // Other food names are deterministically matched to the
+        // closest available image from the same 65-image library.
+        // =========================================================
+
+        var images = new Dictionary<string, string>(
+            StringComparer.OrdinalIgnoreCase)
+        {
+            ["oats with berries and low fat milk"] = "/images/diet-foods/001_oats-with-berries-and-low-fat-milk.jpg",
+            ["apple and almonds"] = "/images/diet-foods/002_apple-and-almonds.jpg",
+            ["grilled chicken brown rice and vegetables"] = "/images/diet-foods/003_grilled-chicken-brown-rice-and-vegetables.jpg",
+            ["greek yogurt"] = "/images/diet-foods/004_greek-yogurt.jpg",
+            ["grilled fish with salad"] = "/images/diet-foods/005_grilled-fish-with-salad.jpg",
+            ["egg omelette with spinach"] = "/images/diet-foods/006_egg-omelette-with-spinach.jpg",
+            ["banana"] = "/images/diet-foods/007_banana.jpg",
+            ["tuna whole grain wrap"] = "/images/diet-foods/008_tuna-whole-grain-wrap.jpg",
+            ["green tea and almonds"] = "/images/diet-foods/009_green-tea-and-almonds.jpg",
+            ["chicken vegetable soup"] = "/images/diet-foods/010_chicken-vegetable-soup.jpg",
+            ["greek yogurt oats and berries"] = "/images/diet-foods/011_greek-yogurt-oats-and-berries.jpg",
+            ["orange"] = "/images/diet-foods/012_orange.jpg",
+            ["grilled chicken quinoa bowl"] = "/images/diet-foods/013_grilled-chicken-quinoa-bowl.jpg",
+            ["carrot and hummus"] = "/images/diet-foods/014_carrot-and-hummus.jpg",
+            ["baked fish with vegetables"] = "/images/diet-foods/015_baked-fish-with-vegetables.jpg",
+            ["scrambled eggs with whole grain toast"] = "/images/diet-foods/016_scrambled-eggs-with-whole-grain-toast.jpg",
+            ["pear"] = "/images/diet-foods/017_pear.jpg",
+            ["chicken brown rice bowl"] = "/images/diet-foods/018_chicken-brown-rice-bowl.jpg",
+            ["protein yogurt with berries"] = "/images/diet-foods/019_protein-yogurt-with-berries.jpg",
+            ["vegetable omelette"] = "/images/diet-foods/020_vegetable-omelette.jpg",
+            ["protein oats with banana"] = "/images/diet-foods/021_protein-oats-with-banana.jpg",
+            ["grilled salmon rice and vegetables"] = "/images/diet-foods/022_grilled-salmon-rice-and-vegetables.jpg",
+            ["apple and walnuts"] = "/images/diet-foods/023_apple-and-walnuts.jpg",
+            ["chicken salad bowl"] = "/images/diet-foods/024_chicken-salad-bowl.jpg",
+            ["egg omelette toast and avocado"] = "/images/diet-foods/025_egg-omelette-toast-and-avocado.jpg",
+            ["banana and milk"] = "/images/diet-foods/026_banana-and-milk.jpg",
+            ["chicken rice bowl with vegetables"] = "/images/diet-foods/027_chicken-rice-bowl-with-vegetables.jpg",
+            ["greek yogurt and berries"] = "/images/diet-foods/028_greek-yogurt-and-berries.jpg",
+            ["grilled fish potatoes and salad"] = "/images/diet-foods/029_grilled-fish-potatoes-and-salad.jpg",
+            ["oatmeal with banana"] = "/images/diet-foods/030_oatmeal-with-banana.jpg",
+            ["apple and peanut butter"] = "/images/diet-foods/031_apple-and-peanut-butter.jpg",
+            ["chicken whole grain sandwich"] = "/images/diet-foods/032_chicken-whole-grain-sandwich.jpg",
+            ["mixed nuts"] = "/images/diet-foods/033_mixed-nuts.jpg",
+            ["lentil curry rice and vegetables"] = "/images/diet-foods/034_lentil-curry-rice-and-vegetables.jpg",
+            ["orange and almonds"] = "/images/diet-foods/035_orange-and-almonds.jpg",
+            ["fish rice bowl with vegetables"] = "/images/diet-foods/036_fish-rice-bowl-with-vegetables.jpg",
+            ["milk and banana"] = "/images/diet-foods/037_milk-and-banana.jpg",
+            ["chicken pasta with vegetables"] = "/images/diet-foods/038_chicken-pasta-with-vegetables.jpg",
+            ["scrambled eggs and whole grain toast"] = "/images/diet-foods/039_scrambled-eggs-and-whole-grain-toast.jpg",
+            ["papaya"] = "/images/diet-foods/040_papaya.jpg",
+            ["chicken burrito bowl"] = "/images/diet-foods/041_chicken-burrito-bowl.jpg",
+            ["yogurt and nuts"] = "/images/diet-foods/042_yogurt-and-nuts.jpg",
+            ["lean beef with sweet potato and greens"] = "/images/diet-foods/043_lean-beef-with-sweet-potato-and-greens.jpg",
+            ["egg sandwich"] = "/images/diet-foods/044_egg-sandwich.jpg",
+            ["chicken and brown rice bowl"] = "/images/diet-foods/045_chicken-and-brown-rice-bowl.jpg",
+            ["greek yogurt with fruit"] = "/images/diet-foods/046_greek-yogurt-with-fruit.jpg",
+            ["grilled salmon with potatoes and vegetables"] = "/images/diet-foods/047_grilled-salmon-with-potatoes-and-vegetables.jpg",
+            ["omelette with oats and banana"] = "/images/diet-foods/048_omelette-with-oats-and-banana.jpg",
+            ["greek yogurt with nuts"] = "/images/diet-foods/049_greek-yogurt-with-nuts.jpg",
+            ["salmon potatoes and vegetables"] = "/images/diet-foods/050_salmon-potatoes-and-vegetables.jpg",
+            ["egg sandwich with avocado"] = "/images/diet-foods/051_egg-sandwich-with-avocado.jpg",
+            ["cottage cheese and fruit"] = "/images/diet-foods/052_cottage-cheese-and-fruit.jpg",
+            ["lean beef rice bowl"] = "/images/diet-foods/053_lean-beef-rice-bowl.jpg",
+            ["protein oats with berries"] = "/images/diet-foods/054_protein-oats-with-berries.jpg",
+            ["banana and peanut butter"] = "/images/diet-foods/055_banana-and-peanut-butter.jpg",
+            ["chicken quinoa bowl"] = "/images/diet-foods/056_chicken-quinoa-bowl.jpg",
+            ["milk and almonds"] = "/images/diet-foods/057_milk-and-almonds.jpg",
+            ["fish rice and vegetables"] = "/images/diet-foods/058_fish-rice-and-vegetables.jpg",
+            ["scrambled eggs with toast"] = "/images/diet-foods/059_scrambled-eggs-with-toast.jpg",
+            ["greek yogurt and banana"] = "/images/diet-foods/060_greek-yogurt-and-banana.jpg",
+            ["protein shake and nuts"] = "/images/diet-foods/061_protein-shake-and-nuts.jpg",
+            ["lean beef with sweet potato"] = "/images/diet-foods/062_lean-beef-with-sweet-potato.jpg",
+            ["eggs oats and fruit"] = "/images/diet-foods/063_eggs-oats-and-fruit.jpg",
+            ["salmon brown rice bowl"] = "/images/diet-foods/064_salmon-brown-rice-bowl.jpg",
+            ["chicken and vegetable pasta"] = "/images/diet-foods/065_chicken-and-vegetable-pasta.jpg"
+        };
+
+        if (images.TryGetValue(key, out var exact))
+            return exact;
+
+        // Strong keyword rules for the remaining food names.
+        if (key.Contains("salmon"))
+        {
+            if (key.Contains("potato") || key.Contains("vegetable"))
+                return images["grilled salmon with potatoes and vegetables"];
+            if (key.Contains("rice"))
+                return images["salmon brown rice bowl"];
+            return images["grilled salmon rice and vegetables"];
+        }
+
+        if (key.Contains("fish"))
+        {
+            if (key.Contains("potato"))
+                return images["grilled fish potatoes and salad"];
+            if (key.Contains("rice"))
+                return images["fish rice bowl with vegetables"];
+            if (key.Contains("salad"))
+                return images["grilled fish with salad"];
+            return images["baked fish with vegetables"];
+        }
+
+        if (key.Contains("chicken"))
+        {
+            if (key.Contains("pasta"))
+                return images["chicken pasta with vegetables"];
+            if (key.Contains("quinoa"))
+                return images["chicken quinoa bowl"];
+            if (key.Contains("salad"))
+                return images["chicken salad bowl"];
+            if (key.Contains("soup"))
+                return images["chicken vegetable soup"];
+            if (key.Contains("sandwich") || key.Contains("wrap"))
+                return images["chicken whole grain sandwich"];
+            if (key.Contains("rice"))
+                return images["chicken rice bowl with vegetables"];
+            return images["grilled chicken brown rice and vegetables"];
+        }
+
+        if (key.Contains("beef"))
+        {
+            if (key.Contains("sweet potato"))
+                return images["lean beef with sweet potato"];
+            if (key.Contains("rice"))
+                return images["lean beef rice bowl"];
+            return images["lean beef with sweet potato and greens"];
+        }
+
+        if (key.Contains("egg") || key.Contains("omelette") || key.Contains("omelet"))
+        {
+            if (key.Contains("sandwich"))
+                return key.Contains("avocado")
+                    ? images["egg sandwich with avocado"]
+                    : images["egg sandwich"];
+
+            if (key.Contains("avocado"))
+                return images["egg omelette toast and avocado"];
+
+            if (key.Contains("spinach"))
+                return images["egg omelette with spinach"];
+
+            if (key.Contains("oat"))
+                return images["omelette with oats and banana"];
+
+            if (key.Contains("toast"))
+                return images["scrambled eggs with toast"];
+
+            return images["scrambled eggs with whole grain toast"];
+        }
+
+        if (key.Contains("yogurt"))
+        {
+            if (key.Contains("berry"))
+                return images["greek yogurt and berries"];
+            if (key.Contains("banana"))
+                return images["greek yogurt and banana"];
+            if (key.Contains("nut"))
+                return images["greek yogurt with nuts"];
+            if (key.Contains("fruit"))
+                return images["greek yogurt with fruit"];
+            if (key.Contains("oat"))
+                return images["greek yogurt oats and berries"];
+            return images["greek yogurt"];
+        }
+
+        if (key.Contains("oat"))
+        {
+            if (key.Contains("banana"))
+                return images["protein oats with banana"];
+            if (key.Contains("berry"))
+                return images["protein oats with berries"];
+            return images["oats with berries and low fat milk"];
+        }
+
+        if (key.Contains("banana"))
+        {
+            if (key.Contains("peanut"))
+                return images["banana and peanut butter"];
+            if (key.Contains("milk"))
+                return images["banana and milk"];
+            return images["banana"];
+        }
+
+        if (key.Contains("apple"))
+        {
+            if (key.Contains("peanut"))
+                return images["apple and peanut butter"];
+            if (key.Contains("walnut") || key.Contains("nut"))
+                return images["apple and walnuts"];
+            return images["apple and almonds"];
+        }
+
+        if (key.Contains("milk"))
+            return images["milk and banana"];
+
+        if (key.Contains("orange"))
+            return images["orange and almonds"];
+
+        if (key.Contains("pear"))
+            return images["pear"];
+
+        if (key.Contains("papaya"))
+            return images["papaya"];
+
+        if (key.Contains("tuna"))
+            return images["tuna whole grain wrap"];
+
+        if (key.Contains("lentil"))
+            return images["lentil curry rice and vegetables"];
+
+        if (key.Contains("rice"))
+            return images["fish rice and vegetables"];
+
+        if (key.Contains("pasta"))
+            return images["chicken pasta with vegetables"];
+
+        if (key.Contains("sandwich") || key.Contains("wrap"))
+            return images["chicken whole grain sandwich"];
+
+        if (key.Contains("salad"))
+        {
+            if (key.Contains("quinoa"))
+                return images["chicken quinoa bowl"];
+            return images["chicken salad bowl"];
+        }
+
+        if (key.Contains("nut") || key.Contains("almond") || key.Contains("walnut"))
+            return images["mixed nuts"];
+
+        if (key.Contains("protein shake"))
+            return images["protein shake and nuts"];
+
+        if (key.Contains("protein"))
+            return images["protein oats with berries"];
+
+        if (key.Contains("avocado"))
+            return images["egg sandwich with avocado"];
+
+        if (key.Contains("cheese") || key.Contains("cottage"))
+            return images["cottage cheese and fruit"];
+
+        if (key.Contains("carrot") || key.Contains("hummus"))
+            return images["carrot and hummus"];
+
+        if (key.Contains("vegetable") || key.Contains("green"))
+            return images["grilled chicken brown rice and vegetables"];
+
+        // Safe deterministic fallback.
+        return images["oats with berries and low fat milk"];
+    }
+
+    string MealImage(object meal)
+    {
+        return DietFoodImage(
+            S(meal, "FoodName", "Healthy Meal")
+        );
+    }
+
+    string StatusClass(string status)
+    {
+        if (string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase))
+            return "active";
+
+        if (string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase))
+            return "completed";
+
+        return "other";
+    }
+}
+
+<!doctype html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1" />
+
+    <title>View Diet Plan - HealthTrack</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --red: #ff1233;
+            --red-dark: #e8002c;
+            --bg: #080d11;
+            --panel: #11181d;
+            --panel-2: #151e24;
+            --line: #29343c;
+            --muted: #7f8b93;
+            --text: #f1f4f5;
+            --green: #65e5a2;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(circle at 85% 8%, #ff123315, transparent 28%),
+                linear-gradient(180deg, #0a0f13, #070b0e);
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        /* =========================
+           SIDEBAR
+           ========================= */
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 245px;
+            height: 100vh;
+            background:
+                linear-gradient(180deg, #11181d, #080c10);
+            border-right: 1px solid var(--line);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .brand {
+            height: 72px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #242e35;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, var(--red), var(--red-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px #ff123330;
+        }
+
+        .brand-icon i {
+            color: white;
+            font-size: 19px;
+        }
+
+        .brand-text {
+            font-size: 20px;
+            font-weight: 850;
+        }
+
+        .profile {
+            margin: 16px 14px;
+            padding: 12px;
+            border: 1px solid var(--line);
+            background: #151d22;
+            border-radius: 13px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .profile img {
+            width: 43px;
+            height: 43px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #ff4057;
+        }
+
+        .profile-name {
+            font-weight: 750;
+            font-size: 12px;
+        }
+
+        .profile-role {
+            color: #7e8a92;
+            font-size: 10px;
+            margin-top: 3px;
+        }
+
+        .section {
+            padding: 10px 20px 7px;
+            color: #65717a;
+            font-size: 10px;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .menu {
+            padding: 0 11px;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 44px;
+            margin: 3px 0;
+            padding: 0 13px;
+            border-radius: 10px;
+            color: #adb7bd;
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            transition: .2s;
+        }
+
+        .menu a i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu a:hover {
+            background: #1b242a;
+            color: white;
+        }
+
+        .menu a.active {
+            color: white;
+            background:
+                linear-gradient(135deg, var(--red), var(--red-dark));
+            box-shadow: 0 10px 25px #ff123330;
+        }
+
+        .bottom {
+            padding: 10px 11px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #252f36;
+            margin: 9px 18px;
+        }
+
+        .bottom a {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            color: #adb7bd;
+            text-decoration: none;
+        }
+
+        /* =========================
+           TOPBAR
+           ========================= */
+
+        .topbar {
+            position: fixed;
+            left: 245px;
+            right: 0;
+            top: 0;
+            height: 72px;
+            background: #151d22ee;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--line);
+            z-index: 900;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 28px;
+        }
+
+        .top-left,
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .top-title {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .top-muted {
+            color: #89959d;
+            font-size: 12px;
+        }
+
+        .notif {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #20282e;
+            border: 1px solid #303a42;
+            color: #c8d0d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .badge-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--red);
+            min-width: 17px;
+            height: 17px;
+            border-radius: 20px;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #151d22;
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #38434b;
+        }
+
+        .user-name {
+            font-weight: 750;
+            font-size: 12px;
+        }
+
+        .user-role {
+            color: #7e8a92;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        /* =========================
+           COMMON BUTTONS
+           ========================= */
+
+        .btn {
+            border: 0;
+            border-radius: 9px;
+            padding: 9px 13px;
+            font-size: 11px;
+            font-weight: 750;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+        }
+
+        .primary {
+            background: linear-gradient(135deg, var(--red), var(--red-dark));
+            color: white;
+        }
+
+        .secondary {
+            background: #252e34;
+            color: #dce2e5;
+            border: 1px solid #364149;
+        }
+
+        .success {
+            background: #153527;
+            color: #72e6a8;
+            border: 1px solid #285d44;
+        }
+
+        .danger {
+            background: #35151c;
+            color: #ff7181;
+            border: 1px solid #6d2632;
+        }
+
+        /* =========================
+           MAIN
+           ========================= */
+
+        .main {
+            margin-left: 245px;
+            padding-top: 72px;
+            min-height: 100vh;
+        }
+
+        .content {
+            padding: 28px;
+            max-width: 1500px;
+            margin: auto;
+        }
+
+        /* =========================
+           HERO
+           ========================= */
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            background:
+                linear-gradient(
+                    90deg,
+                    #111920f8 0%,
+                    #111920e8 52%,
+                    #230a10e8 100%
+                );
+            border: 1px solid #303a42;
+            border-radius: 19px;
+            padding: 24px;
+            box-shadow: 0 20px 50px #0007;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 330px;
+            height: 330px;
+            right: -110px;
+            top: -160px;
+            border-radius: 50%;
+            background: #ff123325;
+            filter: blur(20px);
+            pointer-events: none;
+        }
+
+        .hero-top {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+        }
+
+        .eyebrow {
+            color: #ff526a;
+            text-transform: uppercase;
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: 1.5px;
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .title {
+            font-size: 30px;
+            font-weight: 900;
+            margin: 6px 0;
+        }
+
+        .desc {
+            color: #909ca3;
+            font-size: 12px;
+            max-width: 760px;
+            line-height: 1.6;
+        }
+
+        .status {
+            padding: 7px 11px;
+            border-radius: 99px;
+            font-size: 9px;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+
+        .active {
+            background: #123b28;
+            color: #63e6a2;
+        }
+
+        .completed {
+            background: #172d49;
+            color: #83baff;
+        }
+
+        .other {
+            background: #3a2b16;
+            color: #f0bd63;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .meta {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 9px;
+            margin-top: 21px;
+        }
+
+        .meta-card {
+            min-height: 76px;
+            background: #0d1419d9;
+            border: 1px solid #29343c;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .meta-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #7c8991;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 750;
+            margin-bottom: 6px;
+        }
+
+        .meta-top i {
+            color: var(--red);
+            font-size: 13px;
+        }
+
+        .meta-card b {
+            font-size: 12px;
+            color: #f2f4f5;
+        }
+
+        .meta-sub {
+            color: #718089;
+            font-size: 9px;
+            margin-top: 4px;
+        }
+
+        /* =========================
+           TABS
+           ========================= */
+
+        .tabs {
+            display: flex;
+            margin-top: 15px;
+            background: #11191e;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 11px 12px;
+            color: #8b979e;
+            font-size: 11px;
+            font-weight: 750;
+            border-radius: 8px;
+        }
+
+        .tab.active-tab {
+            background: linear-gradient(135deg, var(--red), var(--red-dark));
+            color: white;
+        }
+
+        /* =========================
+           DIET STRUCTURE
+           ========================= */
+
+        .section-card {
+            background: #11191e;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            margin-top: 15px;
+            overflow: hidden;
+            box-shadow: 0 14px 35px #0004;
+        }
+
+        .section-head {
+            padding: 15px 18px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-head h2 {
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .section-head h2 i {
+            color: var(--red);
+            margin-right: 7px;
+        }
+
+        .day {
+            margin: 14px;
+            border: 1px solid #303a42;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #0d1418;
+        }
+
+        .day-head {
+            background:
+                linear-gradient(
+                    90deg,
+                    #5d0816,
+                    #2a1118 52%,
+                    #171e23
+                );
+            border-bottom: 1px solid #6e1627;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .day-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .day-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #ff1233;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px #ff123330;
+        }
+
+        .day-title {
+            font-size: 15px;
+            font-weight: 850;
+        }
+
+        .day-note {
+            color: #9aa5ab;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        .day-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        /* =========================
+           MEAL CARDS
+           ========================= */
+
+        .meal-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 11px;
+            padding: 14px;
+        }
+
+        .meal-card {
+            background:
+                linear-gradient(180deg, #172027, #0d1418);
+            border: 1px solid #303b43;
+            border-radius: 13px;
+            overflow: hidden;
+            min-width: 0;
+            transition: transform .18s, border-color .18s, box-shadow .18s;
+        }
+
+        .meal-card:hover {
+            transform: translateY(-3px);
+            border-color: #ff4057;
+            box-shadow: 0 12px 28px #0007;
+        }
+
+        .meal-image-wrap {
+            position: relative;
+            height: 145px;
+            background: #20282d;
+            overflow: hidden;
+        }
+
+        .meal-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform .3s;
+        }
+
+        .meal-card:hover .meal-image {
+            transform: scale(1.04);
+        }
+
+        .meal-overlay {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(
+                    180deg,
+                    transparent 45%,
+                    #05080bcc 100%
+                );
+        }
+
+        .meal-number {
+            position: absolute;
+            left: 9px;
+            top: 9px;
+            width: 27px;
+            height: 27px;
+            border-radius: 50%;
+            background: var(--red);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 850;
+            box-shadow: 0 5px 15px #ff123350;
+        }
+
+        .meal-type {
+            position: absolute;
+            left: 9px;
+            bottom: 8px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            background: #080d0dcc;
+            border: 1px solid #ffffff25;
+            backdrop-filter: blur(7px);
+            color: white;
+            font-size: 9px;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+
+        .meal-type i {
+            margin-right: 4px;
+            color: #ff526a;
+        }
+
+        .meal-body {
+            padding: 12px;
+        }
+
+        .meal-name {
+            font-size: 13px;
+            font-weight: 850;
+            line-height: 1.35;
+            min-height: 35px;
+        }
+
+        .meal-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 9px;
+        }
+
+        .meal-stat {
+            background: #11191e;
+            border: 1px solid #29343b;
+            border-radius: 7px;
+            padding: 7px;
+        }
+
+        .meal-stat-label {
+            color: #718089;
+            font-size: 8px;
+            text-transform: uppercase;
+            font-weight: 750;
+        }
+
+        .meal-stat-value {
+            margin-top: 3px;
+            color: #f1f4f5;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .meal-stat-value.calorie {
+            color: #ff6177;
+        }
+
+        .meal-note {
+            border-top: 1px solid #29343b;
+            margin-top: 9px;
+            padding-top: 9px;
+            color: #89959d;
+            font-size: 9px;
+            line-height: 1.45;
+            min-height: 36px;
+        }
+
+        .meal-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .meal-actions .btn {
+            flex: 1;
+            justify-content: center;
+            padding: 7px;
+            font-size: 9px;
+        }
+
+        .empty {
+            padding: 20px;
+            color: #77848c;
+            font-size: 12px;
+        }
+
+        /* =========================
+           MODALS
+           ========================= */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: #000c;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            z-index: 3000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-box {
+            width: min(760px, 100%);
+            max-height: 92vh;
+            overflow: auto;
+            background: #171f24;
+            border: 1px solid #354149;
+            border-radius: 15px;
+            box-shadow: 0 25px 80px #000;
+        }
+
+        .modal-head {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .field label {
+            display: block;
+            color: #aab4b9;
+            font-size: 10px;
+            font-weight: 750;
+            margin-bottom: 6px;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            background: #0c1216;
+            color: white;
+            border: 1px solid #303b43;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-color: var(--red);
+        }
+
+        .field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .modal-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        /* =========================
+           RESPONSIVE
+           ========================= */
+
+        @@media (max-width: 1250px) {
+
+            .meta {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .meal-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @@media (max-width: 1000px) {
+
+            .sidebar {
+                display: none;
+            }
+
+            .topbar {
+                left: 0;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .meta {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .meal-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @@media (max-width: 650px) {
+
+            .content {
+                padding: 16px 10px;
+            }
+
+            .topbar {
+                padding: 0 12px;
+            }
+
+            .top-muted,
+            .user-name,
+            .user-role {
+                display: none;
+            }
+
+            .hero-top {
+                flex-direction: column;
+            }
+
+            .hero-actions {
+                width: 100%;
+            }
+
+            .meta {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            .tab {
+                min-width: 120px;
+            }
+
+            .meal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .meal-image-wrap {
+                height: 190px;
+            }
+
+            .day-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .day-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full {
+                grid-column: auto;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- =========================================================
+         SIDEBAR
+         ========================================================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div class="brand-text">
+                HealthTrack
+            </div>
+
+        </div>
+
+        <div class="profile">
+
+            <img src="@adminImage" />
+
+            <div>
+
+                <div class="profile-name">
+                    @adminName
+                </div>
+
+                <div class="profile-role">
+                    @adminRole
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="section">
+            Main Menu
+        </div>
+
+        <nav class="menu">
+
+            <a href="/Home/Dashboard">
+                <i class="fa-solid fa-gauge-high"></i>
+                Dashboard
+            </a>
+
+            <a href="/Home/Clients">
+                <i class="fa-solid fa-users"></i>
+                Clients
+            </a>
+
+            <a href="/Home/Trainers">
+                <i class="fa-solid fa-user-tie"></i>
+                Trainers
+            </a>
+
+            <a href="/Home/Appointments">
+                <i class="fa-solid fa-calendar-check"></i>
+                Appointments
+            </a>
+
+            <a href="/Home/WorkoutPlans">
+                <i class="fa-solid fa-dumbbell"></i>
+                Workout Plans
+            </a>
+
+            <a class="active"
+               href="/Home/DietPlans">
+
+                <i class="fa-solid fa-utensils"></i>
+                Diet Plans
+
+            </a>
+
+            <a href="/Home/HealthMetrics">
+                <i class="fa-solid fa-chart-line"></i>
+                Health Metrics
+            </a>
+
+            <a href="/Home/Reports">
+                <i class="fa-solid fa-chart-pie"></i>
+                Reports
+            </a>
+
+            <a href="/Home/Notifications">
+                <i class="fa-solid fa-bell"></i>
+                Notifications
+            </a>
+
+        </nav>
+
+        <div class="bottom">
+
+            <div class="divider"></div>
+
+            <a href="/Account/Logout">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================================
+         TOP BAR
+         ========================================================= -->
+
+    <header class="topbar">
+
+        <div class="top-left">
+
+            <a class="btn secondary"
+               href="@ViewBag.BackUrl">
+
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
+
+            </a>
+
+            <span class="top-title">
+                Admin
+            </span>
+
+            <span class="top-muted">
+                / Diet Plan Details
+            </span>
+
+        </div>
+
+        <div class="top-right">
+
+            <a class="notif"
+               href="/Home/Notifications">
+
+                <i class="fa-solid fa-bell"></i>
+
+                <span class="badge-count">
+                    @ViewBag.TotalNotifications
+                </span>
+
+            </a>
+
+            <div class="user">
+
+                <img src="@adminImage" />
+
+                <div>
+
+                    <div class="user-name">
+                        @adminName
+                    </div>
+
+                    <div class="user-role">
+                        @adminRole
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================================
+         MAIN
+         ========================================================= -->
+
+    <main class="main">
+
+        <div class="content">
+
+
+            <!-- =====================================================
+                 HERO
+                 ===================================================== -->
+
+            <div class="hero">
+
+                <div class="hero-top">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            <i class="fa-solid fa-utensils"></i>
+                            Diet Plan
+                        </div>
+
+                        <div class="title-row">
+
+                            <div class="title">
+                                @S(plan, "PlanName", "Unnamed Diet Plan")
+                            </div>
+
+                            <span class="status @StatusClass(S(plan, "Status", "Active"))">
+                                @S(plan, "Status", "Active")
+                            </span>
+
+                        </div>
+
+                        <div class="desc">
+                            @S(
+                                plan,
+                                "Description",
+                                "Structured nutrition plan designed to support the client's health and fitness goals."
+                            )
+                        </div>
+
+                    </div>
+
+
+                    <div class="hero-actions">
+
+                        <a class="btn primary"
+                           href="@ViewBag.BackUrl">
+
+                            <i class="fa-solid fa-arrow-left"></i>
+                            Back to Plans
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PLAN META -->
+
+                <div class="meta">
+
+                    <div class="meta-card">
+
+                        <div class="meta-top">
+                            <i class="fa-solid fa-user"></i>
+                            Client
+                        </div>
+
+                        <b>
+                            @S(
+                                V(plan, "Client"),
+                                "FullName",
+                                "Unknown Client"
+                            )
+                        </b>
+
+                    </div>
+
+
+                    <div class="meta-card">
+
+                        <div class="meta-top">
+                            <i class="fa-solid fa-user-tie"></i>
+                            Trainer
+                        </div>
+
+                        <b>
+                            @S(
+                                V(plan, "Trainer"),
+                                "FullName",
+                                "Unknown Trainer"
+                            )
+                        </b>
+
+                    </div>
+
+
+                    <div class="meta-card">
+
+                        <div class="meta-top">
+                            <i class="fa-solid fa-bullseye"></i>
+                            Goal
+                        </div>
+
+                        <b>
+                            @S(plan, "Goal", "Healthy Nutrition")
+                        </b>
+
+                    </div>
+
+
+                    <div class="meta-card">
+
+                        <div class="meta-top">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            Plan Period
+                        </div>
+
+                        <b>
+                            @D(plan, "StartDate")
+                            –
+                            @D(plan, "EndDate")
+                        </b>
+
+                    </div>
+
+
+                    <div class="meta-card">
+
+                        <div class="meta-top">
+                            <i class="fa-solid fa-fire"></i>
+                            Status
+                        </div>
+
+                        <b style="color:#65e5a2">
+                            @S(plan, "Status", "Active").ToUpperInvariant()
+                        </b>
+
+                        <div class="meta-sub">
+                            Nutrition plan
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 TABS
+                 ===================================================== -->
+
+            <div class="tabs">
+
+                <div class="tab active-tab">
+                    <i class="fa-solid fa-utensils"></i>
+                    Diet Plan
+                </div>
+
+                <div class="tab">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Plan Details
+                </div>
+
+                <div class="tab">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Nutrition Progress
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 DIET STRUCTURE
+                 ===================================================== -->
+
+            <div class="section-card">
+
+                <div class="section-head">
+
+                    <h2>
+                        <i class="fa-solid fa-bowl-food"></i>
+                        Daily Nutrition Plan
+                    </h2>
+
+                    <a class="btn secondary"
+                       href="/Home/DietPlans">
+
+                        <i class="fa-solid fa-list"></i>
+                        All Plans
+
+                    </a>
+
+                </div>
+
+
+                @{
+                    var ds =
+                        days?
+                            .Cast<object>()
+                            .OrderBy(x => I(x, "DayNumber"))
+                            .ToList()
+                        ?? new List<object>();
+                }
+
+
+                @if (ds.Count == 0)
+                {
+
+                    <div class="empty">
+
+                        <i class="fa-regular fa-calendar"></i>
+
+                        No diet days have been added yet.
+                        Go back to Diet Plans and use
+                        <b>Add Day</b>.
+
+                    </div>
+
+                }
+
+
+                @foreach (var d in ds)
+                {
+
+                    var dayId =
+                        I(d, "DietPlanDayId");
+
+                    var meals =
+                        E(d, "DietMeals")?
+                            .Cast<object>()
+                            .OrderBy(x => I(x, "SortOrder"))
+                            .ToList()
+                        ?? new List<object>();
+
+
+                    <div class="day">
+
+
+                        <!-- DAY HEADER -->
+
+                        <div class="day-head">
+
+                            <div class="day-heading">
+
+                                <div class="day-icon">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                </div>
+
+                                <div>
+
+                                    <div class="day-title">
+                                        Day @I(d, "DayNumber")
+                                        —
+                                        @S(d, "DayName", "Diet Day")
+                                    </div>
+
+                                    <div class="day-note">
+                                        @S(
+                                            d,
+                                            "Notes",
+                                            "Balanced meals planned for this day."
+                                        )
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="day-actions">
+
+                                <button class="btn secondary"
+                                        type="button"
+                                        onclick='editDay(
+                                            @dayId,
+                                            @I(d, "DayNumber"),
+                                            @J(d, "DayName"),
+                                            @J(d, "Notes")
+                                        )'>
+
+                                    <i class="fa-solid fa-pen"></i>
+                                    Edit
+
+                                </button>
+
+
+                                <form method="post"
+                                      action="/Home/DeleteDietPlanDay"
+                                      onsubmit="return confirm('Delete this day and all its meals?');">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="id"
+                                           value="@dayId" />
+
+                                    <button class="btn danger"
+                                            type="submit">
+
+                                        <i class="fa-solid fa-trash"></i>
+
+                                    </button>
+
+                                </form>
+
+
+                                <button class="btn success"
+                                        type="button"
+                                        onclick="addMeal(@dayId)">
+
+                                    <i class="fa-solid fa-plus"></i>
+                                    Add Meal
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- MEALS -->
+
+                        @if (meals.Count == 0)
+                        {
+
+                            <div class="empty">
+                                No meals added for this day.
+                            </div>
+
+                        }
+                        else
+                        {
+
+                            <div class="meal-grid">
+
+                                @{
+                                    var mealIndex = 0;
+                                }
+
+
+                                @foreach (var m in meals)
+                                {
+
+                                    mealIndex++;
+
+                                    var mealId =
+                                        I(m, "DietMealId");
+
+                                    var mealType =
+                                        S(m, "MealType", "Meal");
+
+                                    var foodName =
+                                        S(m, "FoodName", "Healthy Meal");
+
+                                    var image =
+                                        MealImage(m);
+
+                                    var mealClass =
+                                        MealClass(mealType);
+
+                                    var icon =
+                                        MealIcon(mealType);
+
+
+                                    <div class="meal-card">
+
+
+                                        <!-- IMAGE -->
+
+                                        <div class="meal-image-wrap">
+
+                                            <img class="meal-image"
+                                                 src="@image"
+                                                 alt="@foodName"
+                                                 loading="lazy"
+                                                 onerror="this.onerror=null;this.src='/images/diet-foods/001_oats-with-berries-and-low-fat-milk.jpg';" />
+
+                                            <div class="meal-overlay"></div>
+
+
+                                            <div class="meal-number">
+                                                @mealIndex
+                                            </div>
+
+
+                                            <div class="meal-type">
+
+                                                <i class="fa-solid @icon"></i>
+
+                                                @mealType
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <!-- BODY -->
+
+                                        <div class="meal-body">
+
+                                            <div class="meal-name">
+                                                @foodName
+                                            </div>
+
+
+                                            <div class="meal-stats">
+
+                                                <div class="meal-stat">
+
+                                                    <div class="meal-stat-label">
+                                                        Quantity
+                                                    </div>
+
+                                                    <div class="meal-stat-value">
+                                                        @S(m, "Quantity", "As recommended")
+                                                    </div>
+
+                                                </div>
+
+
+                                                <div class="meal-stat">
+
+                                                    <div class="meal-stat-label">
+                                                        Calories
+                                                    </div>
+
+                                                    <div class="meal-stat-value calorie">
+
+                                                        @if (V(m, "Calories") != null)
+                                                        {
+                                                            @S(m, "Calories") <text> kcal</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>—</text>
+                                                        }
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="meal-note">
+
+                                                <i class="fa-regular fa-note-sticky"></i>
+
+                                                @S(
+                                                    m,
+                                                    "Notes",
+                                                    "Follow the recommended portion and preparation method."
+                                                )
+
+                                            </div>
+
+
+                                            <!-- ACTIONS -->
+
+                                            <div class="meal-actions">
+
+                                                <button class="btn secondary"
+                                                        type="button"
+                                                        onclick='editMeal(
+                                                            @mealId,
+                                                            @J(m, "MealType"),
+                                                            @J(m, "FoodName"),
+                                                            @J(m, "Quantity"),
+                                                            @I(m, "Calories"),
+                                                            @J(m, "Notes"),
+                                                            @I(m, "SortOrder")
+                                                        )'>
+
+                                                    <i class="fa-solid fa-pen"></i>
+                                                    Edit
+
+                                                </button>
+
+
+                                                <form style="flex:1"
+                                                      method="post"
+                                                      action="/Home/DeleteDietMeal"
+                                                      onsubmit="return confirm('Delete this meal?');">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@mealId" />
+
+                                                    <button class="btn danger"
+                                                            type="submit"
+                                                            style="width:100%;justify-content:center">
+
+                                                        <i class="fa-solid fa-trash"></i>
+                                                        Delete
+
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                }
+
+                            </div>
+
+                        }
+
+                    </div>
+
+                }
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================================================
+         EDIT / ADD DAY MODAL
+         ========================================================= -->
+
+    <div class="modal"
+         id="dayModal">
+
+        <div class="modal-box">
+
+            <div class="modal-head">
+
+                <b id="dayTitle">
+                    Edit Diet Day
+                </b>
+
+                <button class="btn secondary"
+                        type="button"
+                        onclick="closeM('dayModal')">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <form method="post"
+                      id="dayForm">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="dietPlanDayId"
+                           id="dayId" />
+
+
+                    <div class="grid">
+
+                        <div class="field">
+
+                            <label>
+                                Day Number *
+                            </label>
+
+                            <input type="number"
+                                   name="dayNumber"
+                                   id="dayNumber"
+                                   min="1"
+                                   required />
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label>
+                                Day Name *
+                            </label>
+
+                            <input name="dayName"
+                                   id="dayName"
+                                   required />
+
+                        </div>
+
+
+                        <div class="field full">
+
+                            <label>
+                                Notes
+                            </label>
+
+                            <textarea name="notes"
+                                      id="dayNotes"></textarea>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-foot">
+
+                        <button type="button"
+                                class="btn secondary"
+                                onclick="closeM('dayModal')">
+
+                            Cancel
+
+                        </button>
+
+                        <button class="btn primary"
+                                type="submit">
+
+                            <i class="fa-solid fa-check"></i>
+                            Save Day
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         ADD / EDIT MEAL MODAL
+         ========================================================= -->
+
+    <div class="modal"
+         id="mealModal">
+
+        <div class="modal-box">
+
+            <div class="modal-head">
+
+                <b id="mealTitle">
+                    Add Meal
+                </b>
+
+                <button class="btn secondary"
+                        type="button"
+                        onclick="closeM('mealModal')">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <form method="post"
+                      id="mealForm">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="dietPlanDayId"
+                           id="mealDayId" />
+
+                    <input type="hidden"
+                           name="dietMealId"
+                           id="mealId" />
+
+
+                    <div class="grid">
+
+                        <div class="field">
+
+                            <label>
+                                Meal Type *
+                            </label>
+
+                            <input name="mealType"
+                                   id="mealType"
+                                   required
+                                   placeholder="Breakfast" />
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label>
+                                Food Name *
+                            </label>
+
+                            <input name="foodName"
+                                   id="foodName"
+                                   required
+                                   placeholder="Oats with Banana" />
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label>
+                                Quantity
+                            </label>
+
+                            <input name="quantity"
+                                   id="quantity"
+                                   placeholder="1 bowl / 150 g" />
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label>
+                                Calories
+                            </label>
+
+                            <input type="number"
+                                   name="calories"
+                                   id="calories"
+                                   min="0" />
+
+                        </div>
+
+
+                        <div class="field">
+
+                            <label>
+                                Sort Order
+                            </label>
+
+                            <input type="number"
+                                   name="sortOrder"
+                                   id="sortOrder"
+                                   value="0" />
+
+                        </div>
+
+
+                        <div class="field full">
+
+                            <label>
+                                Notes
+                            </label>
+
+                            <textarea name="notes"
+                                      id="mealNotes"
+                                      placeholder="Nutrition / preparation notes..."></textarea>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-foot">
+
+                        <button type="button"
+                                class="btn secondary"
+                                onclick="closeM('mealModal')">
+
+                            Cancel
+
+                        </button>
+
+                        <button class="btn primary"
+                                type="submit">
+
+                            <i class="fa-solid fa-check"></i>
+                            Save Meal
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+         ========================================================= -->
+
+    <script>
+
+        function openM(id) {
+
+            const element =
+                document.getElementById(id);
+
+            if (element) {
+                element.classList.add("show");
+            }
+
+        }
+
+
+        function closeM(id) {
+
+            const element =
+                document.getElementById(id);
+
+            if (element) {
+                element.classList.remove("show");
+            }
+
+        }
+
+
+        function editDay(
+            id,
+            number,
+            name,
+            notes
+        ) {
+
+            document.getElementById("dayForm").action =
+                "/Home/EditDietPlanDay";
+
+            document.getElementById("dayTitle").textContent =
+                "Edit Diet Day";
+
+            document.getElementById("dayId").value =
+                id || "";
+
+            document.getElementById("dayNumber").value =
+                number || "";
+
+            document.getElementById("dayName").value =
+                name || "";
+
+            document.getElementById("dayNotes").value =
+                notes || "";
+
+            openM("dayModal");
+        }
+
+
+        function addMeal(dayId) {
+
+            document.getElementById("mealForm").action =
+                "/Home/AddDietMeal";
+
+            document.getElementById("mealTitle").textContent =
+                "Add Meal";
+
+            document.getElementById("mealDayId").value =
+                dayId || "";
+
+            document.getElementById("mealId").value =
+                "";
+
+            document.getElementById("mealType").value =
+                "";
+
+            document.getElementById("foodName").value =
+                "";
+
+            document.getElementById("quantity").value =
+                "";
+
+            document.getElementById("calories").value =
+                "";
+
+            document.getElementById("mealNotes").value =
+                "";
+
+            document.getElementById("sortOrder").value =
+                "0";
+
+            openM("mealModal");
+        }
+
+
+        function editMeal(
+            id,
+            type,
+            food,
+            quantity,
+            calories,
+            notes,
+            sort
+        ) {
+
+            document.getElementById("mealForm").action =
+                "/Home/EditDietMeal";
+
+            document.getElementById("mealTitle").textContent =
+                "Edit Meal";
+
+            document.getElementById("mealDayId").value =
+                "";
+
+            document.getElementById("mealId").value =
+                id || "";
+
+            document.getElementById("mealType").value =
+                type || "";
+
+            document.getElementById("foodName").value =
+                food || "";
+
+            document.getElementById("quantity").value =
+                quantity || "";
+
+            document.getElementById("calories").value =
+                calories || "";
+
+            document.getElementById("mealNotes").value =
+                notes || "";
+
+            document.getElementById("sortOrder").value =
+                sort || 0;
+
+            openM("mealModal");
+        }
+
+
+        window.addEventListener(
+            "click",
+            function (event) {
+
+                document
+                    .querySelectorAll(".modal.show")
+                    .forEach(function (modal) {
+
+                        if (event.target === modal) {
+                            modal.classList.remove("show");
+                        }
+
+                    });
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>

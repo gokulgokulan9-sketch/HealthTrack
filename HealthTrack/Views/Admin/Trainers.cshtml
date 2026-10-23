@@ -1,10 +1,10 @@
 ﻿@using System
 @using System.Linq
+@using HealthTrack.Models
+@model IEnumerable<HealthTrack.Models.User>
 
 @{
     Layout = null;
-
-    var trainers = ViewBag.Trainers as System.Collections.IEnumerable;
 
     int totalTrainers = ViewBag.TotalTrainers ?? 0;
     int activeTrainers = ViewBag.ActiveTrainers ?? 0;
@@ -278,6 +278,16 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
+            }
+
+            .notification-link {
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .notification-link:hover {
+                color: inherit;
+                text-decoration: none;
             }
 
             .notification-count {
@@ -1188,18 +1198,20 @@
             </div>
 
 
-            <div class="notification-btn">
+            <a href="@Url.Action("Notifications", "Home")"
+               class="notification-btn notification-link"
+               title="Notifications">
 
                 <i class="fa-regular fa-bell"></i>
 
                 @if (notificationCount > 0)
                 {
                     <span class="notification-count">
-                        @notificationCount
+                        @(notificationCount > 99 ? "99+" : notificationCount.ToString())
                     </span>
                 }
 
-            </div>
+            </a>
 
 
             <div class="top-profile">
@@ -1433,43 +1445,35 @@
 
             <div class="trainer-grid">
 
-                @if (trainers != null)
+                @if (Model != null && Model.Any())
                 {
-                    foreach (var trainer in trainers)
+                    foreach (var trainer in Model)
                     {
                         string fullName =
-                            Convert.ToString(trainer.FullName) ?? "Unknown Trainer";
+                            string.IsNullOrWhiteSpace(trainer.FullName)
+                                ? "Unknown Trainer"
+                                : trainer.FullName;
 
                         string email =
-                            Convert.ToString(trainer.Email) ?? "Not provided";
+                            string.IsNullOrWhiteSpace(trainer.Email)
+                                ? "Not provided"
+                                : trainer.Email;
 
                         string phone =
-                            Convert.ToString(trainer.Phone);
-
-                        if (string.IsNullOrWhiteSpace(phone))
-                        {
-                            phone = "Not provided";
-                        }
+                            string.IsNullOrWhiteSpace(trainer.Phone)
+                                ? "Not provided"
+                                : trainer.Phone;
 
                         string status =
-                            Convert.ToString(trainer.Status) ?? "Active";
+                            string.IsNullOrWhiteSpace(trainer.Status)
+                                ? "Active"
+                                : trainer.Status;
 
                         string created =
-                            "";
-
-                        try
-                        {
-                            created =
-                                Convert.ToDateTime(trainer.CreatedAt)
-                                    .ToString("dd MMM yyyy");
-                        }
-                        catch
-                        {
-                            created = "Not available";
-                        }
+                            trainer.CreatedAt.ToString("dd MMM yyyy");
 
                         string profileImage =
-                            Convert.ToString(trainer.ProfileImage);
+                            trainer.ProfileImage;
 
                         if (string.IsNullOrWhiteSpace(profileImage))
                         {
@@ -1673,7 +1677,7 @@
                 }
 
 
-                @if (trainers == null || !trainers.Cast<object>().Any())
+                @if (Model == null || !Model.Any())
                 {
                     <div class="empty-state">
 

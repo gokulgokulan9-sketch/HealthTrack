@@ -1,0 +1,78 @@
+@{
+    Layout = null;
+
+    var trainerName = ViewBag.UserName ?? "Trainer";
+    var trainerEmail = ViewBag.UserEmail ?? "";
+    var trainerRole = ViewBag.UserRole ?? "TRAINER";
+    var phone = ViewBag.Phone ?? "";
+    var profileImage = ViewBag.ProfileImage ?? "/images/default-user.png";
+    var initial = string.IsNullOrWhiteSpace(trainerName.ToString()) ? "T" : trainerName.ToString().Trim().Substring(0, 1).ToUpper();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Profile Settings - HealthTrack</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Segoe UI",Arial,sans-serif;min-height:100vh;background:linear-gradient(180deg,#07182f,#081b31);color:#eaf3f8}.page{min-height:100vh;display:flex}.sidebar{position:fixed;left:0;top:0;width:245px;height:100vh;padding:24px 14px 18px;overflow-y:auto;background:linear-gradient(180deg,#07182f,#0b2340);border-right:1px solid rgba(91,125,151,.18)}.brand{color:#fff;font-size:22px;font-weight:900;padding:0 10px 24px}.brand span{color:#00B894}.side-profile{padding:13px;border:1px solid rgba(0,184,148,.18);border-radius:14px;background:rgba(0,184,148,.06);display:flex;align-items:center;gap:10px;margin-bottom:18px}.side-profile img,.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #00B894}.avatar{display:flex;align-items:center;justify-content:center;background:#00B894;color:#fff;font-weight:800}.side-name{color:#fff;font-size:11px;font-weight:800}.side-role{color:#8da8bb;font-size:9px;margin-top:3px}.menu-title{color:#607e94;font-size:8px;font-weight:800;letter-spacing:1.2px;padding:10px 11px 7px}.menu-item{display:flex;align-items:center;gap:11px;padding:11px 12px;margin:3px 0;color:#b9cbd7;text-decoration:none;border-radius:9px;font-size:10px;font-weight:700}.menu-item i{width:17px;text-align:center}.menu-item:hover,.menu-item.active{color:#fff;background:rgba(0,184,148,.11)}.menu-item.active i,.menu-item:hover i{color:#00B894}.main{margin-left:245px;width:calc(100% - 245px);min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid rgba(94,128,151,.18);background:rgba(5,18,34,.72);backdrop-filter:blur(14px)}.back-link{color:#9db4c3;text-decoration:none;font-size:11px;font-weight:700}.back-link:hover{color:#00B894}.top-title{color:#fff;font-size:13px;font-weight:800}.content{max-width:1050px;margin:0 auto;padding:30px}.heading h1{color:#fff;font-size:25px;margin-bottom:6px}.heading p{color:#88a2b5;font-size:11px;margin-bottom:24px}.alert{padding:12px 14px;border-radius:10px;margin-bottom:18px;font-size:11px;font-weight:700}.success{background:rgba(0,184,148,.12);border:1px solid rgba(0,184,148,.3);color:#7ee8c9}.error{background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.3);color:#ffaaaa}.grid{display:grid;grid-template-columns:290px 1fr;gap:20px}.card{background:linear-gradient(180deg,#0d2944,#0a2036);border:1px solid #21445f;border-radius:17px;box-shadow:0 18px 40px rgba(0,0,0,.2)}.profile-card{padding:25px;text-align:center}.large-avatar,.large-fallback{width:105px;height:105px;margin:0 auto 13px;border-radius:50%;border:3px solid #00B894}.large-avatar{object-fit:cover;display:block}.large-fallback{display:flex;align-items:center;justify-content:center;background:#00B894;color:#fff;font-size:32px;font-weight:900}.profile-card h2{color:#fff;font-size:17px}.role{color:#00B894;font-size:10px;font-weight:800;margin-top:5px}.email{color:#819bad;font-size:10px;margin-top:7px;word-break:break-word}.form-card{padding:25px}.section-title{color:#fff;font-size:14px;font-weight:800;margin-bottom:18px}.section-title i{color:#00B894;margin-right:8px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.field{display:flex;flex-direction:column;gap:7px}.full{grid-column:1/-1}label{color:#9eb3c1;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px}input{width:100%;padding:11px 12px;border-radius:9px;border:1px solid #2a4c66;outline:none;background:#071b2e;color:#fff;font-size:11px}input:focus{border-color:#00B894;box-shadow:0 0 0 3px rgba(0,184,148,.08)}input[type=file]{padding:9px}.hint{color:#70899a;font-size:9px;line-height:1.5}.divider{height:1px;background:#1d3d56;margin:24px 0}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.btn{border:0;border-radius:9px;padding:11px 18px;text-decoration:none;font-size:10px;font-weight:800;cursor:pointer}.secondary{color:#b7cad6;background:#17334b}.primary{color:#062117;background:#00B894}.primary:hover{filter:brightness(1.08)}@@media(max-width:900px){.sidebar{width:210px}.main{margin-left:210px;width:calc(100% - 210px)}.grid{grid-template-columns:1fr}}@@media(max-width:650px){.sidebar{position:relative;width:100%;height:auto}.main{margin-left:0;width:100%}.content{padding:18px}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="page">
+<aside class="sidebar">
+    <div class="brand">Health<span>Track</span></div>
+    <div class="side-profile">
+        @if (!string.IsNullOrWhiteSpace(profileImage.ToString()) && profileImage.ToString() != "/images/default-user.png") { <img src="@profileImage" alt="Trainer" /> } else { <div class="avatar">@initial</div> }
+        <div><div class="side-name">@trainerName</div><div class="side-role">Trainer</div></div>
+    </div>
+    <div class="menu-title">TRAINER MENU</div>
+    <a href="@Url.Action("TrainerDashboard","Home")" class="menu-item"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+    <a href="@Url.Action("MyClients","Home")" class="menu-item"><i class="fa-solid fa-users"></i><span>My Clients</span></a>
+    <a href="@Url.Action("TrainerAppointments","Home")" class="menu-item"><i class="fa-regular fa-calendar-check"></i><span>Appointments</span></a>
+    <a href="@Url.Action("TrainerWorkoutPlans","Home")" class="menu-item"><i class="fa-solid fa-dumbbell"></i><span>Workout Plans</span></a>
+    <a href="@Url.Action("TrainerDietPlans","Home")" class="menu-item"><i class="fa-solid fa-utensils"></i><span>Diet Plans</span></a>
+    <a href="@Url.Action("TrainerHealthRecords","Home")" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Progress Reports</span></a>
+    <a href="@Url.Action("TrainerMessages","Home")" class="menu-item"><i class="fa-solid fa-message"></i><span>Messages</span></a>
+    <a href="@Url.Action("TrainerNotifications","Home")" class="menu-item"><i class="fa-regular fa-bell"></i><span>Notifications</span></a>
+    <a href="@Url.Action("TrainerSettings","Home")" class="menu-item active"><i class="fa-solid fa-user-gear"></i><span>Profile Settings</span></a>
+</aside>
+<main class="main">
+<header class="topbar"><a href="@Url.Action("TrainerDashboard","Home")" class="back-link"><i class="fa-solid fa-arrow-left"></i>&nbsp; Back to Dashboard</a><div class="top-title">Trainer Profile Settings</div><div style="width:145px"></div></header>
+<section class="content">
+<div class="heading"><h1>Profile Settings</h1><p>Update your profile image, name, phone number, email and password.</p></div>
+@if (TempData["Success"] != null) { <div class="alert success"><i class="fa-solid fa-circle-check"></i> @TempData["Success"]</div> }
+@if (TempData["Error"] != null) { <div class="alert error"><i class="fa-solid fa-circle-exclamation"></i> @TempData["Error"]</div> }
+<form asp-action="SaveTrainerSettings" asp-controller="Home" method="post" enctype="multipart/form-data">
+@Html.AntiForgeryToken()
+<div class="grid">
+<div class="card profile-card">
+@if (!string.IsNullOrWhiteSpace(profileImage.ToString()) && profileImage.ToString() != "/images/default-user.png") { <img src="@profileImage" class="large-avatar" alt="Trainer" /> } else { <div class="large-fallback">@initial</div> }
+<h2>@trainerName</h2><div class="role">@trainerRole</div><div class="email">@trainerEmail</div>
+</div>
+<div class="card form-card">
+<div class="section-title"><i class="fa-solid fa-user"></i> Personal Information</div>
+<div class="form-grid">
+<div class="field full"><label>Profile Image</label><input type="file" name="ProfileImage" accept=".jpg,.jpeg,.png,.webp" /><div class="hint">JPG, JPEG, PNG or WEBP. Maximum 5 MB.</div></div>
+<div class="field"><label>Full Name</label><input type="text" name="FullName" value="@trainerName" required /></div>
+<div class="field"><label>Phone Number</label><input type="text" name="Phone" value="@phone" placeholder="Enter phone number" /></div>
+<div class="field full"><label>Email Address</label><input type="email" name="Email" value="@trainerEmail" required /></div>
+</div>
+<div class="divider"></div>
+<div class="section-title"><i class="fa-solid fa-lock"></i> Change Password</div>
+<div class="form-grid">
+<div class="field full"><label>Current Password</label><input type="password" name="CurrentPassword" autocomplete="current-password" /></div>
+<div class="field"><label>New Password</label><input type="password" name="NewPassword" autocomplete="new-password" /></div>
+<div class="field"><label>Confirm New Password</label><input type="password" name="ConfirmPassword" autocomplete="new-password" /></div>
+<div class="field full"><div class="hint">Leave password fields empty if you do not want to change your password. New password must contain at least 6 characters.</div></div>
+</div>
+<div class="actions"><a href="@Url.Action("TrainerDashboard","Home")" class="btn secondary">Cancel</a><button type="submit" class="btn primary"><i class="fa-solid fa-floppy-disk"></i>&nbsp; Save Changes</button></div>
+</div>
+</div>
+</form>
+</section>
+</main>
+</div>
+</body>
+</html>

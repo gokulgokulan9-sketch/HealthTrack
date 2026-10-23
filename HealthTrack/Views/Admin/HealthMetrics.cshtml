@@ -1,0 +1,3308 @@
+﻿@using System
+@using System.Data
+@using System.Linq
+@using HealthTrack.Models
+
+@{
+    Layout = null;
+
+    var metrics =
+        ViewBag.HealthMetrics as DataTable
+        ?? new DataTable();
+
+    var clients =
+        ViewBag.Clients as IEnumerable<User>
+        ?? Enumerable.Empty<User>();
+
+    int totalHealthMetrics =
+        Convert.ToInt32(
+            ViewBag.TotalHealthMetrics ?? 0
+        );
+
+    int totalClients =
+        Convert.ToInt32(
+            ViewBag.TotalClients ?? 0
+        );
+
+    int latestRecords =
+        Convert.ToInt32(
+            ViewBag.LatestHealthMetrics ?? 0
+        );
+
+    int totalHealthProfiles =
+        Convert.ToInt32(
+            ViewBag.TotalHealthProfiles ?? 0
+        );
+
+    int normalBmi =
+        Convert.ToInt32(
+            ViewBag.NormalBmi ?? 0
+        );
+
+    int overweightBmi =
+        Convert.ToInt32(
+            ViewBag.OverweightBmi ?? 0
+        );
+
+    int underweightBmi =
+        Convert.ToInt32(
+            ViewBag.UnderweightBmi ?? 0
+        );
+
+    int obeseBmi =
+        Convert.ToInt32(
+            ViewBag.ObeseBmi ?? 0
+        );
+
+    int bmiTotal =
+        normalBmi +
+        overweightBmi +
+        underweightBmi +
+        obeseBmi;
+
+    double normalPercent =
+        bmiTotal == 0
+            ? 0
+            : (double)normalBmi / bmiTotal * 100;
+
+    double overweightPercent =
+        bmiTotal == 0
+            ? 0
+            : (double)overweightBmi / bmiTotal * 100;
+
+    double underweightPercent =
+        bmiTotal == 0
+            ? 0
+            : (double)underweightBmi / bmiTotal * 100;
+
+    double obesePercent =
+        bmiTotal == 0
+            ? 0
+            : (double)obeseBmi / bmiTotal * 100;
+
+    string searchValue =
+        Convert.ToString(
+            ViewBag.Search ?? ""
+        );
+
+    string dateFilter =
+        Convert.ToString(
+            ViewBag.DateFilter ?? "all"
+        );
+
+    string adminName =
+        Convert.ToString(
+            ViewBag.AdminName ??
+            ViewBag.UserName ??
+            "Admin"
+        );
+
+    string adminRole =
+        Convert.ToString(
+            ViewBag.AdminRole ??
+            ViewBag.UserRole ??
+            "ADMIN"
+        );
+
+    string adminImage =
+        Convert.ToString(
+            ViewBag.AdminProfileImage ??
+            ViewBag.ProfileImage ??
+            "/images/default-user.png"
+        );
+
+    if (string.IsNullOrWhiteSpace(adminImage))
+    {
+        adminImage =
+            "/images/default-user.png";
+    }
+
+    string GetBmiClass(
+        string bmiText)
+    {
+        if (!decimal.TryParse(
+            bmiText,
+            out decimal bmi))
+        {
+            return "bmi-neutral";
+        }
+
+        if (bmi < 18.5m)
+        {
+            return "bmi-under";
+        }
+
+        if (bmi < 25m)
+        {
+            return "bmi-normal";
+        }
+
+        if (bmi < 30m)
+        {
+            return "bmi-over";
+        }
+
+        return "bmi-obese";
+    }
+
+    string GetInitials(
+        string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "CL";
+        }
+
+        var parts =
+            name.Trim()
+                .Split(
+                    ' ',
+                    StringSplitOptions.RemoveEmptyEntries
+                );
+
+        if (parts.Length == 1)
+        {
+            return parts[0]
+                .Substring(
+                    0,
+                    Math.Min(
+                        2,
+                        parts[0].Length
+                    )
+                )
+                .ToUpper();
+        }
+
+        return (
+            parts[0][0].ToString() +
+            parts[^1][0].ToString()
+        ).ToUpper();
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        Health Metrics | HealthTrack Admin
+    </title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <style>
+
+            :root {
+                --sidebar-width: 245px;
+                --topbar-height: 72px;
+                --red: #ff102f;
+                --red-dark: #df0026;
+                --red-soft: #ff4057;
+                --black: #090c0f;
+                --black-2: #0e1317;
+                --card: #151b20;
+                --card-2: #192126;
+                --border: #29343b;
+                --text: #f3f5f6;
+                --muted: #859198;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+            }
+
+            body {
+                background: radial-gradient( circle at 78% 18%, rgba(255, 16, 47, .11), transparent 28% ), radial-gradient( circle at 42% 78%, rgba(255, 16, 47, .06), transparent 25% ), #090c0f;
+                color: var(--text);
+                font-family: Inter, "Segoe UI", Arial, sans-serif;
+            }
+
+
+            /* =====================================================
+                       SIDEBAR
+                       SAME ADMIN SIDEBAR
+                       ===================================================== */
+
+            .admin-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: var(--sidebar-width);
+                height: 100vh;
+                background: linear-gradient( 180deg, #11161b 0%, #0d1115 100% );
+                border-right: 1px solid #242c32;
+                z-index: 1100;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            .admin-brand {
+                height: 72px;
+                padding: 0 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                border-bottom: 1px solid #252d33;
+            }
+
+            .admin-brand-icon {
+                width: 39px;
+                height: 39px;
+                border-radius: 11px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient( 135deg, var(--red), var(--red-dark) );
+                color: #fff;
+                font-size: 18px;
+                box-shadow: 0 7px 18px rgba(255,16,47,.20);
+            }
+
+            .admin-brand-text {
+                color: #fff;
+                font-size: 20px;
+                font-weight: 800;
+            }
+
+            .admin-profile {
+                margin: 17px 14px 14px;
+                padding: 12px;
+                border-radius: 13px;
+                background: #171d22;
+                border: 1px solid #293239;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .admin-profile img {
+                    width: 43px;
+                    height: 43px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid rgba(255,16,47,.65);
+                    background: #252c32;
+                }
+
+            .admin-profile-name {
+                color: #fff;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .admin-profile-role {
+                color: #8d989f;
+                font-size: 11px;
+                margin-top: 2px;
+            }
+
+            .sidebar-section-title {
+                padding: 9px 20px 7px;
+                color: #66727a;
+                font-size: 10px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .sidebar-menu {
+                padding: 0 11px 15px;
+            }
+
+                .sidebar-menu a {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    min-height: 44px;
+                    margin: 3px 0;
+                    padding: 0 13px;
+                    border-radius: 10px;
+                    color: #aeb7bd;
+                    text-decoration: none;
+                    font-size: 13px;
+                    font-weight: 600;
+                    transition: .18s ease;
+                }
+
+                    .sidebar-menu a i {
+                        width: 20px;
+                        text-align: center;
+                        font-size: 15px;
+                        color: #7f8a91;
+                    }
+
+                    .sidebar-menu a:hover {
+                        color: #fff;
+                        background: #1b2228;
+                    }
+
+                        .sidebar-menu a:hover i {
+                            color: var(--red-soft);
+                        }
+
+                    .sidebar-menu a.active {
+                        color: #fff;
+                        background: linear-gradient( 135deg, var(--red), var(--red-dark) );
+                        box-shadow: 0 8px 20px rgba(255,16,47,.18);
+                    }
+
+                        .sidebar-menu a.active i {
+                            color: #fff;
+                        }
+
+            .sidebar-bottom {
+                margin-top: auto;
+                padding: 10px 11px 17px;
+            }
+
+            .sidebar-divider {
+                height: 1px;
+                background: #252d33;
+                margin: 9px 7px 12px;
+            }
+
+            .sidebar-bottom a {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 44px;
+                padding: 0 13px;
+                border-radius: 10px;
+                color: #aeb7bd;
+                text-decoration: none;
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+
+            /* =====================================================
+                       TOPBAR
+                       SAME ADMIN TOPBAR
+                       ===================================================== */
+
+            .admin-topbar {
+                position: fixed;
+                top: 0;
+                right: 0;
+                left: var(--sidebar-width);
+                height: var(--topbar-height);
+                background: linear-gradient( 135deg, #1a2026, #151a1f );
+                border-bottom: 1px solid #293239;
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 28px;
+            }
+
+            .topbar-left,
+            .topbar-right {
+                display: flex;
+                align-items: center;
+            }
+
+            .topbar-left {
+                gap: 14px;
+            }
+
+            .topbar-right {
+                gap: 18px;
+            }
+
+            .topbar-page {
+                color: #fff;
+                font-size: 17px;
+                font-weight: 750;
+            }
+
+            .topbar-divider {
+                color: #55616a;
+            }
+
+            .topbar-current {
+                color: #8f9aa2;
+                font-size: 13px;
+            }
+
+            .topbar-notification {
+                position: relative;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+                color: #c3cbd0;
+                text-decoration: none;
+                background: #20272d;
+                border: 1px solid #303a41;
+            }
+
+            .notification-count {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                min-width: 17px;
+                height: 17px;
+                padding: 0 4px;
+                border-radius: 20px;
+                background: #ff2638;
+                color: #fff;
+                font-size: 9px;
+                font-weight: 800;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid #171d22;
+            }
+
+            .topbar-user {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                text-decoration: none;
+            }
+
+                .topbar-user img {
+                    width: 40px;
+                    height: 40px;
+                    object-fit: cover;
+                    border-radius: 50%;
+                    border: 2px solid #374149;
+                }
+
+            .topbar-user-name {
+                color: #fff;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .topbar-user-role {
+                color: #7f8a92;
+                font-size: 10px;
+                margin-top: 4px;
+                text-transform: uppercase;
+            }
+
+
+            /* =====================================================
+                       MAIN
+                       ===================================================== */
+
+            .admin-main {
+                margin-left: var(--sidebar-width);
+                padding-top: var(--topbar-height);
+                min-height: 100vh;
+            }
+
+            .main-content {
+                padding: 30px 32px 45px;
+            }
+
+
+            /* =====================================================
+                       PAGE HEADER
+                       ===================================================== */
+
+            .page-header {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 20px;
+                margin-bottom: 24px;
+            }
+
+            .page-title {
+                margin: 0;
+                font-size: 29px;
+                font-weight: 850;
+                letter-spacing: -.6px;
+            }
+
+            .page-subtitle {
+                margin: 7px 0 0;
+                color: var(--muted);
+                font-size: 13px;
+            }
+
+            .add-button {
+                border: 0;
+                cursor: pointer;
+                padding: 11px 17px;
+                border-radius: 10px;
+                background: linear-gradient( 135deg, var(--red), var(--red-dark) );
+                color: #fff;
+                font-size: 12px;
+                font-weight: 800;
+                box-shadow: 0 9px 25px rgba(255,16,47,.18);
+            }
+
+
+            /* =====================================================
+                       ALERTS
+                       ===================================================== */
+
+            .alert {
+                padding: 12px 15px;
+                border-radius: 10px;
+                margin-bottom: 18px;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .alert-success {
+                background: rgba(34,197,94,.08);
+                border: 1px solid rgba(34,197,94,.22);
+                color: #65e89c;
+            }
+
+            .alert-error {
+                background: rgba(255,16,47,.08);
+                border: 1px solid rgba(255,16,47,.22);
+                color: #ff7586;
+            }
+
+
+            /* =====================================================
+                       KPI CARDS
+                       ===================================================== */
+
+            .kpi-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 13px;
+                margin-bottom: 18px;
+            }
+
+            .kpi-card {
+                position: relative;
+                overflow: hidden;
+                min-height: 112px;
+                padding: 16px;
+                border-radius: 13px;
+                background: linear-gradient( 145deg, #171e23, #11171b );
+                border: 1px solid #2a353c;
+                box-shadow: 0 12px 30px rgba(0,0,0,.18);
+            }
+
+                .kpi-card::after {
+                    content: "";
+                    position: absolute;
+                    width: 90px;
+                    height: 90px;
+                    right: -35px;
+                    top: -35px;
+                    border-radius: 50%;
+                    background: rgba(255,16,47,.08);
+                }
+
+            .kpi-icon {
+                width: 34px;
+                height: 34px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 9px;
+                background: rgba(255,16,47,.12);
+                color: var(--red-soft);
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .kpi-label {
+                color: #7f8b92;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: .4px;
+            }
+
+            .kpi-number {
+                margin-top: 4px;
+                color: #fff;
+                font-size: 23px;
+                font-weight: 850;
+            }
+
+
+            /* =====================================================
+                       ANALYTICS
+                       ===================================================== */
+
+            .analytics-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1.65fr) minmax(330px, .85fr);
+                gap: 16px;
+                margin-bottom: 18px;
+            }
+
+            .analytics-card {
+                position: relative;
+                background: linear-gradient( 145deg, #151c21, #101519 );
+                border: 1px solid #29343b;
+                border-radius: 15px;
+                overflow: hidden;
+                box-shadow: 0 15px 40px rgba(0,0,0,.20);
+            }
+
+            .analytics-header {
+                padding: 17px 19px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 1px solid #273138;
+            }
+
+            .analytics-title {
+                color: #fff;
+                font-size: 14px;
+                font-weight: 800;
+            }
+
+            .analytics-subtitle {
+                margin-top: 4px;
+                color: #737f86;
+                font-size: 10px;
+            }
+
+            .analytics-body {
+                padding: 19px;
+            }
+
+
+            /* =====================================================
+                       WEIGHT VISUAL
+                       ===================================================== */
+
+            .weight-chart {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .weight-row {
+                display: grid;
+                grid-template-columns: 74px 1fr 55px;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .weight-date {
+                color: #77838a;
+                font-size: 10px;
+            }
+
+            .weight-track {
+                height: 8px;
+                background: #20282e;
+                border-radius: 20px;
+                overflow: hidden;
+            }
+
+            .weight-fill {
+                height: 100%;
+                min-width: 4px;
+                border-radius: 20px;
+                background: linear-gradient( 90deg, #a90020, #ff102f, #ff5062 );
+                box-shadow: 0 0 13px rgba(255,16,47,.25);
+            }
+
+            .weight-value {
+                color: #e5e9eb;
+                font-size: 10px;
+                text-align: right;
+                font-weight: 750;
+            }
+
+            .no-chart {
+                padding: 35px 10px;
+                text-align: center;
+                color: #68747b;
+                font-size: 11px;
+            }
+
+
+            /* =====================================================
+                       BMI
+                       ===================================================== */
+
+            .bmi-layout {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .bmi-donut {
+                width: 145px;
+                height: 145px;
+                flex: 0 0 145px;
+                border-radius: 50%;
+                background: conic-gradient( #28c77b 0% var(--normal), #2994ff var(--normal) var(--over), #ffae21 var(--over) var(--under), #ff3049 var(--under) 100% );
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+                .bmi-donut::after {
+                    content: "";
+                    position: absolute;
+                    width: 91px;
+                    height: 91px;
+                    border-radius: 50%;
+                    background: #12181c;
+                }
+
+            .bmi-center {
+                position: relative;
+                z-index: 2;
+                text-align: center;
+            }
+
+                .bmi-center strong {
+                    display: block;
+                    color: #fff;
+                    font-size: 25px;
+                    font-weight: 850;
+                }
+
+                .bmi-center span {
+                    color: #737f86;
+                    font-size: 9px;
+                }
+
+            .bmi-legend {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .bmi-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .bmi-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                flex: 0 0 8px;
+            }
+
+            .bmi-item-text {
+                flex: 1;
+                color: #9ca6ab;
+                font-size: 10px;
+            }
+
+            .bmi-item-number {
+                color: #fff;
+                font-size: 10px;
+                font-weight: 800;
+            }
+
+
+            /* =====================================================
+                       TOOLBAR
+                       ===================================================== */
+
+            .toolbar {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .search-box {
+                flex: 1;
+                position: relative;
+            }
+
+                .search-box i {
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #6e7a81;
+                    font-size: 13px;
+                }
+
+                .search-box input {
+                    width: 100%;
+                    height: 43px;
+                    padding: 0 13px 0 40px;
+                    border-radius: 10px;
+                    border: 1px solid #303b42;
+                    background: #11171b;
+                    color: #fff;
+                    outline: none;
+                }
+
+            .filter-select {
+                height: 43px;
+                min-width: 130px;
+                padding: 0 12px;
+                border-radius: 10px;
+                border: 1px solid #303b42;
+                background: #11171b;
+                color: #cbd2d6;
+                outline: none;
+                font-size: 11px;
+            }
+
+            .search-button {
+                height: 43px;
+                padding: 0 16px;
+                border: 0;
+                border-radius: 10px;
+                background: #252e34;
+                color: #fff;
+                font-size: 11px;
+                font-weight: 800;
+                cursor: pointer;
+            }
+
+
+            /* =====================================================
+                       TABLE
+                       ===================================================== */
+
+            .table-card {
+                overflow: hidden;
+                background: linear-gradient( 145deg, #151c21, #101519 );
+                border: 1px solid #29343b;
+                border-radius: 15px;
+                box-shadow: 0 15px 40px rgba(0,0,0,.18);
+            }
+
+            .table-header {
+                padding: 17px 19px;
+                border-bottom: 1px solid #29343b;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .table-title {
+                color: #fff;
+                font-size: 14px;
+                font-weight: 800;
+            }
+
+            .table-count {
+                color: #727e85;
+                font-size: 10px;
+                margin-top: 3px;
+            }
+
+            .table-wrap {
+                overflow-x: auto;
+            }
+
+            table {
+                width: 100%;
+                min-width: 930px;
+                border-collapse: collapse;
+            }
+
+            th {
+                padding: 12px 14px;
+                background: #10161a;
+                border-bottom: 1px solid #29343b;
+                color: #737f86;
+                text-align: left;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: .7px;
+            }
+
+            td {
+                padding: 13px 14px;
+                border-bottom: 1px solid #222b31;
+                color: #d8dfe2;
+                font-size: 11px;
+            }
+
+            tbody tr:hover {
+                background: rgba(255,16,47,.025);
+            }
+
+            .client-cell {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+            }
+
+            .client-avatar {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient( 135deg, #252e34, #343e45 );
+                border: 1px solid #465159;
+                color: #fff;
+                font-size: 9px;
+                font-weight: 800;
+            }
+
+            .client-name {
+                color: #e8ecee;
+                font-weight: 750;
+            }
+
+            .date-cell {
+                color: #9aa5aa;
+                white-space: nowrap;
+            }
+
+            .number-cell {
+                color: #dce1e3;
+                font-weight: 700;
+            }
+
+            .bmi-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 47px;
+                padding: 5px 8px;
+                border-radius: 999px;
+                font-size: 9px;
+                font-weight: 850;
+            }
+
+            .bmi-normal {
+                color: #64e5a0;
+                background: rgba(40,199,123,.11);
+                border: 1px solid rgba(40,199,123,.22);
+            }
+
+            .bmi-under {
+                color: #ffbf4b;
+                background: rgba(255,174,33,.10);
+                border: 1px solid rgba(255,174,33,.22);
+            }
+
+            .bmi-over {
+                color: #ffc05a;
+                background: rgba(255,174,33,.10);
+                border: 1px solid rgba(255,174,33,.22);
+            }
+
+            .bmi-obese {
+                color: #ff6979;
+                background: rgba(255,48,73,.11);
+                border: 1px solid rgba(255,48,73,.23);
+            }
+
+            .bmi-neutral {
+                color: #9ba5aa;
+                background: #20282e;
+            }
+
+            .action-group {
+                display: flex;
+                gap: 5px;
+            }
+
+            .action-btn {
+                height: 31px;
+                padding: 0 9px;
+                border-radius: 7px;
+                border: 1px solid transparent;
+                cursor: pointer;
+                font-size: 9px;
+                font-weight: 800;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .view-btn {
+                background: #20292f;
+                color: #cbd3d7;
+                border-color: #344048;
+            }
+
+            .edit-btn {
+                background: rgba(255,16,47,.09);
+                color: #ff6275;
+                border-color: rgba(255,16,47,.20);
+            }
+
+            .delete-btn {
+                background: rgba(255,16,47,.07);
+                color: #ff5268;
+                border-color: rgba(255,16,47,.17);
+            }
+
+            .empty-row {
+                padding: 50px !important;
+                text-align: center;
+                color: #69757c !important;
+            }
+
+
+            /* =====================================================
+                       MODALS
+                       ===================================================== */
+
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,.72);
+                z-index: 3000;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+                .modal-overlay.show {
+                    display: flex;
+                }
+
+            .modal {
+                width: min(650px, 100%);
+                max-height: 92vh;
+                overflow-y: auto;
+                border-radius: 16px;
+                background: linear-gradient( 145deg, #181f24, #101519 );
+                border: 1px solid #344048;
+                box-shadow: 0 30px 100px rgba(0,0,0,.60);
+            }
+
+            .modal-head {
+                padding: 18px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 1px solid #2b353b;
+            }
+
+                .modal-head h3 {
+                    margin: 0;
+                    color: #fff;
+                    font-size: 17px;
+                }
+
+            .modal-close {
+                width: 34px;
+                height: 34px;
+                border: 0;
+                border-radius: 8px;
+                background: #242d33;
+                color: #b9c2c6;
+                cursor: pointer;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .form-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .form-group.full {
+                grid-column: 1 / -1;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 6px;
+                color: #9da8ad;
+                font-size: 10px;
+                font-weight: 750;
+                text-transform: uppercase;
+            }
+
+            .form-control {
+                width: 100%;
+                height: 42px;
+                padding: 0 11px;
+                border-radius: 8px;
+                border: 1px solid #303b42;
+                background: #0c1115;
+                color: #fff;
+                outline: none;
+                font-size: 12px;
+            }
+
+                .form-control:focus {
+                    border-color: var(--red-soft);
+                    box-shadow: 0 0 0 3px rgba(255,64,87,.08);
+                }
+
+            .modal-footer {
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+                margin-top: 20px;
+            }
+
+            .cancel-btn,
+            .save-btn {
+                height: 40px;
+                padding: 0 15px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 800;
+            }
+
+            .cancel-btn {
+                border: 1px solid #364149;
+                background: #222b31;
+                color: #cbd2d6;
+            }
+
+            .save-btn {
+                border: 0;
+                background: linear-gradient( 135deg, var(--red), var(--red-dark) );
+                color: #fff;
+            }
+
+            .view-details {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .detail-box {
+                padding: 14px;
+                border-radius: 10px;
+                background: #11171b;
+                border: 1px solid #29343b;
+            }
+
+            .detail-label {
+                color: #6f7b82;
+                font-size: 9px;
+                text-transform: uppercase;
+                margin-bottom: 5px;
+            }
+
+            .detail-value {
+                color: #f0f3f4;
+                font-size: 13px;
+                font-weight: 800;
+            }
+
+
+            /* =====================================================
+                       MOBILE
+                       ===================================================== */
+
+            .mobile-menu-btn {
+                display: none;
+                width: 39px;
+                height: 39px;
+                border: 1px solid #354049;
+                border-radius: 9px;
+                background: #20272d;
+                color: #fff;
+            }
+
+            .sidebar-overlay {
+                display: none;
+            }
+
+            @@media(max - width: 1000px)
+
+            {
+
+                .kpi-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+
+                .analytics-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @@media(max - width: 850px)
+
+            {
+
+                .admin-sidebar {
+                    transform: translateX(-100%);
+                    transition: transform .25s ease;
+                }
+
+                    .admin-sidebar.open {
+                        transform: translateX(0);
+                    }
+
+                .admin-topbar {
+                    left: 0;
+                }
+
+                .admin-main {
+                    margin-left: 0;
+                }
+
+                .mobile-menu-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .sidebar-overlay.show {
+                    display: block;
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0,0,0,.60);
+                    z-index: 1050;
+                }
+            }
+
+            @@media(max - width: 650px)
+
+            {
+
+                .main-content {
+                    padding: 22px 15px 35px;
+                }
+
+                .page-header {
+                    align-items: flex-start;
+                    flex-direction: column;
+                }
+
+                .kpi-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .toolbar {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .form-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .form-group.full {
+                    grid-column: auto;
+                }
+
+                .view-details {
+                    grid-template-columns: 1fr;
+                }
+
+                .topbar-current,
+                .topbar-divider,
+                .topbar-user-info {
+                    display: none;
+                }
+            }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+
+    <aside class="admin-sidebar"
+           id="adminSidebar">
+
+        <div class="admin-brand">
+
+            <div class="admin-brand-icon">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div class="admin-brand-text">
+                HealthTrack
+            </div>
+
+        </div>
+
+
+        <div class="admin-profile">
+
+            <img src="@adminImage"
+                 alt="Admin Profile" />
+
+            <div>
+
+                <div class="admin-profile-name">
+                    @adminName
+                </div>
+
+                <div class="admin-profile-role">
+                    @adminRole
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="sidebar-section-title">
+            Main Menu
+        </div>
+
+
+        <nav class="sidebar-menu">
+
+            <a href="/Home/Dashboard">
+                <i class="fa-solid fa-gauge-high"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="/Home/Clients">
+                <i class="fa-solid fa-users"></i>
+                <span>Clients</span>
+            </a>
+
+            <a href="/Home/Trainers">
+                <i class="fa-solid fa-user-tie"></i>
+                <span>Trainers</span>
+            </a>
+
+            <a href="/Home/Appointments">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span>Appointments</span>
+            </a>
+
+            <a href="/Home/WorkoutPlans">
+                <i class="fa-solid fa-dumbbell"></i>
+                <span>Workout Plans</span>
+            </a>
+
+            <a href="/Home/DietPlans">
+                <i class="fa-solid fa-utensils"></i>
+                <span>Diet Plans</span>
+            </a>
+
+            <a href="/Home/HealthMetrics"
+               class="active">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+                <span>
+                    Health Metrics
+                </span>
+
+            </a>
+
+            <a href="/Home/Reports">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Reports</span>
+            </a>
+
+            <a href="/Home/Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+
+            <a href="/Home/Settings">
+                <i class="fa-solid fa-gear"></i>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="sidebar-divider"></div>
+
+            <a href="/Account/Logout">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                <span>
+                    Logout
+                </span>
+
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <div class="sidebar-overlay"
+         id="sidebarOverlay">
+    </div>
+
+
+    <!-- =====================================================
+         TOPBAR
+         ===================================================== -->
+
+    <header class="admin-topbar">
+
+        <div class="topbar-left">
+
+            <button class="mobile-menu-btn"
+                    id="mobileMenuBtn">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+            <div class="topbar-page">
+                Admin
+            </div>
+
+            <div class="topbar-divider">
+                /
+            </div>
+
+            <div class="topbar-current">
+                Health Metrics
+            </div>
+
+        </div>
+
+
+        <div class="topbar-right">
+
+            <a href="/Home/Notifications"
+               class="topbar-notification">
+
+                <i class="fa-regular fa-bell"></i>
+
+                <span class="notification-count">
+
+                    @(ViewBag.TotalNotifications ?? 0)
+
+                </span>
+
+            </a>
+
+
+            <a href="/Home/Profile"
+               class="topbar-user">
+
+                <img src="@adminImage"
+                     alt="Admin Profile" />
+
+                <div class="topbar-user-info">
+
+                    <div class="topbar-user-name">
+                        @adminName
+                    </div>
+
+                    <div class="topbar-user-role">
+                        @adminRole
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+         ===================================================== -->
+
+    <div class="admin-main">
+
+        <main class="main-content">
+
+
+            <!-- =================================================
+                 PAGE HEADER
+                 ================================================= -->
+
+            <div class="page-header">
+
+                <div>
+
+                    <h1 class="page-title">
+                        Health Metrics
+                    </h1>
+
+                    <p class="page-subtitle">
+                        Track and manage client health measurements
+                        and physical progress.
+                    </p>
+
+                </div>
+
+
+                <button class="add-button"
+                        onclick="openAddModal()">
+
+                    <i class="fa-solid fa-plus"></i>
+
+                    Add Health Metric
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 ALERTS
+                 ================================================= -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    @TempData["Success"]
+
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-error">
+
+                    <i class="fa-solid fa-circle-exclamation"></i>
+
+                    @TempData["Error"]
+
+                </div>
+            }
+
+
+            <!-- =================================================
+                 KPI
+                 ================================================= -->
+
+            <div class="kpi-grid">
+
+                <div class="kpi-card">
+
+                    <div class="kpi-icon">
+                        <i class="fa-solid fa-chart-column"></i>
+                    </div>
+
+                    <div class="kpi-label">
+                        Total Health Records
+                    </div>
+
+                    <div class="kpi-number">
+                        @totalHealthMetrics
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-card">
+
+                    <div class="kpi-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <div class="kpi-label">
+                        Total Clients
+                    </div>
+
+                    <div class="kpi-number">
+                        @totalClients
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-card">
+
+                    <div class="kpi-icon">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+
+                    <div class="kpi-label">
+                        Last 30 Days
+                    </div>
+
+                    <div class="kpi-number">
+                        @latestRecords
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-card">
+
+                    <div class="kpi-icon">
+                        <i class="fa-solid fa-id-card"></i>
+                    </div>
+
+                    <div class="kpi-label">
+                        Health Profiles
+                    </div>
+
+                    <div class="kpi-number">
+                        @totalHealthProfiles
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ANALYTICS
+                 ================================================= -->
+
+            <div class="analytics-grid">
+
+
+                <!-- WEIGHT -->
+
+                <div class="analytics-card">
+
+                    <div class="analytics-header">
+
+                        <div>
+
+                            <div class="analytics-title">
+
+                                <i class="fa-solid fa-chart-line"
+                                   style="color:#ff4057;">
+                                </i>
+
+                                Weight Progress Overview
+
+                            </div>
+
+                            <div class="analytics-subtitle">
+                                Recent client weight measurements
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="analytics-body">
+
+                        @if (metrics.Rows.Count > 0)
+                        {
+                            var recentRows =
+                                metrics.AsEnumerable()
+                                    .Take(8)
+                                    .ToList();
+
+                            decimal maxWeight = 1;
+
+                            foreach (var row in recentRows)
+                            {
+                                if (decimal.TryParse(
+                                    Convert.ToString(
+                                        row["Weight"]
+                                    ),
+                                    out decimal w))
+                                {
+                                    if (w > maxWeight)
+                                    {
+                                        maxWeight = w;
+                                    }
+                                }
+                            }
+
+
+                            <div class="weight-chart">
+
+                                @foreach (var row in recentRows)
+                                {
+                                    string weightText =
+                                        Convert.ToString(
+                                            row["Weight"]
+                                        ) ?? "";
+
+                                    decimal.TryParse(
+                                        weightText,
+                                        out decimal weight
+                                    );
+
+                                    int width =
+                                        maxWeight <= 0
+                                            ? 5
+                                            : (int)(
+                                                weight /
+                                                maxWeight *
+                                                100
+                                            );
+
+                                    <div class="weight-row">
+
+                                        <div class="weight-date">
+
+                                            @Convert.ToString(
+                                                row["RecordDate"]
+                                            )
+
+                                        </div>
+
+                                        <div class="weight-track">
+
+                                            <div class="weight-fill"
+                                                 style="width:@width%;">
+                                            </div>
+
+                                        </div>
+
+                                        <div class="weight-value">
+
+                                            @weightText kg
+
+                                        </div>
+
+                                    </div>
+                                }
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="no-chart">
+
+                                <i class="fa-solid fa-chart-line"></i>
+
+                                No health metric records
+                                available yet.
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- BMI -->
+
+                <div class="analytics-card">
+
+                    <div class="analytics-header">
+
+                        <div>
+
+                            <div class="analytics-title">
+
+                                <i class="fa-solid fa-chart-pie"
+                                   style="color:#ff4057;">
+                                </i>
+
+                                BMI Category Distribution
+
+                            </div>
+
+                            <div class="analytics-subtitle">
+                                Based on recorded health metrics
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="analytics-body">
+
+                        <div class="bmi-layout">
+
+
+                            <div class="bmi-donut"
+                                 style="
+                                --normal:@normalPercent%;
+                                --over:@(normalPercent + overweightPercent)%;
+                                --under:@(normalPercent + overweightPercent + underweightPercent)%;
+                                ">
+
+                                <div class="bmi-center">
+
+                                    <strong>
+                                        @bmiTotal
+                                    </strong>
+
+                                    <span>
+                                        Records
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="bmi-legend">
+
+
+                                <div class="bmi-item">
+
+                                    <span class="bmi-dot"
+                                          style="background:#28c77b;">
+                                    </span>
+
+                                    <span class="bmi-item-text">
+                                        Normal
+                                    </span>
+
+                                    <span class="bmi-item-number">
+                                        @normalBmi
+                                    </span>
+
+                                </div>
+
+
+                                <div class="bmi-item">
+
+                                    <span class="bmi-dot"
+                                          style="background:#2994ff;">
+                                    </span>
+
+                                    <span class="bmi-item-text">
+                                        Overweight
+                                    </span>
+
+                                    <span class="bmi-item-number">
+                                        @overweightBmi
+                                    </span>
+
+                                </div>
+
+
+                                <div class="bmi-item">
+
+                                    <span class="bmi-dot"
+                                          style="background:#ffae21;">
+                                    </span>
+
+                                    <span class="bmi-item-text">
+                                        Underweight
+                                    </span>
+
+                                    <span class="bmi-item-number">
+                                        @underweightBmi
+                                    </span>
+
+                                </div>
+
+
+                                <div class="bmi-item">
+
+                                    <span class="bmi-dot"
+                                          style="background:#ff3049;">
+                                    </span>
+
+                                    <span class="bmi-item-text">
+                                        Obese
+                                    </span>
+
+                                    <span class="bmi-item-number">
+                                        @obeseBmi
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SEARCH
+                 ================================================= -->
+
+            <form method="get"
+                  action="/Home/HealthMetrics"
+                  class="toolbar">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input type="text"
+                           name="search"
+                           value="@searchValue"
+                           placeholder="Search by client name..." />
+
+                </div>
+
+
+                <select name="dateFilter"
+                        class="filter-select">
+
+                    <option value="all"
+                            selected="@(dateFilter == "all")">
+
+                        All Dates
+
+                    </option>
+
+                    <option value="7"
+                            selected="@(dateFilter == "7")">
+
+                        Last 7 Days
+
+                    </option>
+
+                    <option value="30"
+                            selected="@(dateFilter == "30")">
+
+                        Last 30 Days
+
+                    </option>
+
+                    <option value="90"
+                            selected="@(dateFilter == "90")">
+
+                        Last 90 Days
+
+                    </option>
+
+                </select>
+
+
+                <button class="search-button"
+                        type="submit">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    Search
+
+                </button>
+
+            </form>
+
+
+            <!-- =================================================
+                 TABLE
+                 ================================================= -->
+
+            <div class="table-card">
+
+                <div class="table-header">
+
+                    <div>
+
+                        <div class="table-title">
+                            Health Metrics List
+                        </div>
+
+                        <div class="table-count">
+
+                            @metrics.Rows.Count
+                            record(s) shown
+
+                        </div>
+
+                    </div>
+
+                    <i class="fa-solid fa-heart-pulse"
+                       style="color:#ff4057;">
+                    </i>
+
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    #
+                                </th>
+
+                                <th>
+                                    Client
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Weight (kg)
+                                </th>
+
+                                <th>
+                                    Height (cm)
+                                </th>
+
+                                <th>
+                                    BMI
+                                </th>
+
+                                <th>
+                                    Body Fat (%)
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @if (metrics.Rows.Count == 0)
+                            {
+                                <tr>
+
+                                    <td colspan="8"
+                                        class="empty-row">
+
+                                        <i class="fa-solid fa-heart-pulse"
+                                           style="font-size:28px;margin-bottom:10px;">
+                                        </i>
+
+                                        <br />
+
+                                        No health metric records
+                                        found.
+
+                                    </td>
+
+                                </tr>
+                            }
+                            else
+                            {
+                                int rowNumber = 1;
+
+                                foreach (DataRow row in metrics.Rows)
+                                {
+                                    string clientName =
+                                        Convert.ToString(
+                                            row["ClientName"]
+                                        ) ?? "Unknown Client";
+
+                                    string bmiText =
+                                        Convert.ToString(
+                                            row["BMI"]
+                                        ) ?? "-";
+
+                                    string bodyFatText =
+                                        Convert.ToString(
+                                            row["BodyFat"]
+                                        ) ?? "-";
+
+                                    <tr>
+
+                                        <td>
+                                            @rowNumber
+                                        </td>
+
+
+                                        <td>
+
+                                            <div class="client-cell">
+
+                                                <div class="client-avatar">
+
+                                                    @GetInitials(
+                                                        clientName
+                                                    )
+
+                                                </div>
+
+                                                <div class="client-name">
+
+                                                    @clientName
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+
+                                        <td class="date-cell">
+
+                                            @Convert.ToString(
+                                                row["RecordDate"]
+                                            )
+
+                                        </td>
+
+
+                                        <td class="number-cell">
+
+                                            @Convert.ToString(
+                                                row["Weight"]
+                                            )
+
+                                        </td>
+
+
+                                        <td class="number-cell">
+
+                                            @Convert.ToString(
+                                                row["Height"]
+                                            )
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="bmi-badge @GetBmiClass(bmiText)">
+
+                                                @bmiText
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <td class="number-cell">
+
+                                            @(
+                                                string.IsNullOrWhiteSpace(
+                                                    bodyFatText
+                                                )
+                                                    ? "-"
+                                                    : bodyFatText
+                                            )
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <div class="action-group">
+
+
+                                                <button type="button"
+                                                        class="action-btn view-btn"
+                                                        onclick="viewMetric(@Convert.ToInt32(row["MetricId"]))">
+
+                                                    <i class="fa-solid fa-eye"></i>
+
+                                                    View
+
+                                                </button>
+
+
+                                                <button type="button"
+                                                        class="action-btn edit-btn"
+                                                        onclick="editMetric(@Convert.ToInt32(row["MetricId"]))">
+
+                                                    <i class="fa-solid fa-pen"></i>
+
+                                                    Edit
+
+                                                </button>
+
+
+                                                <form method="post"
+                                                      action="/Home/DeleteHealthMetric"
+                                                      style="display:inline;"
+                                                      onsubmit="return confirmDelete();">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@Convert.ToInt32(row["MetricId"])" />
+
+                                                    <button type="submit"
+                                                            class="action-btn delete-btn">
+
+                                                        <i class="fa-solid fa-trash"></i>
+
+                                                        Delete
+
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                    rowNumber++;
+                                }
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================================
+         ADD MODAL
+         ===================================================== -->
+
+    <div class="modal-overlay"
+         id="addModal">
+
+        <div class="modal">
+
+            <div class="modal-head">
+
+                <h3>
+                    Add Health Metric
+                </h3>
+
+                <button type="button"
+                        class="modal-close"
+                        onclick="closeModal('addModal')">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <form method="post"
+                      action="/Home/AddHealthMetric">
+
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-grid">
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Client
+                            </label>
+
+                            <select name="ClientId"
+                                    class="form-control"
+                                    required>
+
+                                <option value="">
+                                    Select Client
+                                </option>
+
+                                @foreach (var client in clients)
+                                {
+                                    <option value="@client.UserId">
+
+                                        @client.FullName
+
+                                    </option>
+                                }
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Measurement Date
+                            </label>
+
+                            <input type="date"
+                                   name="RecordDate"
+                                   class="form-control"
+                                   value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Weight (kg)
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0.1"
+                                   name="Weight"
+                                   id="addWeight"
+                                   class="form-control"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Height (cm)
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="1"
+                                   name="Height"
+                                   id="addHeight"
+                                   class="form-control"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Body Fat (%)
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="BodyFat"
+                                   class="form-control" />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Calories Burned
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="CaloriesBurned"
+                                   id="addCaloriesBurned"
+                                   class="form-control" />
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Notes
+                            </label>
+
+                            <textarea name="Notes"
+                                      id="addNotes"
+                                      class="form-control"
+                                      style="height:90px;padding:10px;resize:vertical;"
+                                      maxlength="500"></textarea>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                BMI
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   name="BMI"
+                                   id="addBmi"
+                                   class="form-control"
+                                   readonly />
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="cancel-btn"
+                                onclick="closeModal('addModal')">
+
+                            Cancel
+
+                        </button>
+
+                        <button type="submit"
+                                class="save-btn">
+
+                            <i class="fa-solid fa-check"></i>
+
+                            Save Health Metric
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         EDIT MODAL
+         ===================================================== -->
+
+    <div class="modal-overlay"
+         id="editModal">
+
+        <div class="modal">
+
+            <div class="modal-head">
+
+                <h3>
+                    Edit Health Metric
+                </h3>
+
+                <button type="button"
+                        class="modal-close"
+                        onclick="closeModal('editModal')">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <form method="post"
+                      action="/Home/EditHealthMetric">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="MetricId"
+                           id="editId" />
+
+
+                    <div class="form-grid">
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Client
+                            </label>
+
+                            <select name="ClientId"
+                                    id="editClient"
+                                    class="form-control"
+                                    required>
+
+                                <option value="">
+                                    Select Client
+                                </option>
+
+                                @foreach (var client in clients)
+                                {
+                                    <option value="@client.UserId">
+
+                                        @client.FullName
+
+                                    </option>
+                                }
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Measurement Date
+                            </label>
+
+                            <input type="date"
+                                   name="RecordDate"
+                                   id="editDate"
+                                   class="form-control"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Weight (kg)
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0.1"
+                                   name="Weight"
+                                   id="editWeight"
+                                   class="form-control"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Height (cm)
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="1"
+                                   name="Height"
+                                   id="editHeight"
+                                   class="form-control"
+                                   required />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Body Fat (%)
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="BodyFat"
+                                   id="editBodyFat"
+                                   class="form-control" />
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Calories Burned
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="CaloriesBurned"
+                                   id="editCaloriesBurned"
+                                   class="form-control" />
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Notes
+                            </label>
+
+                            <textarea name="Notes"
+                                      id="editNotes"
+                                      class="form-control"
+                                      style="height:90px;padding:10px;resize:vertical;"
+                                      maxlength="500"></textarea>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                BMI
+                            </label>
+
+                            <input type="number"
+                                   step="0.01"
+                                   name="BMI"
+                                   id="editBmi"
+                                   class="form-control"
+                                   readonly />
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="cancel-btn"
+                                onclick="closeModal('editModal')">
+
+                            Cancel
+
+                        </button>
+
+                        <button type="submit"
+                                class="save-btn">
+
+                            <i class="fa-solid fa-check"></i>
+
+                            Update Health Metric
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         VIEW MODAL
+         ===================================================== -->
+
+    <div class="modal-overlay"
+         id="viewModal">
+
+        <div class="modal">
+
+            <div class="modal-head">
+
+                <h3>
+                    Health Metric Details
+                </h3>
+
+                <button type="button"
+                        class="modal-close"
+                        onclick="closeModal('viewModal')">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <div class="view-details">
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Client
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewClient">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Date
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewDate">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Weight
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewWeight">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Height
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewHeight">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            BMI
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewBmi">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Body Fat
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewBodyFat">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Calories Burned
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewCaloriesBurned">
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-box">
+
+                        <div class="detail-label">
+                            Notes
+                        </div>
+
+                        <div class="detail-value"
+                             id="viewNotes">
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="cancel-btn"
+                            onclick="closeModal('viewModal')">
+
+                        Close
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+            // =====================================================
+            // SIDEBAR
+            // =====================================================
+
+            const mobileMenuBtn =
+                document.getElementById(
+                    "mobileMenuBtn"
+                );
+
+            const adminSidebar =
+                document.getElementById(
+                    "adminSidebar"
+                );
+
+            const sidebarOverlay =
+                document.getElementById(
+                    "sidebarOverlay"
+                );
+
+
+            if (mobileMenuBtn) {
+
+                mobileMenuBtn.addEventListener(
+                    "click",
+                    function() {
+
+                        adminSidebar.classList.add(
+                            "open"
+                        );
+
+                        sidebarOverlay.classList.add(
+                            "show"
+                        );
+
+                    }
+                );
+
+            }
+
+
+            if (sidebarOverlay) {
+
+                sidebarOverlay.addEventListener(
+                    "click",
+                    function() {
+
+                        adminSidebar.classList.remove(
+                            "open"
+                        );
+
+                        sidebarOverlay.classList.remove(
+                            "show"
+                        );
+
+                    }
+                );
+
+            }
+
+
+            // =====================================================
+            // MODALS
+            // =====================================================
+
+            function openAddModal() {
+
+                document
+                    .getElementById("addModal")
+                    .classList.add("show");
+
+            }
+
+
+            function closeModal(id) {
+
+                document
+                    .getElementById(id)
+                    .classList.remove("show");
+
+            }
+
+
+            // =====================================================
+            // BMI CALCULATION
+            // =====================================================
+
+            function calculateBmi(
+                weightId,
+                heightId,
+                bmiId
+            ) {
+
+                const weight =
+                    parseFloat(
+                        document
+                            .getElementById(weightId)
+                            .value
+                    );
+
+                const height =
+                    parseFloat(
+                        document
+                            .getElementById(heightId)
+                            .value
+                    );
+
+                const bmiInput =
+                    document
+                        .getElementById(bmiId);
+
+
+                if (
+                    weight > 0 &&
+                    height > 0
+                ) {
+
+                    const heightMeters =
+                        height / 100;
+
+                    const bmi =
+                        weight /
+                        (
+                            heightMeters *
+                            heightMeters
+                        );
+
+                    bmiInput.value =
+                        bmi.toFixed(2);
+
+                }
+                else {
+
+                    bmiInput.value = "";
+
+                }
+
+            }
+
+
+            document
+                .getElementById("addWeight")
+                .addEventListener(
+                    "input",
+                    function() {
+
+                        calculateBmi(
+                            "addWeight",
+                            "addHeight",
+                            "addBmi"
+                        );
+
+                    }
+                );
+
+
+            document
+                .getElementById("addHeight")
+                .addEventListener(
+                    "input",
+                    function() {
+
+                        calculateBmi(
+                            "addWeight",
+                            "addHeight",
+                            "addBmi"
+                        );
+
+                    }
+                );
+
+
+            document
+                .getElementById("editWeight")
+                .addEventListener(
+                    "input",
+                    function() {
+
+                        calculateBmi(
+                            "editWeight",
+                            "editHeight",
+                            "editBmi"
+                        );
+
+                    }
+                );
+
+
+            document
+                .getElementById("editHeight")
+                .addEventListener(
+                    "input",
+                    function() {
+
+                        calculateBmi(
+                            "editWeight",
+                            "editHeight",
+                            "editBmi"
+                        );
+
+                    }
+                );
+
+
+            // =====================================================
+            // VIEW
+            // =====================================================
+
+            async function viewMetric(id) {
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/Home/ViewHealthMetric?id=" +
+                            id
+                        );
+
+                    const data =
+                        await response.json();
+
+
+                    if (!data.success) {
+
+                        alert(
+                            data.message ||
+                            "Unable to load health metric."
+                        );
+
+                        return;
+                    }
+
+
+                    document
+                        .getElementById("viewClient")
+                        .textContent =
+                        data.clientName;
+
+
+                    document
+                        .getElementById("viewDate")
+                        .textContent =
+                        data.recordDate;
+
+
+                    document
+                        .getElementById("viewWeight")
+                        .textContent =
+                        data.weight + " kg";
+
+
+                    document
+                        .getElementById("viewHeight")
+                        .textContent =
+                        data.height + " cm";
+
+
+                    document
+                        .getElementById("viewBmi")
+                        .textContent =
+                        data.bmi;
+
+
+                    document
+                        .getElementById("viewBodyFat")
+                        .textContent =
+                        data.bodyFat
+                            ? data.bodyFat + " %"
+                            : "-";
+
+
+                    document
+                        .getElementById("viewCaloriesBurned")
+                        .textContent =
+                        data.caloriesBurned
+                            ? data.caloriesBurned + " kcal"
+                            : "-";
+
+
+                    document
+                        .getElementById("viewNotes")
+                        .textContent =
+                        data.notes || "-";
+
+
+                    document
+                        .getElementById("viewModal")
+                        .classList.add("show");
+
+                }
+                catch (error) {
+
+                    alert(
+                        "Unable to load health metric."
+                    );
+
+                }
+
+            }
+
+
+            // =====================================================
+            // EDIT
+            // =====================================================
+
+            async function editMetric(id) {
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/Home/ViewHealthMetric?id=" +
+                            id
+                        );
+
+                    const data =
+                        await response.json();
+
+
+                    if (!data.success) {
+
+                        alert(
+                            data.message ||
+                            "Unable to load health metric."
+                        );
+
+                        return;
+                    }
+
+
+                    document
+                        .getElementById("editId")
+                        .value =
+                        data.metricId;
+
+
+                    document
+                        .getElementById("editClient")
+                        .value =
+                        data.clientId;
+
+
+                    document
+                        .getElementById("editDate")
+                        .value =
+                        data.recordDate;
+
+
+                    document
+                        .getElementById("editWeight")
+                        .value =
+                        data.weight;
+
+
+                    document
+                        .getElementById("editHeight")
+                        .value =
+                        data.height;
+
+
+                    document
+                        .getElementById("editBodyFat")
+                        .value =
+                        data.bodyFat;
+
+
+                    document
+                        .getElementById("editCaloriesBurned")
+                        .value =
+                        data.caloriesBurned || "";
+
+
+                    document
+                        .getElementById("editNotes")
+                        .value =
+                        data.notes || "";
+
+
+                    document
+                        .getElementById("editBmi")
+                        .value =
+                        data.bmi;
+
+
+                    document
+                        .getElementById("editModal")
+                        .classList.add("show");
+
+                }
+                catch (error) {
+
+                    alert(
+                        "Unable to load health metric."
+                    );
+
+                }
+
+            }
+
+
+            // =====================================================
+            // DELETE CONFIRMATION
+            // =====================================================
+
+            function confirmDelete() {
+
+                return confirm(
+                    "Are you sure you want to delete this health metric?"
+                );
+
+            }
+
+
+            // =====================================================
+            // CLOSE MODAL WHEN CLICK OUTSIDE
+            // =====================================================
+
+            document
+                .querySelectorAll(".modal-overlay")
+                .forEach(
+                    function(overlay) {
+
+                        overlay.addEventListener(
+                            "click",
+                            function(event) {
+
+                                if (
+                                    event.target ===
+                                    overlay
+                                ) {
+
+                                    overlay.classList.remove(
+                                        "show"
+                                    );
+
+                                }
+
+                            }
+                        );
+
+                    }
+                );
+
+    </script>
+
+
+</body>
+
+</html>

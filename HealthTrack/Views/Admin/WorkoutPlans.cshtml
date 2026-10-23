@@ -1,0 +1,183 @@
+@using System
+@using System.Collections
+@using System.Reflection
+@{
+    Layout = null;
+    var plans = ViewBag.WorkoutPlans as IEnumerable;
+    var clients = ViewBag.Clients as IEnumerable;
+    var trainers = ViewBag.Trainers as IEnumerable;
+
+    string adminName = Convert.ToString(ViewBag.AdminName) ?? "Admin";
+    string adminRole = Convert.ToString(ViewBag.AdminRole) ?? "ADMIN";
+    string adminImage = Convert.ToString(ViewBag.AdminProfileImage ?? ViewBag.ProfileImage) ?? "/images/default-user.png";
+    string search = Convert.ToString(ViewBag.Search) ?? "";
+}
+@functions {
+    object? V(object? o, string n)
+    {
+        if (o == null) return null;
+        var p = o.GetType().GetProperty(n, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        try { return p?.GetValue(o); } catch { return null; }
+    }
+    string S(object? o, string n, string fallback = "")
+    {
+        var v = V(o, n);
+        var s = Convert.ToString(v);
+        return string.IsNullOrWhiteSpace(s) ? fallback : s;
+    }
+    int I(object? o, string n, int fallback = 0)
+    {
+        if (int.TryParse(Convert.ToString(V(o, n)), out var x)) return x;
+        return fallback;
+    }
+    string D(object? o, string n)
+    {
+        var s = S(o, n);
+        if (DateTime.TryParse(s, out var d)) return d.ToString("dd MMM yyyy");
+        return s;
+    }
+    string J(object? o, string n)
+    {
+        return System.Text.Json.JsonSerializer.Serialize(S(o, n));
+    }
+}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Workout Plans - HealthTrack</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+<style>
+*{box-sizing:border-box}
+:root{--red:#ff1233;--red2:#e9002d;--bg:#0c1115;--panel:#141a1f;--panel2:#181f25;--line:#29323a;--muted:#87939b;--text:#f3f5f6;--green:#63e6a2}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Arial,sans-serif}
+a{text-decoration:none;color:inherit}
+.sidebar{position:fixed;left:0;top:0;width:245px;height:100vh;background:linear-gradient(180deg,#11171c,#0a0e11);border-right:1px solid var(--line);z-index:1000;overflow:auto}
+.brand{height:72px;padding:0 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #252d33}
+.brand-icon{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--red),var(--red2));display:flex;align-items:center;justify-content:center}
+.brand-text{font-size:20px;font-weight:800}
+.profile{margin:16px 14px;padding:12px;border:1px solid var(--line);background:#171e23;border-radius:13px;display:flex;gap:10px;align-items:center}
+.profile img,.user img{object-fit:cover;border-radius:50%}
+.profile img{width:43px;height:43px;border:2px solid #ff4057}
+.profile-name{font-size:13px;font-weight:700}.profile-role{font-size:10px;color:var(--muted);margin-top:3px}
+.section{padding:10px 20px 7px;color:#65717a;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.menu{padding:0 11px}.menu a{display:flex;align-items:center;gap:12px;min-height:44px;margin:3px 0;padding:0 13px;border-radius:10px;color:#adb7bd;font-size:13px;font-weight:600}
+.menu a i{width:20px;text-align:center}.menu a:hover{background:#1b2228;color:#fff}
+.menu a.active{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;box-shadow:0 8px 22px #ff123333}
+.bottom{padding:10px 11px 17px}.divider{height:1px;background:#252d33;margin:9px 18px}.bottom a{display:flex;gap:12px;padding:12px;color:#adb7bd}
+.topbar{position:fixed;left:245px;right:0;top:0;height:72px;background:#151c21;border-bottom:1px solid var(--line);z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+.top-left,.top-right{display:flex;align-items:center;gap:14px}.top-page{font-size:17px;font-weight:800}.muted{font-size:13px;color:#89959d}
+.notif{width:40px;height:40px;border-radius:10px;background:#20282e;border:1px solid #303a42;display:flex;align-items:center;justify-content:center;position:relative}
+.badge-count{position:absolute;top:-5px;right:-5px;background:var(--red);min-width:17px;height:17px;border-radius:20px;font-size:9px;display:flex;align-items:center;justify-content:center;border:2px solid #151c21}
+.user{display:flex;align-items:center;gap:10px}.user img{width:40px;height:40px;border:2px solid #38434b}.user-name{font-size:12px;font-weight:700}.user-role{font-size:10px;color:#7d8991}
+.main{margin-left:245px;padding-top:72px;min-height:100vh}.content{max-width:1500px;margin:auto;padding:28px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:18px}.eyebrow{color:#ff4b63;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}.title{font-size:29px;font-weight:850;margin:5px 0}.subtitle{color:var(--muted);font-size:12px}
+.btn{border:0;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.primary{background:var(--red);color:#fff}.secondary{background:#252e34;color:#dbe0e3;border:1px solid #364149}.info{background:#172a40;color:#b9d7ff;border:1px solid #2d537f}.success{background:#153527;color:#72e6a8;border:1px solid #285d44}.danger{background:#35151c;color:#ff7181;border:1px solid #6d2632}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.stat{background:linear-gradient(145deg,#161d22,#11171b);border:1px solid var(--line);border-radius:14px;padding:17px}.stat i{color:#ff3b57;font-size:17px}.stat-label{color:#7f8b93;font-size:9px;text-transform:uppercase;font-weight:800;margin-top:9px}.stat-value{font-size:24px;font-weight:850;margin-top:2px}
+.panel{background:#151c21;border:1px solid var(--line);border-radius:15px;overflow:hidden}.searchbar{padding:14px;display:flex;gap:9px;border-bottom:1px solid var(--line)}.searchbar input{flex:1;background:#0d1317;color:#f2f4f5;border:1px solid #303a42;border-radius:9px;padding:11px 13px;outline:none}.searchbar input:focus{border-color:#ff4057}
+.table-wrap{overflow:auto}.plans{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}.plans th{background:#10161a;color:#7d8991;font-size:9px;text-transform:uppercase;letter-spacing:.7px;text-align:left;padding:13px;border-bottom:1px solid var(--line)}
+.plans td{background:#171e23;color:#dce1e4;font-size:11px;padding:15px 13px;border-bottom:1px solid #252e35;vertical-align:middle}.plans tbody tr:hover td{background:#1c242a}.plan-name{font-weight:800;color:#fff}.plan-desc{font-size:10px;color:#7f8b92;margin-top:4px;max-width:250px}.person{color:#cbd2d6}.period{white-space:nowrap;color:#b9c2c7}.status{display:inline-block;border-radius:99px;padding:5px 9px;font-size:9px;font-weight:800;text-transform:uppercase}.active{background:#123b28;color:#63e6a2}.completed{background:#172d49;color:#83baff}.other{background:#3a2b16;color:#f0bd63}.actions{display:flex;gap:6px;align-items:center;white-space:nowrap}.actions form{margin:0}.actions .btn{padding:8px 10px;font-size:10px}
+.empty{padding:35px;text-align:center;color:#77848c;font-size:12px}.flash{margin-bottom:14px;padding:11px 14px;border-radius:10px;font-size:12px}.flash.success{background:#113322}.flash.error{background:#35151c;color:#ffb1bb}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:18px;z-index:3000}.modal.show{display:flex}.modal-box{width:min(760px,100%);max-height:92vh;overflow:auto;background:#171e23;border:1px solid #354048;border-radius:15px;box-shadow:0 25px 70px #0008}.modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head b{font-size:15px}.modal-body{padding:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}.field label{display:block;color:#aab4b9;font-size:10px;font-weight:700;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;background:#0e1317;border:1px solid #303a42;color:#f2f4f5;border-radius:8px;padding:10px;font-size:12px;outline:none}.field textarea{min-height:80px;resize:vertical}.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
+@@media(max-width:900px){.sidebar{transform:translateX(-100%)}.topbar{left:0}.main{margin-left:0}.content{padding:20px 14px}.stats{grid-template-columns:1fr 1fr}.page-head{align-items:flex-start;flex-direction:column}}
+@@media(max-width:600px){.stats{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}.user-name,.user-role,.muted{display:none}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+<div class="brand"><div class="brand-icon"><i class="fa-solid fa-heart-pulse"></i></div><div class="brand-text">HealthTrack</div></div>
+<div class="profile"><img src="@adminImage"/><div><div class="profile-name">@adminName</div><div class="profile-role">@adminRole</div></div></div>
+<div class="section">Main Menu</div>
+<nav class="menu">
+<a href="/Home/Dashboard"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+<a href="/Home/Clients"><i class="fa-solid fa-users"></i>Clients</a>
+<a href="/Home/Trainers"><i class="fa-solid fa-user-tie"></i>Trainers</a>
+<a href="/Home/Appointments"><i class="fa-solid fa-calendar-check"></i>Appointments</a>
+<a class="active" href="/Home/WorkoutPlans"><i class="fa-solid fa-dumbbell"></i>Workout Plans</a>
+<a href="/Home/DietPlans"><i class="fa-solid fa-utensils"></i>Diet Plans</a>
+<a href="/Home/HealthMetrics"><i class="fa-solid fa-chart-line"></i>Health Metrics</a>
+<a href="/Home/Reports"><i class="fa-solid fa-chart-pie"></i>Reports</a>
+<a href="/Home/Notifications"><i class="fa-solid fa-bell"></i>Notifications</a>
+</nav><div class="bottom"><div class="divider"></div><a href="/Account/Logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></div>
+</aside>
+<header class="topbar">
+<div class="top-left"><span class="top-page">Admin</span><span class="muted">/ Workout Plans</span></div>
+<div class="top-right"><a class="notif" href="/Home/Notifications"><i class="fa-solid fa-bell"></i><span class="badge-count">@ViewBag.TotalNotifications</span></a><div class="user"><img src="@adminImage"/><div><div class="user-name">@adminName</div><div class="user-role">@adminRole</div></div></div></div>
+</header>
+<main class="main"><div class="content">
+<div class="page-head"><div><div class="eyebrow"><i class="fa-solid fa-dumbbell"></i> HealthTrack Admin</div><div class="title">Workout Plans</div><div class="subtitle">Manage personalized workout plans for clients.</div></div><button class="btn primary" onclick="openM('addPlan')"><i class="fa-solid fa-plus"></i>Add New Workout Plan</button></div>
+@if(TempData["Success"] != null){<div class="flash success">@TempData["Success"]</div>}
+@if(TempData["Error"] != null){<div class="flash error">@TempData["Error"]</div>}
+<div class="stats">
+<div class="stat"><i class="fa-solid fa-dumbbell"></i><div class="stat-label">Total Plans</div><div class="stat-value">@ViewBag.TotalWorkoutPlans</div></div>
+<div class="stat"><i class="fa-solid fa-circle-check"></i><div class="stat-label">Active</div><div class="stat-value">@ViewBag.ActiveWorkoutPlans</div></div>
+<div class="stat"><i class="fa-solid fa-flag-checkered"></i><div class="stat-label">Completed</div><div class="stat-value">@ViewBag.CompletedWorkoutPlans</div></div>
+<div class="stat"><i class="fa-solid fa-layer-group"></i><div class="stat-label">Other Status</div><div class="stat-value">@ViewBag.OtherWorkoutPlans</div></div>
+</div>
+<div class="panel">
+<form class="searchbar" method="get" action="/Home/WorkoutPlans"><input name="search" value="@search" placeholder="Search plan, client or trainer..."/><button class="btn primary"><i class="fa-solid fa-magnifying-glass"></i>Search</button><a class="btn secondary" href="/Home/WorkoutPlans">Clear</a></form>
+<div class="table-wrap">
+@if(plans == null){<div class="empty">No workout plans found.</div>}else{
+<table class="plans"><thead><tr><th>Plan</th><th>Client</th><th>Trainer</th><th>Period</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+@foreach(var p in plans){
+    var id=I(p,"WorkoutPlanId");
+    var st=S(p,"Status","Active");
+    var cls=st.Equals("Active",StringComparison.OrdinalIgnoreCase)?"active":st.Equals("Completed",StringComparison.OrdinalIgnoreCase)?"completed":"other";
+    <tr>
+      <td><div class="plan-name">@S(p,"PlanName","Unnamed Plan")</div><div class="plan-desc">@S(p,"Description","No description")</div></td>
+      <td class="person">@S(V(p,"Client"),"FullName","Unknown Client")</td>
+      <td class="person">@S(V(p,"Trainer"),"FullName","Unknown Trainer")</td>
+      <td class="period">@D(p,"StartDate") - @D(p,"EndDate")</td>
+      <td><span class="status @cls">@st</span></td>
+      <td><div class="actions">
+        <a class="btn info" href="/Home/ViewWorkoutPlan?id=@id"><i class="fa-solid fa-eye"></i>View</a>
+        <button type="button" class="btn success" onclick="addDay(@id)"><i class="fa-solid fa-calendar-plus"></i>Add Day</button>
+        <button type="button" class="btn secondary" onclick='editPlan(@id,@I(V(p,"Trainer"),"UserId"),@I(V(p,"Client"),"UserId"),@J(p,"PlanName"),@J(p,"Description"),@J(p,"StartDate"),@J(p,"EndDate"),@J(p,"Status"))'><i class="fa-solid fa-pen"></i>Edit</button>
+        <form method="post" action="/Home/DeleteWorkoutPlan" onsubmit="return confirm('Delete this workout plan and its details?');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@id"/><button class="btn danger" title="Delete"><i class="fa-solid fa-trash"></i></button></form>
+      </div></td>
+    </tr>
+}
+</tbody></table>}
+</div></div>
+</div></main>
+
+<div class="modal" id="addPlan"><div class="modal-box"><div class="modal-head"><b>Add Workout Plan</b><button class="btn secondary" type="button" onclick="closeM('addPlan')">×</button></div><div class="modal-body">
+<form method="post" action="/Home/CreateWorkoutPlan">@Html.AntiForgeryToken()
+<div class="grid">
+<div class="field"><label>Trainer *</label><select name="TrainerId" required><option value="">-- Select Trainer --</option>@if(trainers!=null){foreach(var t in trainers){<option value="@I(t,"UserId")">@S(t,"FullName")</option>}}</select></div>
+<div class="field"><label>Client *</label><select name="ClientId" required><option value="">-- Select Client --</option>@if(clients!=null){foreach(var c in clients){<option value="@I(c,"UserId")">@S(c,"FullName")</option>}}</select></div>
+<div class="field full"><label>Plan Name *</label><input name="PlanName" required placeholder="e.g. Beginner Full Body"/></div>
+<div class="field full"><label>Description</label><textarea name="Description" placeholder="Workout plan description"></textarea></div>
+<div class="field"><label>Start Date *</label><input type="date" name="StartDate" required/></div>
+<div class="field"><label>End Date</label><input type="date" name="EndDate"/></div>
+<div class="field"><label>Status</label><select name="Status"><option>Active</option><option>Completed</option><option>Inactive</option></select></div>
+</div>
+<div class="modal-foot"><button type="button" class="btn secondary" onclick="closeM('addPlan')">Cancel</button><button class="btn primary">Create Plan</button></div>
+</form></div></div></div>
+
+<div class="modal" id="dayModal"><div class="modal-box"><div class="modal-head"><b>Add Workout Day</b><button class="btn secondary" type="button" onclick="closeM('dayModal')">×</button></div><div class="modal-body">
+<form method="post" id="dayForm">@Html.AntiForgeryToken()<input type="hidden" name="workoutPlanId" id="dayPlanId"/>
+<div class="grid"><div class="field"><label>Day Number *</label><input type="number" name="dayNumber" id="dayNumber" min="1" required/></div><div class="field"><label>Day Name *</label><input name="dayName" id="dayName" required placeholder="Monday"/></div><div class="field full"><label>Notes</label><textarea name="notes" id="dayNotes"></textarea></div></div>
+<div class="modal-foot"><button type="button" class="btn secondary" onclick="closeM('dayModal')">Cancel</button><button class="btn primary">Add Day</button></div>
+</form></div></div></div>
+
+<div class="modal" id="editPlan"><div class="modal-box"><div class="modal-head"><b>Edit Workout Plan</b><button class="btn secondary" type="button" onclick="closeM('editPlan')">×</button></div><div class="modal-body">
+<form method="post" action="/Home/EditWorkoutPlan">@Html.AntiForgeryToken()
+<input type="hidden" name="WorkoutPlanId" id="editId"/><input type="hidden" name="TrainerId" id="editTrainerId"/><input type="hidden" name="ClientId" id="editClientId"/>
+<div class="grid"><div class="field full"><label>Plan Name *</label><input name="PlanName" id="editName" required/></div><div class="field full"><label>Description</label><textarea name="Description" id="editDesc"></textarea></div><div class="field"><label>Start Date *</label><input type="date" name="StartDate" id="editStart" required/></div><div class="field"><label>End Date</label><input type="date" name="EndDate" id="editEnd"/></div><div class="field"><label>Status</label><select name="Status" id="editStatus"><option>Active</option><option>Completed</option><option>Inactive</option></select></div></div>
+<div class="modal-foot"><button type="button" class="btn secondary" onclick="closeM('editPlan')">Cancel</button><button class="btn primary">Save Changes</button></div></form></div></div></div>
+
+<script>
+function openM(id){document.getElementById(id).classList.add('show')}
+function closeM(id){document.getElementById(id).classList.remove('show')}
+function addDay(id){document.getElementById('dayForm').action='/Home/AddWorkoutPlanDay';document.getElementById('dayPlanId').value=id;document.getElementById('dayNumber').value='';document.getElementById('dayName').value='';document.getElementById('dayNotes').value='';openM('dayModal')}
+function editPlan(id,trainer,client,name,desc,start,end,status){
+ document.getElementById('editId').value=id;document.getElementById('editTrainerId').value=trainer;document.getElementById('editClientId').value=client;
+ document.getElementById('editName').value=name;document.getElementById('editDesc').value=desc;
+ document.getElementById('editStart').value=(start||'').substring(0,10);document.getElementById('editEnd').value=(end||'').substring(0,10);document.getElementById('editStatus').value=status||'Active';openM('editPlan');
+}
+window.addEventListener('click',e=>document.querySelectorAll('.modal.show').forEach(m=>{if(e.target===m)m.classList.remove('show')}));
+</script>
+</body></html>
